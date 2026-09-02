@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Página não encontrada — Amira</title>
+    <link rel="icon" type="image/svg+xml" href="images/amira-favicon.svg">
+    <link rel="alternate icon" type="image/x-icon" href="images/amira-favicon.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <style media="screen">
+      /* Paleta Amira — esta página é servida pelo Firebase sem o style.css */
+      :root {
+        --bg: #150A0D;
+        --surface: #201115;
+        --brand: #6E101C;
+        --gold: #D2566C;
+        --on-brand: #FDF3F4;
+        --texto: #F6E8EA;
+        --texto-suave: rgba(246, 232, 234, 0.62);
+        --border: rgba(210, 86, 108, 0.25);
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        background: var(--bg);
+        color: var(--texto);
+        font-family: 'Jost', Helvetica, Arial, sans-serif;
+      }
+      #message {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        max-width: 420px;
+        width: 100%;
+        padding: 40px 32px 32px;
+        text-align: center;
+      }
+      #message img { width: 88px; height: 88px; margin-bottom: 20px; }
+      #message h2 {
+        margin: 0;
+        font-size: 3rem;
+        font-weight: 500;
+        letter-spacing: 0.1em;
+        color: var(--gold);
+        font-family: 'Playfair Display', serif;
+      }
+      #message h1 {
+        margin: 6px 0 14px;
+        font-size: 1.15rem;
+        font-weight: 400;
+        letter-spacing: 0.04em;
+      }
+      #message p {
+        margin: 0 0 26px;
+        font-size: 0.9rem;
+        line-height: 1.7;
+        color: var(--texto-suave);
+      }
+      #message a {
+        display: block;
+        padding: 14px;
+        border-radius: 6px;
+        background: var(--brand);
+        color: var(--on-brand);
+        text-decoration: none;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        font-size: 0.78rem;
+        font-weight: 500;
+        transition: background 0.2s;
+      }
+      #message a:hover { background: var(--gold); }
+    </style>
+  </head>
+  <body>
+    <div id="message">
+      <img src="images/amira-favicon.svg" alt="Amira">
+      <h2>404</h2>
+      <h1>Página não encontrada</h1>
+      <p>O endereço que você tentou abrir não existe (ou saiu do ar). Confira o link e tente de novo.</p>
+      <a href="index.html">Voltar para a loja</a>
+    </div>
+  </body>
+</html>

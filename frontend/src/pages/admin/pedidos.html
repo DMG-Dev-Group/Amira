@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pedidos — Painel Admin Amira</title>
+  <link rel="icon" type="image/svg+xml" href="../images/amira-favicon.svg">
+  <link rel="alternate icon" type="image/x-icon" href="../images/amira-favicon.ico">
+  <link rel="apple-touch-icon" href="../images/amira-apple-touch.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body data-theme="dark">
+
+  <div class="admin-layout">
+    <div id="admin-sidebar-slot"></div>
+
+    <main class="admin-conteudo">
+      <div class="admin-topo">
+        <div>
+          <h1>Pedidos</h1>
+          <p id="contagem-pedidos"></p>
+        </div>
+        <select id="filtro-status" class="admin-campo" style="max-width:220px;">
+          <option value="">Todos os status</option>
+          <option value="aguardando_pagamento">Aguardando pagamento</option>
+          <option value="pago">Pago</option>
+          <option value="preparando">Preparando</option>
+          <option value="enviado">Enviado</option>
+          <option value="entregue">Entregue</option>
+          <option value="cancelado">Cancelado</option>
+        </select>
+      </div>
+
+      <div class="admin-bloco">
+        <div id="tabela-pedidos">
+          <p class="admin-vazio">Carregando pedidos...</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal de detalhe do pedido -->
+  <div class="admin-modal-overlay" id="modal-pedido" style="display:none;">
+    <div class="admin-modal">
+      <h2>Detalhes do pedido</h2>
+      <div id="modal-pedido-conteudo"></div>
+      <div class="admin-modal-acoes">
+        <button type="button" class="admin-btn admin-btn-outline" id="btn-fechar-modal-pedido">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/admin-sidebar.js"></script>
+  <script src="../services/tema.js"></script>
+  <script type="module" src="js/admin-pedidos.js"></script>
+</body>
+</html>

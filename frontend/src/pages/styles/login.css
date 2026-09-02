@@ -1,0 +1,286 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+
+/* ── Paleta Amira (esta página não carrega style.css, então os tokens
+      ficam aqui — mesmos valores de styles/style.css) ─────────────────── */
+:root {
+    --brand: #6E101C;          /* bordô da marca */
+    --brand-strong: #4A0A13;   /* bordô mais profundo, para hover */
+    --brand-soft: #8E1526;
+    --on-brand: #FDF3F4;       /* texto sobre o bordô */
+    --card: rgba(253, 243, 244, 0.92);
+    --texto: #3A1218;
+    --texto-suave: rgba(58, 18, 24, 0.68);
+    --danger: #C0271C;
+    --success: #1D7A3B;
+    --warning: #8F6410;
+    --info: #2B57B8;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Montserrat", sans-serif;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: url("../images/bordobg.jpg") no-repeat center center;
+    background-size: cover;
+    padding: 16px; /* Evita que o container cole nas bordas em celulares muito pequenos */
+}
+
+.container {
+    width: 100%;
+    max-width: 400px; /* Largura ideal para desktop; encolhe perfeitamente no mobile */
+    background-color: var(--card); /* Vidro claro: o fundo bordô é escuro demais para texto escuro por cima */
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 16px;
+    color: var(--texto);
+    padding: 35px 24px; /* Padding reduzido nas laterais para aproveitar a tela do celular */
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    margin: 0 16px;
+}
+
+.container h1 {
+    font-size: 32px;
+    text-align: center;
+    color: var(--brand);
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+/* Campos de Entrada */
+.input-box {
+    position: relative;
+    width: 100%;
+    height: 50px;
+    margin: 22px 0; /* Espaçamento vertical ligeiramente reduzido para telas menores */
+}
+
+.input-box input {
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.603); /* Input semi-transparente melhora a leitura do texto */
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 40px;
+    outline: none;
+    font-size: 15px;
+    color: var(--texto);
+    padding: 0 45px 0 20px;
+    transition: all 0.3s ease;
+}
+
+.input-box input:focus {
+    background-color: #ffffff;
+    border-color: var(--brand-soft); /* Realce bordô ao focar no campo */
+    box-shadow: 0 0 8px rgba(142, 21, 38, 0.45);
+}
+
+.input-box input::placeholder {
+    color: var(--texto-suave);
+}
+
+.input-box i {
+    position: absolute;
+    right: 20px;
+    top: 50%; 
+    transform: translateY(-50%);
+    font-size: 18px;
+    color: var(--texto-suave);   /* Cor ligeiramente mais escura para melhor visibilidade */
+    cursor: pointer;  /* Mostra a "mãozinha" ao passar o mouse */
+    z-index: 2;       /* Garante que o ícone fique por cima do input e seja clicável */
+}
+
+/* Lembrar / Esqueci */
+.remember-forgot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    margin: -10px 0 25px;
+}
+
+.remember-forgot label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    color: var(--texto);
+}
+
+.remember-forgot label input {
+    accent-color: var(--brand);
+    margin-right: 6px;
+}
+
+.remember-forgot a {
+    text-decoration: none;
+    color: var(--brand);
+    font-weight: 500;
+    transition: color 0.3s;
+}
+
+.remember-forgot a:hover {
+    text-decoration: underline;
+    color: var(--brand-soft);
+}
+
+/* Botão de Login Principal */
+.login {
+    width: 100%;
+    height: 50px;
+    background-color: var(--brand); /* Botão bordô sólido gera contraste marcante */
+    color: var(--on-brand);
+    border: 1px solid var(--brand);
+    border-radius: 40px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+}
+
+.login:hover:not(:disabled) {
+    background-color: transparent;
+    color: var(--brand);
+    border-color: var(--brand);
+}
+
+.login:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Link de Registro */
+.register-link {
+    font-size: 14px;
+    text-align: center;
+    margin: 25px 0 10px;
+    color: var(--texto);
+}
+
+.register-link a {
+    text-decoration: none;
+    color: var(--brand);
+    font-weight: 700;
+    transition: color 0.3s;
+}
+
+.register-link a:hover {
+    text-decoration: underline;
+    color: var(--brand-soft);
+}
+
+/* Links adicionais e Divisores */
+.voltar-link {
+    display: block;
+    text-align: center;
+    margin-top: 15px;
+    font-size: 13px;
+    color: var(--texto-suave);
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.voltar-link:hover {
+    text-decoration: underline;
+    color: var(--brand);
+}
+
+.divisor-ou {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 20px 0;
+    font-size: 12px;
+    color: var(--texto-suave);
+    font-weight: 500;
+}
+
+.divisor-ou::before,
+.divisor-ou::after {
+    content: "";
+    flex: 1;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.divisor-ou::before { margin-right: 12px; }
+.divisor-ou::after { margin-left: 12px; }
+
+/* Botão Google */
+.login-google {
+    background: #ffffff;
+    color: var(--brand);
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.login-google:hover {
+    background: #f9f9f9;
+    border-color: var(--brand);
+}
+
+/* Mensagens de Feedback */
+.form-msg {
+    min-height: 20px;
+    font-size: 13px;
+    text-align: center;
+    margin-top: 10px;
+    color: var(--danger);
+    font-weight: 500;
+}
+
+.form-msg.sucesso {
+    color: var(--success);
+}
+
+/* Alertas de Verificação */
+.verificacao-alerta {
+    background: rgba(142, 21, 38, 0.10);
+    border: 1px solid rgba(142, 21, 38, 0.35);
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 13px;
+    color: var(--brand);
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+.verificacao-alerta button {
+    display: block;
+    margin: 6px auto 0;
+    background: none;
+    border: none;
+    color: var(--brand);
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* Ajustes finos para Mobile (telas abaixo de 400px de largura) */
+@media (max-width: 400px) {
+    .container {
+        padding: 30px 20px; /* Reduz ligeiramente o espaço interno */
+    }
+    
+    .container h1 {
+        font-size: 28px; /* Título um pouco menor para não quebrar feio */
+    }
+    
+    .remember-forgot {
+        font-size: 12px; /* Ajusta os textos do checkbox/link esqueci a senha */
+    }
+
+    .input-box {
+        margin: 18px 0; /* Encolhe o espaço vertical geral da tela */
+    }
+}

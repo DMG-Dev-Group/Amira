@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Produtos — Painel Admin Amira</title>
+  <link rel="icon" type="image/svg+xml" href="../images/amira-favicon.svg">
+  <link rel="alternate icon" type="image/x-icon" href="../images/amira-favicon.ico">
+  <link rel="apple-touch-icon" href="../images/amira-apple-touch.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body data-theme="dark">
+
+  <div class="admin-layout">
+    <div id="admin-sidebar-slot"></div>
+
+    <main class="admin-conteudo">
+      <div class="admin-topo">
+        <div>
+          <h1>Produtos</h1>
+          <p id="contagem-produtos"></p>
+        </div>
+        <div style="display:flex; gap:0.6rem; align-items:center; flex-wrap:wrap;">
+          <input type="text" id="busca-produtos-admin" placeholder="Buscar por nome ou SKU..."
+            style="background:var(--surface,#201115); color:inherit; border:1px solid var(--border,rgba(210, 86, 108,0.2)); border-radius:5px; padding:0.5rem 0.8rem; font-family:'Jost',sans-serif; font-size:0.82rem; min-width:220px;">
+          <select id="select-ordenar-admin" style="background:var(--surface,#201115); color:inherit; border:1px solid var(--border,rgba(210, 86, 108,0.2)); border-radius:5px; padding:0.5rem 0.7rem; font-family:'Jost',sans-serif; font-size:0.82rem;">
+            <option value="recentes">Mais recentes</option>
+            <option value="categoria-az">Categoria (A-Z)</option>
+            <option value="preco-maior">Preço (maior)</option>
+            <option value="preco-menor">Preço (menor)</option>
+            <option value="estoque-maior">Estoque (maior)</option>
+            <option value="estoque-menor">Estoque (menor)</option>
+          </select>
+          <button class="admin-btn admin-btn-primary" id="btn-novo-produto">+ Novo produto</button>
+        </div>
+      </div>
+
+      <div class="admin-bloco">
+        <div id="tabela-produtos">
+          <p class="admin-vazio">Carregando produtos...</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal de criar/editar produto -->
+  <div class="admin-modal-overlay" id="modal-produto" style="display:none;">
+    <div class="admin-modal">
+      <h2 id="modal-titulo">Novo produto</h2>
+      <form id="form-produto">
+        <div class="admin-campo">
+          <label for="p-nome">Nome</label>
+          <input type="text" id="p-nome" required>
+        </div>
+
+        <div class="admin-campo-grid">
+          <div class="admin-campo">
+            <label for="p-sku">SKU</label>
+            <input type="text" id="p-sku" required>
+          </div>
+          <div class="admin-campo">
+            <label for="p-codigo-barras">Código de barras</label>
+            <input type="text" id="p-codigo-barras">
+          </div>
+        </div>
+
+        <div class="admin-campo-grid">
+          <div class="admin-campo">
+            <label for="p-categoria">Categoria</label>
+            <select id="p-categoria" required>
+              <option value="" disabled selected>Carregando categorias...</option>
+            </select>
+          </div>
+          <div class="admin-campo">
+            <label for="p-peso">Peso (gramas)</label>
+            <input type="number" id="p-peso" min="0" required>
+          </div>
+        </div>
+
+        <div class="admin-campo">
+          <label for="p-descricao">Descrição</label>
+          <textarea id="p-descricao" rows="3"></textarea>
+        </div>
+
+        <div class="admin-campo">
+          <label>Imagens do produto</label>
+          <div id="lista-imagens-produto"></div>
+          <button type="button" class="admin-btn admin-btn-outline admin-btn-sm" id="btn-add-imagem" style="margin-top:0.5rem;">+ Adicionar outra imagem</button>
+          <small style="display:block; margin-top:0.4rem; color:var(--text-muted,#999); font-size:0.72rem;">
+            A primeira imagem é a principal (aparece no catálogo e na página do produto).
+          </small>
+        </div>
+
+        <!-- Varejo agora é OPCIONAL (R2 item 6.1): um produto pode existir
+             só no atacado. Deixe o preço de varejo vazio/zero para isso. -->
+        <div class="admin-campo-grid">
+          <div class="admin-campo">
+            <label for="p-preco-varejo">Preço varejo (R$) — opcional</label>
+            <input type="number" id="p-preco-varejo" min="0" step="0.01">
+          </div>
+          <div class="admin-campo">
+            <label for="p-estoque-varejo">Estoque varejo (unidades)</label>
+            <input type="number" id="p-estoque-varejo" min="0" value="0">
+          </div>
+        </div>
+
+        <!-- Estoques independentes por modalidade (A4): o produto pode
+             existir só no varejo, só no atacado, ou nos dois. -->
+        <div class="admin-campo-grid">
+          <div class="admin-campo">
+            <label for="p-preco-atacado">Preço atacado/un. (R$) — opcional</label>
+            <input type="number" id="p-preco-atacado" min="0" step="0.01">
+          </div>
+          <div class="admin-campo">
+            <label for="p-estoque-atacado">Estoque atacado (unidades)</label>
+            <input type="number" id="p-estoque-atacado" min="0" value="0">
+          </div>
+        </div>
+        <small style="display:block; margin:-0.4rem 0 1rem; color:var(--text-muted,#999); font-size:0.72rem;">
+          O mínimo de atacado agora é por carrinho (não por produto) — configurável
+          no documento configuracoes/atacado do Firestore.
+        </small>
+
+        <!-- Desconto opcional (A2) — funciona como o banner: só aparece
+             para preencher se você ligar. -->
+        <div class="admin-campo" style="border-top:1px solid var(--border,rgba(156,102,68,0.15)); padding-top:1rem; margin-top:0.5rem;">
+          <label for="p-desconto-ativo">Produto em desconto?</label>
+          <select id="p-desconto-ativo">
+            <option value="false">Não</option>
+            <option value="true">Sim</option>
+          </select>
+        </div>
+
+        <div id="campos-desconto" style="display:none;">
+          <div class="admin-campo-grid">
+            <div class="admin-campo">
+              <label for="p-desconto-tipo">Tipo de desconto</label>
+              <select id="p-desconto-tipo">
+                <option value="percentual">Percentual (%)</option>
+              </select>
+            </div>
+            <div class="admin-campo">
+              <label for="p-desconto-percentual">Desconto (%) — 1 a 90</label>
+              <input type="number" id="p-desconto-percentual" min="1" max="90" step="1">
+            </div>
+          </div>
+          <small style="display:block; margin:-0.4rem 0 1rem; color:var(--text-muted,#999); font-size:0.72rem;">
+            O desconto é aplicado sobre o preço de varejo. O card mostra o preço
+            novo em destaque e o antigo riscado — ex.: R$ 180 <s>R$ 200</s>.
+          </small>
+        </div>
+
+        <!-- Frete por produto (R2 item 7): "Não" = o cliente só consegue
+             pedir este produto com retirada na loja. -->
+        <div class="admin-campo">
+          <label for="p-frete-disponivel">Frete disponível (entrega em casa)?</label>
+          <select id="p-frete-disponivel">
+            <option value="true">Sim — pode ser entregue</option>
+            <option value="false">Não — somente retirada na loja</option>
+          </select>
+        </div>
+
+        <div class="admin-campo-grid">
+          <div class="admin-campo">
+            <label for="p-ativo">Status</label>
+            <select id="p-ativo">
+              <option value="true">Ativo (visível na loja)</option>
+              <option value="false">Inativo (oculto)</option>
+            </select>
+          </div>
+          <div class="admin-campo">
+            <label for="p-destaque">Destaque na home (seção "Os mais amados")</label>
+            <select id="p-destaque">
+              <option value="false">Não</option>
+              <option value="true">Sim</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="admin-campo" style="border-top:1px solid var(--border,rgba(210, 86, 108,0.15)); padding-top:1rem; margin-top:0.5rem;">
+          <label for="p-banner-hero">Aparece no banner "Produto da Estação"?</label>
+          <select id="p-banner-hero">
+            <option value="false">Não</option>
+            <option value="true">Sim</option>
+          </select>
+        </div>
+
+        <div id="campos-banner-hero" style="display:none;">
+          <div class="admin-campo">
+            <label for="p-banner-nome-secao">Nome da seção (ex: "Produto da estação", "Destaque do mês")</label>
+            <input type="text" id="p-banner-nome-secao" placeholder="Produto da estação">
+          </div>
+          <div class="admin-campo">
+            <label for="p-banner-imagem">Imagem do banner (opcional)</label>
+            <input type="url" id="p-banner-imagem" placeholder="https://... (deixe vazio para usar a imagem principal do produto)">
+          </div>
+          <div class="admin-campo">
+            <label for="p-banner-etiqueta">Etiqueta (ex: Lançamento, Edição Limitada)</label>
+            <input type="text" id="p-banner-etiqueta" placeholder="Lançamento">
+          </div>
+          <div class="admin-campo">
+            <label for="p-banner-titulo">Título do banner</label>
+            <input type="text" id="p-banner-titulo" placeholder="Ex: Flor de Primavera — Edição Limitada">
+          </div>
+          <div class="admin-campo">
+            <label for="p-banner-texto">Texto promocional</label>
+            <textarea id="p-banner-texto" rows="2" placeholder="Uma fragrância que celebra..."></textarea>
+          </div>
+          <div class="admin-campo">
+            <label for="p-banner-tags">Tags (separadas por vírgula)</label>
+            <input type="text" id="p-banner-tags" placeholder="Rosa, Jasmim, Baunilha, Âmbar">
+          </div>
+          <div class="admin-campo">
+            <label for="p-banner-ordem">Ordem de exibição no carrossel (menor aparece primeiro)</label>
+            <input type="number" id="p-banner-ordem" min="0" value="0">
+          </div>
+        </div>
+
+        <p class="admin-msg" id="modal-msg" style="display:none;"></p>
+
+        <div class="admin-modal-acoes">
+          <button type="button" class="admin-btn admin-btn-outline" id="btn-cancelar-modal">Cancelar</button>
+          <button type="submit" class="admin-btn admin-btn-primary" id="btn-salvar-produto">Salvar produto</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="js/admin-sidebar.js"></script>
+  <script src="../services/tema.js"></script>
+  <script type="module" src="js/admin-produtos.js"></script>
+</body>
+</html>

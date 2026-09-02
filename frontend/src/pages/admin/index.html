@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Painel Admin Amira</title>
+  <link rel="icon" type="image/svg+xml" href="../images/amira-favicon.svg">
+  <link rel="alternate icon" type="image/x-icon" href="../images/amira-favicon.ico">
+  <link rel="apple-touch-icon" href="../images/amira-apple-touch.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body data-theme="dark">
+
+  <div class="admin-layout">
+    <div id="admin-sidebar-slot"></div>
+
+    <main class="admin-conteudo">
+      <div class="admin-topo">
+        <div>
+          <h1>Dashboard</h1>
+          <p>Visão geral da loja</p>
+        </div>
+      </div>
+
+      <div class="admin-metricas-grid" id="cards-metricas">
+        <div class="admin-card-metrica"><div class="valor">—</div><div class="rotulo">Carregando...</div></div>
+      </div>
+
+      <div class="admin-bloco">
+        <h2>Seção de iPhones</h2>
+        <div id="bloco-iphones"></div>
+      </div>
+
+      <div class="admin-bloco">
+        <h2>Visitas por dispositivo (últimos 30 dias)</h2>
+        <div id="grafico-dispositivo"></div>
+      </div>
+
+      <div class="admin-bloco">
+        <h2>Origem do tráfego (últimos 30 dias)</h2>
+        <div id="grafico-origem"></div>
+      </div>
+
+      <div class="admin-bloco">
+        <h2>Páginas mais visitadas</h2>
+        <div id="lista-paginas"></div>
+      </div>
+
+      <div class="admin-bloco">
+        <h2>Pedidos recentes</h2>
+        <div id="lista-pedidos-recentes"></div>
+      </div>
+    </main>
+  </div>
+
+  <script type="module" src="js/admin-sidebar.js"></script>
+  <script src="../services/tema.js"></script>
+  <script type="module" src="js/admin-dashboard.js"></script>
+</body>
+</html>

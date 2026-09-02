@@ -1,0 +1,190 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helpers ──────────────────────────────────────────────────────────
+    function estaLogado() {
+      return request.auth != null;
+    }
+
+    function ehDono(uid) {
+      return estaLogado() && request.auth.uid == uid;
+    }
+
+    function emailVerificado() {
+      return estaLogado() && request.auth.token.email_verified == true;
+    }
+
+    function ehAdmin() {
+      return estaLogado() &&
+        exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.role == "admin";
+    }
+
+    function ehRevendedorAprovado() {
+      return estaLogado() &&
+        exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
+        (get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.get("statusRevendedor", "") == "aprovado" ||
+         get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.role == "admin");
+    }
+
+    // ── usuarios/{uid} ───────────────────────────────────────────────────
+    // Cada pessoa só lê/edita o próprio perfil. Admin pode ler todos
+    // (necessário para o painel administrativo), mas ninguém pode escrever
+    // o campo "role" de si mesmo — isso evita que um cliente se promova a
+    // admin editando o próprio documento.
+    //
+    // O perfil SÓ pode ser criado depois do e-mail estar verificado
+    // (request.auth.token.email_verified). Isso impede que um script em
+    // loop crie contas fantasma com documento no banco: sem clicar no link
+    // de verificação, nada é gravado no Firestore. Contas Google já chegam
+    // com email_verified == true.
+    //
+    // "statusRevendedor" nasce como "pendente" e só o admin muda para
+    // "aprovado"/"rejeitado". O próprio usuário pode SOLICITAR revenda
+    // (definir "pendente") a qualquer momento, desde que não esteja
+    // mexendo num status já "aprovado" — isso suporta a troca de tipo de
+    // conta sem criar conta nova (cliente → revendedor pendente).
+    match /usuarios/{uid} {
+      allow read: if ehDono(uid) || ehAdmin();
+      allow create: if ehDono(uid) &&
+        emailVerificado() &&
+        request.resource.data.role == "cliente" &&
+        (!("statusRevendedor" in request.resource.data) ||
+          request.resource.data.statusRevendedor == "pendente");
+      allow update: if ehDono(uid) &&
+        request.resource.data.role == resource.data.role &&
+        (
+          // ou não mexe no status de revendedor…
+          request.resource.data.get("statusRevendedor", "") ==
+            resource.data.get("statusRevendedor", "") ||
+          // …ou está solicitando revenda ("pendente"), o que é permitido
+          // desde que o status atual não seja "aprovado" (um aprovado não
+          // pode se "re-aprovar" nem resetar o próprio histórico).
+          (request.resource.data.get("statusRevendedor", "") == "pendente" &&
+            resource.data.get("statusRevendedor", "") != "aprovado")
+        );
+      allow update: if ehAdmin();
+      allow delete: if ehAdmin();
+    }
+
+    // ── usuarios/{uid}/dados/{docId} ──────────────────────────────────────
+    // Subcoleção com dados extras do perfil (ex: endereço salvo). Mesma
+    // regra de dono do documento pai: só o próprio usuário ou admin acessam.
+    match /usuarios/{uid}/dados/{docId} {
+      allow read, write: if ehDono(uid) || ehAdmin();
+    }
+
+    // ── produtos/{produtoId} ─────────────────────────────────────────────
+    // Qualquer pessoa (logada ou não) pode VER o catálogo.
+    // Só admin pode criar, editar ou remover produtos. Editar preço/
+    // desconto/estoque por aqui é o fluxo autorizado da loja.
+    match /produtos/{produtoId} {
+      allow read: if true;
+      allow write: if ehAdmin();
+    }
+
+    // ── categorias/{categoriaId} ─────────────────────────────────────────
+    match /categorias/{categoriaId} {
+      allow read: if true;
+      allow write: if ehAdmin();
+    }
+
+    // ── configuracoes/{docId} ────────────────────────────────────────────
+    // Textos e ajustes globais da loja (ex: mínimo de atacado por
+    // carrinho, dados de pagamento PIX, imagens do carrossel da home).
+    // Públicos para leitura, só admin edita.
+    match /configuracoes/{docId} {
+      allow read: if true;
+      allow write: if ehAdmin();
+    }
+
+    // ── carrinhos/{uid} ──────────────────────────────────────────────────
+    // O carrinho é privado: só o próprio dono lê/escreve o seu. O conteúdo
+    // do carrinho NÃO é fonte de verdade de preço — no checkout, a Cloud
+    // Function "criarPedido" recalcula tudo a partir da coleção "produtos".
+    match /carrinhos/{uid} {
+      allow read, write: if ehDono(uid);
+    }
+
+    // ── pedidos/{pedidoId} ───────────────────────────────────────────────
+    // SEM Cloud Functions (plano Spark/custo zero), o pedido é criado pelo
+    // cliente — mas o documento NÃO PODE conter nenhum valor monetário:
+    // a allowlist de chaves abaixo rejeita qualquer campo de preço/total.
+    // Cada item guarda só {produtoId, quantidade, modo}; preço, desconto,
+    // frete e total são DERIVADOS da coleção "produtos" (que só o admin
+    // escreve) na hora de exibir (checkout, confirmação e painel admin).
+    // Risco residual documentado em docs/FALHAS_REMANESCENTES.md: o shape
+    // de cada elemento de "itens" não é validável em rules (sem loops);
+    // a conferência humana do PIX barra qualquer pedido adulterado.
+    match /pedidos/{pedidoId} {
+      allow read: if estaLogado() &&
+        (resource.data.uidComprador == request.auth.uid || ehAdmin());
+      allow create: if estaLogado() &&
+        emailVerificado() &&
+        request.resource.data.keys().hasOnly(['uidComprador', 'itens', 'temItemAtacado', 'modoEntrega', 'endereco', 'status', 'pagamento', 'criadoEm']) &&
+        request.resource.data.keys().hasAll(['uidComprador', 'itens', 'temItemAtacado', 'modoEntrega', 'endereco', 'status', 'pagamento', 'criadoEm']) &&
+        request.resource.data.uidComprador == request.auth.uid &&
+        request.resource.data.itens is list &&
+        request.resource.data.itens.size() >= 1 &&
+        request.resource.data.itens.size() <= 30 &&
+        request.resource.data.temItemAtacado is bool &&
+        (request.resource.data.temItemAtacado == false || ehRevendedorAprovado()) &&
+        request.resource.data.modoEntrega in ['entrega', 'retirada'] &&
+        (
+          (request.resource.data.modoEntrega == 'retirada' &&
+            request.resource.data.endereco == null) ||
+          (request.resource.data.modoEntrega == 'entrega' &&
+            request.resource.data.endereco is map &&
+            request.resource.data.endereco.keys().hasOnly(['cep', 'endereco', 'bairro']) &&
+            request.resource.data.endereco.keys().hasAll(['cep', 'endereco', 'bairro']) &&
+            request.resource.data.endereco.cep is string &&
+            request.resource.data.endereco.cep.size() >= 8 &&
+            request.resource.data.endereco.cep.size() <= 12 &&
+            request.resource.data.endereco.endereco is string &&
+            request.resource.data.endereco.endereco.size() >= 1 &&
+            request.resource.data.endereco.endereco.size() <= 300 &&
+            request.resource.data.endereco.bairro is string &&
+            request.resource.data.endereco.bairro.size() >= 1 &&
+            request.resource.data.endereco.bairro.size() <= 120)
+        ) &&
+        request.resource.data.status == 'aguardando_pagamento' &&
+        request.resource.data.pagamento is map &&
+        request.resource.data.pagamento.keys().hasOnly(['metodo', 'status']) &&
+        request.resource.data.pagamento.keys().hasAll(['metodo', 'status']) &&
+        request.resource.data.pagamento.metodo == 'pix_whatsapp' &&
+        request.resource.data.pagamento.status == 'pendente' &&
+        request.resource.data.criadoEm == request.time;
+      allow update, delete: if ehAdmin();
+    }
+
+    // ── metricas/{docId} ─────────────────────────────────────────────────
+    // Qualquer visitante pode registrar um evento de acesso, mas o shape é
+    // validado aqui: só os campos da allowlist, com valores controlados e
+    // strings curtas. Isso fecha a escrita pública ilimitada (billing/spam).
+    // A proteção contra bots que respeitam o shape vem do App Check.
+    match /metricas/{docId} {
+      allow create: if
+        request.resource.data.keys().hasOnly(['tipo', 'pagina', 'dispositivo', 'origem', 'criadoEm']) &&
+        request.resource.data.keys().hasAll(['tipo', 'pagina', 'dispositivo', 'origem', 'criadoEm']) &&
+        request.resource.data.tipo in ['pagina', 'produto'] &&
+        request.resource.data.pagina is string &&
+        request.resource.data.pagina.size() > 0 &&
+        request.resource.data.pagina.size() <= 200 &&
+        request.resource.data.dispositivo in ['mobile', 'tablet', 'desktop'] &&
+        request.resource.data.origem is string &&
+        request.resource.data.origem.size() > 0 &&
+        request.resource.data.origem.size() <= 200 &&
+        request.resource.data.criadoEm == request.time;
+      allow read: if ehAdmin();
+      allow update, delete: if ehAdmin();
+    }
+
+    // ── Bloqueio padrão ──────────────────────────────────────────────────
+    // Qualquer coleção não listada acima fica negada por padrão.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

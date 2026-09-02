@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minha Conta — Amira</title>
+  <link rel="icon" type="image/svg+xml" href="images/amira-favicon.svg">
+  <link rel="alternate icon" type="image/x-icon" href="images/amira-favicon.ico">
+  <link rel="apple-touch-icon" href="images/amira-apple-touch.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles/style.css">
+  <link rel="stylesheet" href="styles/perfil.css">
+</head>
+<body>
+
+  <!-- ── NAV ──────────────────────────────────────────────── -->
+  <nav id="navbar" class="scrolled">
+    <div class="nav-logo">
+      <a href="index.html" id="logo-button">
+        <img class="logo-amira logo-amira--claro" src="images/amira-claro.svg" alt="Amira">
+        <img class="logo-amira logo-amira--escuro" src="images/amira-escuro.svg" alt="Amira">
+      </a>
+    </div>
+    <div class="nav-categorias-wrapper">
+      <a href="index.html" class="nav-categorias-btn" style="text-decoration:none;">
+        ← Voltar para a loja
+      </a>
+    </div>
+    <div class="nav-actions">
+      <div id="nav-carrinho-slot"></div>
+      <div id="theme-button">
+        <button id="theme-toggle" class="theme-toggle" aria-label="Alternar tema claro e escuro">
+          <span class="theme-icon theme-icon--moon">🌙</span>
+          <span class="theme-icon theme-icon--sun">☀️</span>
+          <span class="theme-toggle__circle"></span>
+        </button>
+      </div>
+      <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Abrir menu" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ── MENU MOBILE ──────────────────────────────────────── -->
+  <div class="mobile-menu-overlay" id="mobile-menu-overlay"></div>
+  <aside class="mobile-menu-panel" id="mobile-menu-panel" aria-hidden="true">
+    <div class="mobile-menu-header">
+      <span class="mobile-menu-title">Menu</span>
+      <button class="mobile-menu-close" id="mobile-menu-close" aria-label="Fechar menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="5" x2="19" y2="19"/>
+          <line x1="19" y1="5" x2="5" y2="19"/>
+        </svg>
+      </button>
+    </div>
+    <nav class="mobile-menu-links">
+      <a href="login.html" class="mobile-menu-link" id="mobile-nav-perfil">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+        <span id="mobile-nav-perfil-label">Entrar</span>
+      </a>
+      <a href="produtos.html" class="mobile-menu-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7"/>
+          <rect x="14" y="3" width="7" height="7"/>
+          <rect x="14" y="14" width="7" height="7"/>
+          <rect x="3" y="14" width="7" height="7"/>
+        </svg>
+        Categorias
+      </a>
+      <a href="iphones.html" class="mobile-menu-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="6" y="2" width="12" height="20" rx="3"/>
+          <line x1="10.5" y1="18.5" x2="13.5" y2="18.5"/>
+        </svg>
+        iPhones
+      </a>
+      <a href="index.html#contato" class="mobile-menu-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="4" width="20" height="16" rx="2"/>
+          <path d="M22 6l-10 7L2 6"/>
+        </svg>
+        Contato
+      </a>
+      <a href="carrinho.html" class="mobile-menu-link" id="mobile-nav-carrinho" style="display:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="9" cy="21" r="1"/>
+          <circle cx="20" cy="21" r="1"/>
+          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+        </svg>
+        Carrinho
+        <span class="mobile-menu-badge" id="mobile-carrinho-badge" style="display:none;"></span>
+      </a>
+    </nav>
+    <div class="mobile-menu-footer">
+      <button id="theme-toggle-mobile" class="theme-toggle" aria-label="Alternar tema claro e escuro">
+        <span class="theme-icon theme-icon--moon">🌙</span>
+        <span class="theme-icon theme-icon--sun">☀️</span>
+        <span class="theme-toggle__circle"></span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ── MINHA CONTA ──────────────────────────────────────── -->
+  <main class="perfil-main">
+    <div class="perfil-header">
+      <div class="perfil-avatar-wrap">
+        <img id="perfil-avatar-img" class="perfil-avatar" src="" alt="Foto de perfil" style="display:none;">
+        <div id="perfil-avatar-iniciais" class="perfil-avatar-iniciais"></div>
+      </div>
+      <div class="perfil-titulo">
+        <h1 id="perfil-nome-titulo">Minha Conta</h1>
+        <p id="perfil-email-titulo"></p>
+      </div>
+    </div>
+
+    <div class="perfil-tabs">
+      <button class="perfil-tab-btn active" data-tab="dados">Dados pessoais</button>
+      <button class="perfil-tab-btn" data-tab="seguranca">Segurança</button>
+      <button class="perfil-tab-btn" data-tab="enderecos">Endereços</button>
+      <button class="perfil-tab-btn" data-tab="revendedor" id="tab-revendedor">Atacado / Revenda</button>
+    </div>
+
+    <!-- Aba: Dados pessoais -->
+    <section class="perfil-painel active" id="painel-dados">
+      <form id="form-dados">
+        <div class="perfil-campo">
+          <label for="campo-nome">Nome completo</label>
+          <input type="text" id="campo-nome" placeholder="Seu nome completo" required>
+        </div>
+        <div class="perfil-campo">
+          <label for="campo-email">E-mail</label>
+          <input type="email" id="campo-email" disabled>
+          <small>Para alterar o e-mail, fale com o suporte.</small>
+        </div>
+        <div class="perfil-campo">
+          <label for="campo-telefone">Celular / WhatsApp</label>
+          <input type="tel" id="campo-telefone" placeholder="(98) 9xxxx-xxxx" maxlength="15">
+        </div>
+        <div class="perfil-campo">
+          <label for="campo-foto">URL da foto de perfil</label>
+          <input type="url" id="campo-foto" placeholder="https://exemplo.com/minha-foto.jpg">
+          <small>Cole o link de uma imagem hospedada na web. Deixe vazio para usar suas iniciais.</small>
+        </div>
+        <div class="perfil-acoes">
+          <button type="submit" class="btn-primary" id="btn-salvar-dados">Salvar alterações</button>
+          <span class="perfil-msg" id="msg-dados"></span>
+        </div>
+      </form>
+    </section>
+
+    <!-- Aba: Segurança -->
+    <section class="perfil-painel" id="painel-seguranca">
+      <form id="form-senha">
+        <div class="perfil-campo">
+          <label for="campo-senha-atual">Senha atual</label>
+          <input type="password" id="campo-senha-atual" required autocomplete="current-password">
+        </div>
+        <div class="perfil-campo">
+          <label for="campo-senha-nova">Nova senha</label>
+          <input type="password" id="campo-senha-nova" required autocomplete="new-password" minlength="6">
+          <small>Mínimo de 6 caracteres.</small>
+        </div>
+        <div class="perfil-campo">
+          <label for="campo-senha-confirma">Confirme a nova senha</label>
+          <input type="password" id="campo-senha-confirma" required autocomplete="new-password" minlength="6">
+        </div>
+        <div class="perfil-acoes">
+          <button type="submit" class="btn-primary" id="btn-salvar-senha">Alterar senha</button>
+          <span class="perfil-msg" id="msg-senha"></span>
+        </div>
+      </form>
+
+      <div class="perfil-zona-perigo">
+        <h3>Sair da conta</h3>
+        <p>Você será desconectado deste dispositivo.</p>
+        <button class="btn-sair-conta" id="btn-logout">Sair da conta</button>
+      </div>
+    </section>
+
+    <!-- Aba: Endereços -->
+    <section class="perfil-painel" id="painel-enderecos">
+      <form id="form-endereco">
+        <div class="perfil-campo">
+          <label for="campo-cep">CEP</label>
+          <input type="text" id="campo-cep" placeholder="65000-000" maxlength="9">
+        </div>
+        <div class="perfil-campo">
+          <label for="campo-endereco">Endereço</label>
+          <input type="text" id="campo-endereco" placeholder="Rua, número, bairro" disabled>
+        </div>
+        <div class="perfil-campo">
+          <label for="campo-cidade-uf">Cidade / UF</label>
+          <input type="text" id="campo-cidade-uf" placeholder="Cidade - UF" disabled>
+        </div>
+        <div class="perfil-campo">
+          <label for="campo-complemento">Complemento</label>
+          <input type="text" id="campo-complemento" placeholder="Apartamento, bloco, ponto de referência...">
+        </div>
+        <div class="perfil-acoes">
+          <button type="submit" class="btn-primary" id="btn-salvar-endereco">Salvar endereço</button>
+          <span class="perfil-msg" id="msg-endereco"></span>
+        </div>
+      </form>
+    </section>
+
+    <!-- Aba: Atacado / Revenda (A5 — troca de tipo de conta sem criar outra) -->
+    <section class="perfil-painel" id="painel-revendedor">
+      <div id="revendedor-status"></div>
+
+      <form id="form-revendedor" style="display:none;">
+        <p class="perfil-campo" style="color:var(--text-muted); font-size:0.85rem;">
+          Informe o CNPJ da sua loja para desbloquear os preços de atacado.
+          Sua conta continua a mesma — apenas passa por uma análise da equipe.
+        </p>
+        <div class="perfil-campo">
+          <label for="campo-cnpj">CNPJ</label>
+          <input type="text" id="campo-cnpj" placeholder="00.000.000/0000-00" maxlength="18">
+          <small id="cnpj-status-perfil"></small>
+        </div>
+        <div class="perfil-campo">
+          <label for="campo-razao-social">Razão social</label>
+          <input type="text" id="campo-razao-social" placeholder="Nome da empresa">
+        </div>
+        <div class="perfil-acoes">
+          <button type="submit" class="btn-primary" id="btn-solicitar-revenda">Solicitar conta de revendedor</button>
+          <span class="perfil-msg" id="msg-revendedor"></span>
+        </div>
+      </form>
+
+      <div class="perfil-zona-perigo" id="bloco-voltar-cliente" style="display:none;">
+        <h3>Voltar para conta de cliente</h3>
+        <p>Sua aprovação fica guardada — se quiser voltar ao atacado depois, não precisa de nova análise.</p>
+        <button class="btn-sair-conta" id="btn-voltar-cliente">Usar como conta de cliente</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="services/script.js"></script>
+  <script src="services/tema.js"></script>
+  <script src="services/nav-busca.js"></script>
+  <script type="module" src="services/nav-conta.js"></script>
+  <script type="module" src="services/nav-carrinho.js"></script>
+  <script type="module" src="./js/perfil.js"></script>
+  <script type="module" src="services/nav-mobile-menu.js"></script>
+</body>
+</html>

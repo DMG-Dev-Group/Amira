@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="Imagem indisponível">
+  <rect width="120" height="120" fill="#2A161B"/>
+  <g fill="none" stroke="rgba(233,163,176,0.75)" stroke-width="3" stroke-linecap="round">
+    <path d="M 40 70 A 20 20 0 0 1 80 70"/>
+    <line x1="14" y1="70" x2="106" y2="70"/>
+  </g>
+  <g fill="none" stroke="rgba(233,163,176,0.75)" stroke-width="2.6" stroke-linecap="round">
+  <line x1="35.27" y1="61.97" x2="23.86" y2="58.26"/>
+  <line x1="38.97" y1="54.72" x2="29.26" y2="47.66"/>
+  <line x1="44.72" y1="48.97" x2="37.66" y2="39.26"/>
+  <line x1="51.97" y1="45.27" x2="48.26" y2="33.86"/>
+  <line x1="60.00" y1="44.00" x2="60.00" y2="32.00"/>
+  <line x1="68.03" y1="45.27" x2="71.74" y2="33.86"/>
+  <line x1="75.28" y1="48.97" x2="82.34" y2="39.26"/>
+  <line x1="81.03" y1="54.72" x2="90.74" y2="47.66"/>
+  <line x1="84.73" y1="61.97" x2="96.14" y2="58.26"/>
+  </g>
+</svg>

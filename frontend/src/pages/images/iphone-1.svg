@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 760" width="560" height="760" role="img" aria-label="iPhone">
+  <defs>
+  <linearGradient id="fundo0" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0%" stop-color="#1A0C10"/><stop offset="100%" stop-color="#3E1520"/>
+    </linearGradient>
+    <radialGradient id="brilho0" cx="0.5" cy="0.34" r="0.62">
+      <stop offset="0%" stop-color="#D2566C" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#D2566C" stop-opacity="0"/>
+    </radialGradient>
+  <linearGradient id="metal0" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#E8E4DE"/>
+      <stop offset="45%" stop-color="#9A958C"/>
+      <stop offset="100%" stop-color="#E8E4DE"/>
+    </linearGradient>
+
+    <filter id="sombra0" x="-30%" y="-20%" width="160%" height="150%">
+      <feDropShadow dx="0" dy="26" stdDeviation="26" flood-color="#000000" flood-opacity="0.55"/>
+    </filter>
+  </defs>
+  <rect width="560" height="760" fill="url(#fundo0)"/>
+  <rect width="560" height="760" fill="url(#brilho0)"/>
+  <g filter="url(#sombra0)">
+    <rect x="168" y="118" width="224" height="470" rx="34" fill="url(#metal0)"/>
+
+    <rect x="176" y="126" width="208" height="454" rx="27" fill="url(#metal0)" opacity="0.55"/>
+    <rect x="192" y="142" width="96" height="96" rx="26" fill="#0F0B0C" opacity="0.82"/>
+    <g>
+      <circle cx="222" cy="172" r="19" fill="#07090C"/>
+      <circle cx="222" cy="172" r="11" fill="#16232F"/>
+      <circle cx="217" cy="166" r="4" fill="#7FA8CC" opacity="0.7"/>
+      <circle cx="258" cy="172" r="19" fill="#07090C"/>
+      <circle cx="258" cy="172" r="11" fill="#16232F"/>
+      <circle cx="253" cy="166" r="4" fill="#7FA8CC" opacity="0.7"/>
+      <circle cx="222" cy="208" r="19" fill="#07090C"/>
+      <circle cx="222" cy="208" r="11" fill="#16232F"/>
+      <circle cx="217" cy="202" r="4" fill="#7FA8CC" opacity="0.7"/>
+      <circle cx="260" cy="206" r="9" fill="#F3E4C0" opacity="0.85"/>
+      <circle cx="260" cy="224" r="5" fill="#0F0B0C"/>
+    </g>
+    <circle cx="280.0" cy="362.4" r="30" fill="#FFFFFF" opacity="0.06"/>
+  </g>
+  <ellipse cx="280.0" cy="628" rx="120" ry="16" fill="#000000" opacity="0.35"/>
+</svg>
