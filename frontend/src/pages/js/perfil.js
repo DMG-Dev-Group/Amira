@@ -34,9 +34,27 @@ const formDados = document.getElementById("form-dados");
 const campoNome = document.getElementById("campo-nome");
 const campoEmail = document.getElementById("campo-email");
 const campoTelefone = document.getElementById("campo-telefone");
+const campoNascimento = document.getElementById("campo-nascimento");
+const campoMarketing = document.getElementById("campo-marketing");
 const campoFoto = document.getElementById("campo-foto");
 const btnSalvarDados = document.getElementById("btn-salvar-dados");
 const msgDados = document.getElementById("msg-dados");
+const btnBaixarDados = document.getElementById("btn-baixar-dados");
+const btnExcluirConta = document.getElementById("btn-excluir-conta");
+
+const WHATSAPP_LOJA = "5598984853656";
+
+// Data de nascimento: nunca no futuro.
+if (campoNascimento) campoNascimento.max = new Date().toISOString().slice(0, 10);
+
+function formatarTelefoneBR(valor) {
+  const d = String(valor || "").replace(/\D/g, "").slice(0, 11);
+  if (d.length > 10) return d.replace(/(\d{2})(\d{5})(\d{0,4})/, "($1) $2-$3");
+  if (d.length > 6) return d.replace(/(\d{2})(\d{4})(\d{0,4})/, "($1) $2-$3");
+  if (d.length > 2) return d.replace(/(\d{2})(\d{0,5})/, "($1) $2");
+  if (d.length > 0) return d.replace(/(\d{0,2})/, "($1");
+  return "";
+}
 
 const formSenha = document.getElementById("form-senha");
 const campoSenhaAtual = document.getElementById("campo-senha-atual");
@@ -98,17 +116,7 @@ function atualizarAvatar(nome, fotoURL) {
 
 // ── Máscara simples de telefone BR ───────────────────────────────────────
 campoTelefone.addEventListener("input", () => {
-  let v = campoTelefone.value.replace(/\D/g, "").slice(0, 11);
-  if (v.length > 10) {
-    v = v.replace(/(\d{2})(\d{5})(\d{0,4})/, "($1) $2-$3");
-  } else if (v.length > 5) {
-    v = v.replace(/(\d{2})(\d{4})(\d{0,4})/, "($1) $2-$3");
-  } else if (v.length > 2) {
-    v = v.replace(/(\d{2})(\d{0,5})/, "($1) $2");
-  } else if (v.length > 0) {
-    v = v.replace(/(\d{0,2})/, "($1");
-  }
-  campoTelefone.value = v.trim().replace(/-$/, "").replace(/\($/, "");
+  campoTelefone.value = formatarTelefoneBR(campoTelefone.value);
 });
 
 // ── Máscara de CEP ────────────────────────────────────────────────────────
@@ -340,7 +348,9 @@ exigirLogin(async ({ usuario, perfil }) => {
 
   campoNome.value = nome;
   campoEmail.value = usuario.email;
-  campoTelefone.value = perfil?.telefone || "";
+  campoTelefone.value = formatarTelefoneBR(perfil?.telefone || "");
+  campoNascimento.value = perfil?.dataNascimento || "";
+  campoMarketing.checked = perfil?.aceiteMarketing === true;
   campoFoto.value = fotoURL;
 
   // Carrega endereço salvo, se existir
@@ -365,7 +375,9 @@ formDados.addEventListener("submit", async (evento) => {
   mostrarMsg(msgDados, "");
 
   const nome = campoNome.value.trim();
-  const telefone = campoTelefone.value.trim();
+  const telefone = campoTelefone.value.replace(/\D/g, ""); // guardamos só dígitos
+  const dataNascimento = campoNascimento.value;
+  const aceiteMarketing = campoMarketing.checked;
   const fotoURL = campoFoto.value.trim();
 
   if (!nome) {
@@ -373,11 +385,25 @@ formDados.addEventListener("submit", async (evento) => {
     return;
   }
 
+  if (telefone && (telefone.length < 10 || telefone.length > 11)) {
+    mostrarMsg(msgDados, "Informe um telefone com DDD (10 ou 11 dígitos) ou deixe em branco.");
+    return;
+  }
+
+  if (dataNascimento) {
+    const d = new Date(`${dataNascimento}T00:00:00`);
+    if (Number.isNaN(d.getTime()) || d > new Date() || d.getFullYear() < 1900) {
+      mostrarMsg(msgDados, "Informe uma data de nascimento válida.");
+      return;
+    }
+  }
+
   btnSalvarDados.disabled = true;
   btnSalvarDados.textContent = "Salvando...";
 
   try {
-    await atualizarPerfil(usuarioAtual, { nome, telefone, fotoURL });
+    await atualizarPerfil(usuarioAtual, { nome, telefone, dataNascimento, aceiteMarketing, fotoURL });
+    perfilAtual = { ...perfilAtual, nome, telefone, dataNascimento, aceiteMarketing };
     nomeTitulo.textContent = nome;
     atualizarAvatar(nome, fotoURL);
     mostrarMsg(msgDados, "Dados atualizados com sucesso!", "sucesso");
@@ -420,6 +446,33 @@ formSenha.addEventListener("submit", async (evento) => {
     btnSalvarSenha.disabled = false;
     btnSalvarSenha.textContent = "Alterar senha";
   }
+});
+
+// ── Direitos LGPD: solicitar cópia / exclusão pelo WhatsApp da loja ──────
+function abrirWhatsAppLoja(texto) {
+  const url = `https://wa.me/${WHATSAPP_LOJA}?text=${encodeURIComponent(texto)}`;
+  window.open(url, "_blank", "noopener");
+}
+
+btnBaixarDados?.addEventListener("click", () => {
+  const nome = campoNome.value.trim() || perfilAtual?.nome || "";
+  abrirWhatsAppLoja(
+    `Olá! Sou ${nome} (${usuarioAtual.email}). ` +
+    `Gostaria de receber uma cópia dos meus dados pessoais que a loja guarda, conforme a LGPD.`
+  );
+});
+
+btnExcluirConta?.addEventListener("click", () => {
+  const confirmar = confirm(
+    "Isso abre uma conversa com a loja para solicitar a exclusão definitiva da sua conta e dos seus dados. " +
+    "A exclusão é feita pela loja e não pode ser desfeita. Deseja continuar?"
+  );
+  if (!confirmar) return;
+  const nome = campoNome.value.trim() || perfilAtual?.nome || "";
+  abrirWhatsAppLoja(
+    `Olá! Sou ${nome} (${usuarioAtual.email}). ` +
+    `Quero solicitar a EXCLUSÃO da minha conta e de todos os meus dados pessoais, conforme a LGPD.`
+  );
 });
 
 // ── Logout ────────────────────────────────────────────────────────────────

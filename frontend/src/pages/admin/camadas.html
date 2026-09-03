@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Camadas de filtro — Painel Admin Amira</title>
+  <link rel="icon" type="image/svg+xml" href="../images/amira-favicon.svg">
+  <link rel="alternate icon" type="image/x-icon" href="../images/amira-favicon.ico">
+  <link rel="apple-touch-icon" href="../images/amira-apple-touch.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body data-theme="dark">
+
+  <div class="admin-layout">
+    <div id="admin-sidebar-slot"></div>
+
+    <main class="admin-conteudo">
+      <div class="admin-topo">
+        <div>
+          <h1>Camadas de filtro</h1>
+          <p id="contagem-camadas"></p>
+        </div>
+        <button class="admin-btn admin-btn-primary" id="btn-nova-camada">+ Nova camada</button>
+      </div>
+
+      <div class="admin-bloco">
+        <p style="font-size:0.8rem; color:var(--text-muted,#999); margin-bottom:1rem;">
+          Cada camada é um eixo de filtragem do catálogo (ex: Tipo, Origem, Gênero). A camada
+          <strong>no topo é a principal</strong> — é ela que aparece na navbar, no menu do celular,
+          no rodapé e na seção "Nossas categorias" da home. Use as setas para reordenar.
+          <br>
+          <strong>Renomear nunca muda o identificador (slug)</strong>: ele já está gravado nos
+          produtos e nos links que os clientes salvaram.
+        </p>
+        <div id="lista-camadas">
+          <p class="admin-vazio">Carregando camadas...</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal criar/renomear camada -->
+  <div class="admin-modal-overlay" id="modal-camada" style="display:none;">
+    <div class="admin-modal" style="max-width:420px;">
+      <h2 id="modal-camada-titulo">Nova camada</h2>
+      <form id="form-camada">
+        <div class="admin-campo">
+          <label for="camada-nome">Nome</label>
+          <input type="text" id="camada-nome" required placeholder="Ex: Origem">
+        </div>
+        <p class="admin-msg" id="modal-camada-msg" style="display:none;"></p>
+        <div class="admin-modal-acoes">
+          <button type="button" class="admin-btn admin-btn-outline" id="btn-cancelar-modal-camada">Cancelar</button>
+          <button type="submit" class="admin-btn admin-btn-primary" id="btn-salvar-camada">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal criar/editar opção -->
+  <div class="admin-modal-overlay" id="modal-opcao" style="display:none;">
+    <div class="admin-modal" style="max-width:420px;">
+      <h2 id="modal-opcao-titulo">Nova opção</h2>
+      <form id="form-opcao">
+        <div class="admin-campo">
+          <label for="opcao-nome">Nome</label>
+          <input type="text" id="opcao-nome" required placeholder="Ex: Árabe">
+        </div>
+        <div class="admin-campo" id="campo-opcao-imagem">
+          <label for="opcao-imagem">Imagem de capa (opcional)</label>
+          <input type="url" id="opcao-imagem" placeholder="https://... (usada na seção 'Nossas categorias' da home)">
+        </div>
+        <p class="admin-msg" id="modal-opcao-msg" style="display:none;"></p>
+        <div class="admin-modal-acoes">
+          <button type="button" class="admin-btn admin-btn-outline" id="btn-cancelar-modal-opcao">Cancelar</button>
+          <button type="submit" class="admin-btn admin-btn-primary" id="btn-salvar-opcao">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="js/admin-sidebar.js"></script>
+  <script src="../services/tema.js"></script>
+  <script type="module" src="js/admin-camadas.js"></script>
+</body>
+</html>

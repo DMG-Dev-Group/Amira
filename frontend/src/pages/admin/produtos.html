@@ -56,28 +56,25 @@
           <input type="text" id="p-nome" required>
         </div>
 
-        <div class="admin-campo-grid">
-          <div class="admin-campo">
-            <label for="p-sku">SKU</label>
-            <input type="text" id="p-sku" required>
-          </div>
-          <div class="admin-campo">
-            <label for="p-codigo-barras">Código de barras</label>
-            <input type="text" id="p-codigo-barras">
-          </div>
+        <div class="admin-campo">
+          <label for="p-codigo-barras">Código de barras (opcional)</label>
+          <input type="text" id="p-codigo-barras">
         </div>
 
-        <div class="admin-campo-grid">
-          <div class="admin-campo">
-            <label for="p-categoria">Categoria</label>
-            <select id="p-categoria" required>
-              <option value="" disabled selected>Carregando categorias...</option>
-            </select>
+        <div class="admin-campo">
+          <label>Camadas de filtro</label>
+          <div id="p-camadas" class="p-camadas">
+            <p style="color:var(--text-muted,#999); font-size:0.8rem;">Carregando camadas...</p>
           </div>
-          <div class="admin-campo">
-            <label for="p-peso">Peso (gramas)</label>
-            <input type="number" id="p-peso" min="0" required>
-          </div>
+          <small style="display:block; margin-top:0.4rem; color:var(--text-muted,#999); font-size:0.72rem;">
+            Marque ao menos uma opção na <strong>camada principal</strong> (a primeira). Sem
+            marcação nas outras, o produto só não aparece quando alguém filtra por elas.
+          </small>
+        </div>
+
+        <div class="admin-campo">
+          <label for="p-peso">Peso (gramas)</label>
+          <input type="number" id="p-peso" min="0" required>
         </div>
 
         <div class="admin-campo">
@@ -86,11 +83,13 @@
         </div>
 
         <div class="admin-campo">
-          <label>Imagens do produto</label>
+          <label>Fotos do produto</label>
           <div id="lista-imagens-produto"></div>
-          <button type="button" class="admin-btn admin-btn-outline admin-btn-sm" id="btn-add-imagem" style="margin-top:0.5rem;">+ Adicionar outra imagem</button>
+          <button type="button" class="admin-btn admin-btn-outline admin-btn-sm" id="btn-add-imagem" style="margin-top:0.5rem;">+ Adicionar outra foto</button>
           <small style="display:block; margin-top:0.4rem; color:var(--text-muted,#999); font-size:0.72rem;">
-            A primeira imagem é a principal (aparece no catálogo e na página do produto).
+            A primeira foto é a principal (aparece no catálogo e na página do produto). As fotos
+            são escolhidas do seu computador e ficam salvas junto do produto — sem custo de
+            armazenamento. Elas são reduzidas automaticamente; use até 5 fotos por produto.
           </small>
         </div>
 

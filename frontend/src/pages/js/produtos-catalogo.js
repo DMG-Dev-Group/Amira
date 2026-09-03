@@ -1,10 +1,20 @@
 // ── Catálogo de produtos — Amira ────────────────────────────────────
-// Grade com "sensação de infinito" (B3): os produtos chegam em blocos
-// paginados por cursor conforme a pessoa rola a página, em vez de baixar
-// a coleção inteira de uma vez (escala com o catálogo — A8).
-// Quando há busca por texto ou filtro de preço, carregamos a categoria
-// completa uma única vez e filtramos no cliente (o Firestore não tem
-// busca full-text nativa) — comportamento documentado como híbrido.
+// Grade com "sensação de infinito" (B3): sem filtro, os produtos chegam
+// em blocos paginados por cursor conforme a pessoa rola (escala com o
+// catálogo — A8).
+//
+// FILTROS EM CAMADAS (B): cada camada (Tipo, Origem, Gênero…) é um eixo
+// de facetas. Dentro de uma camada as opções SOMAM (OU); entre camadas
+// as escolhas se CRUZAM (E). Assim que qualquer filtro (camada, busca ou
+// preço) está ativo, o catálogo carrega a lista completa uma vez e cruza
+// em memória — o Firestore aceita só um array-contains por consulta, e
+// cruzar três camadas no servidor custaria mais leituras e latência do
+// que vale neste porte de catálogo (ROADMAP_FUTURO.md §3.2).
+//
+// Estado na URL: produtos.html?tipo=perfumes,decante&origem=arabe — o
+// filtro é compartilhável e sobrevive ao F5. Links antigos com
+// ?categoria=slug continuam funcionando, traduzidos para a camada
+// principal.
 
 import {
   listarProdutos,
@@ -15,7 +25,7 @@ import {
   estoquePorModo,
   disponivelNoModo
 } from "../services/produtos.js";
-import { listarCategorias } from "../services/categorias.js";
+import { listarCamadas, camadaPrincipal } from "../services/camadas.js";
 import { escapeHtml, urlImagemSegura } from "../services/seguranca.js";
 
 const grid = document.getElementById("catalogo-grid");
@@ -24,8 +34,8 @@ const contagem = document.getElementById("catalogo-contagem");
 const selectOrdenar = document.getElementById("select-ordenar");
 const buscaInput = document.getElementById("nav-busca-input");
 const buscaForm = document.getElementById("nav-busca-form");
-const filtroCategoriasLista = document.getElementById("filtro-categorias-lista");
-const dropdownCategoriasLista = document.getElementById("dropdown-categorias-lista");
+const camadasContainer = document.getElementById("filtro-camadas");
+const chipsContainer = document.getElementById("filtro-chips");
 const inputPrecoMin = document.getElementById("filtro-preco-min");
 const inputPrecoMax = document.getElementById("filtro-preco-max");
 const btnAplicarPreco = document.getElementById("btn-aplicar-preco");
@@ -35,56 +45,138 @@ const sentinela = document.getElementById("catalogo-sentinela");
 const TAMANHO_PAGINA = 24;
 
 let produtosCarregados = []; // acumulado das páginas já buscadas
-let categoriasCache = [];
-let categoriaAtual = "";
+let camadas = [];
+let camadaPrincipalSlug = null;
+let selecao = {};            // { [camadaSlug]: string[] } — só camadas com opção marcada
 let termoBusca = "";
 let precoMin = null;
 let precoMax = null;
 let ultimoDoc = null;
 let temMais = true;
 let carregandoPagina = false;
-let modoFiltroCompleto = false; // true = busca/preço ativo (lista completa carregada)
+let modoFiltroCompleto = false; // true = algum filtro ativo (lista completa carregada)
 
-// ── Lê parâmetros da URL (categoria=, busca=) ────────────────────────────
+// ── Lê os filtros da URL ────────────────────────────────────────────────
 const params = new URLSearchParams(window.location.search);
-categoriaAtual = params.get("categoria") || "";
 termoBusca = params.get("busca") || "";
 if (buscaInput) buscaInput.value = termoBusca;
 
-// ── Monta a lista de categorias nos filtros e no dropdown da navbar ──────
-async function montarCategorias() {
-  try {
-    categoriasCache = await listarCategorias();
-  } catch (erro) {
-    console.error("Erro ao carregar categorias:", erro);
-    categoriasCache = [];
+// ── Seleção ────────────────────────────────────────────────────────────
+function marcadas(camadaSlug) {
+  return selecao[camadaSlug] || [];
+}
+
+function alternarOpcao(camadaSlug, opcaoSlug) {
+  const atuais = new Set(marcadas(camadaSlug));
+  if (atuais.has(opcaoSlug)) atuais.delete(opcaoSlug);
+  else atuais.add(opcaoSlug);
+
+  if (atuais.size === 0) delete selecao[camadaSlug];
+  else selecao[camadaSlug] = [...atuais];
+}
+
+function temFiltroCamada() {
+  return Object.keys(selecao).length > 0;
+}
+
+function lerSelecaoDaURL() {
+  selecao = {};
+  camadas.forEach((camada) => {
+    const cru = params.get(camada.slug);
+    if (!cru) return;
+    const slugsValidos = new Set(camada.opcoes.map((o) => o.slug));
+    const escolhidas = cru.split(",").map((s) => s.trim()).filter((s) => slugsValidos.has(s));
+    if (escolhidas.length) selecao[camada.slug] = escolhidas;
+  });
+
+  // Ponte: link antigo ?categoria=slug vira uma marcação na camada principal.
+  const legado = params.get("categoria");
+  if (legado && camadaPrincipalSlug) {
+    const principal = camadas.find((c) => c.slug === camadaPrincipalSlug);
+    if (principal && principal.opcoes.some((o) => o.slug === legado)) {
+      const atuais = new Set(marcadas(camadaPrincipalSlug));
+      atuais.add(legado);
+      selecao[camadaPrincipalSlug] = [...atuais];
+    }
   }
+}
 
-  filtroCategoriasLista.innerHTML = categoriasCache.map(
-    (cat) => `<button class="filtro-categoria-item" data-categoria="${escapeHtml(cat.slug)}">${escapeHtml(cat.nome)}</button>`
-  ).join("");
+function escreverSelecaoNaURL() {
+  const novaURL = new URL(window.location.href);
+  const qs = novaURL.searchParams;
+  // limpa chaves de camada e o legado, e regrava a seleção atual
+  camadas.forEach((c) => qs.delete(c.slug));
+  qs.delete("categoria");
+  Object.entries(selecao).forEach(([slug, opcoes]) => {
+    if (opcoes.length) qs.set(slug, opcoes.join(","));
+  });
+  if (termoBusca.trim()) qs.set("busca", termoBusca.trim());
+  else qs.delete("busca");
+  novaURL.search = qs.toString();
+  history.replaceState(null, "", novaURL);
+}
 
-  dropdownCategoriasLista.innerHTML = categoriasCache.map(
-    (cat) => `<li><a href="produtos.html?categoria=${encodeURIComponent(cat.slug)}"><i class="cat-icon"></i> ${escapeHtml(cat.nome)}</a></li>`
-  ).join("");
+// ── Monta o painel de filtros (uma seção por camada) ────────────────────
+function montarPainelCamadas() {
+  if (!camadasContainer) return;
 
-  document.querySelectorAll(".filtro-categoria-item").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      categoriaAtual = btn.dataset.categoria;
-      document.querySelectorAll(".filtro-categoria-item").forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
+  camadasContainer.innerHTML = camadas.map((camada) => `
+    <div class="filtro-grupo" data-camada="${escapeHtml(camada.slug)}">
+      <h3>${escapeHtml(camada.nome)}</h3>
+      <div class="filtro-opcoes">
+        ${camada.opcoes.map((op) => `
+          <label class="filtro-opcao">
+            <input type="checkbox" data-camada="${escapeHtml(camada.slug)}" value="${escapeHtml(op.slug)}"
+              ${marcadas(camada.slug).includes(op.slug) ? "checked" : ""}>
+            <span>${escapeHtml(op.nome)}</span>
+          </label>
+        `).join("")}
+      </div>
+    </div>
+  `).join("");
+
+  camadasContainer.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
+    cb.addEventListener("change", () => {
+      alternarOpcao(cb.dataset.camada, cb.value);
       reiniciarCatalogo();
     });
   });
+}
 
-  // Marca o botão "Todas" ou a categoria certa como ativo, conforme a URL
-  const botaoAtivo = document.querySelector(
-    `.filtro-categoria-item[data-categoria="${CSS.escape(categoriaAtual)}"]`
-  );
-  if (botaoAtivo) {
-    document.querySelectorAll(".filtro-categoria-item").forEach((b) => b.classList.remove("active"));
-    botaoAtivo.classList.add("active");
-  }
+function nomeOpcao(camadaSlug, opcaoSlug) {
+  const camada = camadas.find((c) => c.slug === camadaSlug);
+  return camada?.opcoes.find((o) => o.slug === opcaoSlug)?.nome || opcaoSlug;
+}
+
+function montarChips() {
+  if (!chipsContainer) return;
+  const chips = [];
+  Object.entries(selecao).forEach(([camadaSlug, opcoes]) => {
+    opcoes.forEach((op) => {
+      chips.push(`
+        <button class="filtro-chip" data-camada="${escapeHtml(camadaSlug)}" data-opcao="${escapeHtml(op)}">
+          ${escapeHtml(nomeOpcao(camadaSlug, op))}
+          <span aria-hidden="true">×</span>
+        </button>`);
+    });
+  });
+  chipsContainer.innerHTML = chips.join("");
+  chipsContainer.hidden = chips.length === 0;
+
+  chipsContainer.querySelectorAll(".filtro-chip").forEach((chip) => {
+    chip.addEventListener("click", () => {
+      alternarOpcao(chip.dataset.camada, chip.dataset.opcao);
+      sincronizarCheckboxes();
+      reiniciarCatalogo();
+    });
+  });
+}
+
+function sincronizarCheckboxes() {
+  if (!camadasContainer) return;
+  camadasContainer.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
+    cb.checked = marcadas(cb.dataset.camada).includes(cb.value);
+  });
 }
 
 // ── Renderização dos cards ────────────────────────────────────────────────
@@ -137,14 +229,25 @@ function atualizarContagem(qtdVisivel) {
   contagem.textContent = `${qtdVisivel}${sufixo} produto${qtdVisivel === 1 ? "" : "s"} encontrado${qtdVisivel === 1 ? "" : "s"}`;
 }
 
-// ── Modo paginado (navegação normal, sem busca/preço) ─────────────────────
+function atualizarTitulo() {
+  // Título específico só quando há exatamente uma opção marcada, e ela é
+  // da camada principal (o caso "cliente clicou numa categoria").
+  const totalMarcadas = Object.values(selecao).reduce((n, arr) => n + arr.length, 0);
+  const soPrincipal = Object.keys(selecao).length === 1 && selecao[camadaPrincipalSlug]?.length === 1;
+  if (totalMarcadas === 1 && soPrincipal) {
+    tituloTexto.textContent = nomeOpcao(camadaPrincipalSlug, selecao[camadaPrincipalSlug][0]);
+  } else {
+    tituloTexto.textContent = "Todos os produtos";
+  }
+}
+
+// ── Modo paginado (navegação normal, sem filtro) ─────────────────────────
 async function carregarProximaPagina() {
   if (carregandoPagina || !temMais || modoFiltroCompleto) return;
   carregandoPagina = true;
 
   try {
     const pagina = await listarProdutosPaginado({
-      categoria: categoriaAtual || null,
       tamanhoPagina: TAMANHO_PAGINA,
       aposDoc: ultimoDoc
     });
@@ -157,7 +260,7 @@ async function carregarProximaPagina() {
     const lista = ordenarProdutos(produtosCarregados, selectOrdenar.value);
     renderizarLista(lista, { acrescentar: false });
     if (primeiraPagina && lista.length === 0) {
-      grid.innerHTML = `<p class="catalogo-vazio">Nenhum produto nesta categoria ainda.</p>`;
+      grid.innerHTML = `<p class="catalogo-vazio">Nenhum produto no catálogo ainda.</p>`;
     }
     atualizarContagem(lista.length);
   } catch (erro) {
@@ -170,11 +273,11 @@ async function carregarProximaPagina() {
   }
 }
 
-// ── Modo filtro completo (busca por texto e/ou faixa de preço) ────────────
+// ── Modo filtro completo (camada, busca e/ou faixa de preço) ─────────────
 async function carregarListaCompletaEFiltrar() {
   grid.innerHTML = `<p class="catalogo-loading">Carregando produtos...</p>`;
   try {
-    produtosCarregados = await listarProdutos({ categoria: categoriaAtual || null });
+    produtosCarregados = await listarProdutos();
     temMais = false;
     aplicarFiltrosERenderizar();
   } catch (erro) {
@@ -184,7 +287,13 @@ async function carregarListaCompletaEFiltrar() {
 }
 
 function aplicarFiltrosERenderizar() {
-  let lista = filtrarProdutos(produtosCarregados, { termo: termoBusca, precoMin, precoMax });
+  let lista = filtrarProdutos(produtosCarregados, {
+    termo: termoBusca,
+    precoMin,
+    precoMax,
+    selecaoCamadas: selecao,
+    camadaPrincipalSlug
+  });
   lista = ordenarProdutos(lista, selectOrdenar.value);
   renderizarLista(lista);
   atualizarContagem(lista.length);
@@ -192,7 +301,7 @@ function aplicarFiltrosERenderizar() {
 
 // ── Orquestração ──────────────────────────────────────────────────────────
 function haFiltrosAtivos() {
-  return Boolean(termoBusca.trim()) || precoMin !== null || precoMax !== null;
+  return Boolean(termoBusca.trim()) || precoMin !== null || precoMax !== null || temFiltroCamada();
 }
 
 async function reiniciarCatalogo() {
@@ -201,8 +310,9 @@ async function reiniciarCatalogo() {
   temMais = true;
   modoFiltroCompleto = haFiltrosAtivos();
 
-  const catInfo = categoriasCache.find((c) => c.slug === categoriaAtual);
-  tituloTexto.textContent = catInfo ? catInfo.nome : "Todos os produtos";
+  escreverSelecaoNaURL();
+  montarChips();
+  atualizarTitulo();
 
   if (modoFiltroCompleto) {
     await carregarListaCompletaEFiltrar();
@@ -234,7 +344,6 @@ buscaForm?.addEventListener("submit", (evento) => {
   aoBuscar(buscaInput.value);
 });
 
-
 selectOrdenar.addEventListener("change", () => {
   if (modoFiltroCompleto) {
     aplicarFiltrosERenderizar();
@@ -255,20 +364,27 @@ btnLimparFiltros.addEventListener("click", () => {
   termoBusca = "";
   precoMin = null;
   precoMax = null;
-  categoriaAtual = "";
+  selecao = {};
   if (buscaInput) buscaInput.value = "";
   inputPrecoMin.value = "";
   inputPrecoMax.value = "";
   selectOrdenar.value = "relevancia";
-  document.querySelectorAll(".filtro-categoria-item").forEach((b) => b.classList.remove("active"));
-  const botaoTodas = document.querySelector('.filtro-categoria-item[data-categoria=""]');
-  if (botaoTodas) botaoTodas.classList.add("active");
+  sincronizarCheckboxes();
   reiniciarCatalogo();
 });
 
 // ── Inicialização ──────────────────────────────────────────────────────────
 async function iniciar() {
-  await montarCategorias();
+  try {
+    camadas = await listarCamadas();
+  } catch (erro) {
+    console.error("Erro ao carregar as camadas de filtro:", erro);
+    camadas = [];
+  }
+  camadaPrincipalSlug = camadaPrincipal(camadas)?.slug || null;
+
+  lerSelecaoDaURL();
+  montarPainelCamadas();
   await reiniciarCatalogo();
 }
 iniciar();

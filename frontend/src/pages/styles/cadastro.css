@@ -291,3 +291,52 @@ body {
         font-size: 24px;
     }
 }
+/* ── Data de nascimento (input com rótulo visível) ─────────────────────── */
+.input-box--data {
+    height: auto;
+}
+.input-box--data label {
+    display: block;
+    font-size: 12px;
+    color: var(--texto-suave);
+    margin: 0 0 4px 20px;
+}
+.input-box--data input[type="date"] {
+    height: 50px;
+    color: var(--texto);
+    padding-right: 20px;
+}
+.input-box--data input[type="date"]::-webkit-calendar-picker-indicator {
+    opacity: 0.55;
+    cursor: pointer;
+}
+
+/* ── Consentimentos LGPD ──────────────────────────────────────────────── */
+.consentimentos {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 6px 0 18px;
+    text-align: left;
+}
+.consentimento {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--texto);
+    cursor: pointer;
+}
+.consentimento input[type="checkbox"] {
+    accent-color: var(--brand);
+    width: 16px;
+    height: 16px;
+    margin-top: 2px;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+.consentimento a {
+    color: var(--brand);
+    text-decoration: underline;
+}

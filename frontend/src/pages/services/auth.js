@@ -31,6 +31,11 @@ import {
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
+// Versão da Política de Privacidade aceita no cadastro. Mantenha igual à
+// de privacidade.html e services/consentimento-cookies.js — é gravada em
+// cada perfil para saber qual versão a pessoa concordou (LGPD).
+export const VERSAO_POLITICA_PRIVACIDADE = "2026-09-03";
+
 // Traduz os códigos de erro do Firebase Auth para mensagens em PT-BR
 export function traduzErroAuth(codigo) {
   const mapa = {
@@ -101,8 +106,9 @@ function limparCadastroPendente() {
  * @param {string} email
  * @param {string} senha
  * @param {{cnpj?: string, razaoSocial?: string, provavelMEI?: boolean|null, porteEmpresa?: string|null}} [dadosRevendedor]
+ * @param {{telefone?: string, dataNascimento?: string, aceiteMarketing?: boolean}} [dadosPessoais]
  */
-export async function cadastrarUsuario(nome, email, senha, dadosRevendedor = null) {
+export async function cadastrarUsuario(nome, email, senha, dadosRevendedor = null, dadosPessoais = null) {
   const credencial = await createUserWithEmailAndPassword(auth, email, senha);
   const usuario = credencial.user;
 
@@ -110,7 +116,8 @@ export async function cadastrarUsuario(nome, email, senha, dadosRevendedor = nul
 
   salvarCadastroPendente(usuario.uid, {
     nome,
-    dadosRevendedor: dadosRevendedor || null
+    dadosRevendedor: dadosRevendedor || null,
+    dadosPessoais: dadosPessoais || null
   });
 
   // O e-mail de verificação é o que "ativa" a conta. Se falhar aqui
@@ -138,14 +145,27 @@ export async function garantirPerfil(usuario) {
 
   const pendente = lerCadastroPendente(usuario.uid);
   const dadosRevendedor = pendente?.dadosRevendedor || null;
+  const dadosPessoais = pendente?.dadosPessoais || null;
 
   // TODA conta nova nasce com role "cliente" (as rules rejeitam qualquer
   // outra coisa). Promover a "admin" só manualmente no Firebase Console.
+  //
+  // telefone / dataNascimento: preenchidos no cadastro por e-mail; contas
+  // criadas via Google chegam sem eles (a pessoa completa em "Minha Conta").
+  // aceiteTermos é sempre true aqui — sem aceitar a Política, o cadastro
+  // não chega a este ponto (cadastro por e-mail) e o botão do Google diz
+  // explicitamente que continuar implica no aceite.
   const dadosPerfil = {
     nome: pendente?.nome || usuario.displayName || "Cliente",
     email: usuario.email,
     role: "cliente",
     tipoConta: dadosRevendedor ? "revendedor" : "cliente",
+    telefone: dadosPessoais?.telefone || "",
+    dataNascimento: dadosPessoais?.dataNascimento || "",
+    aceiteTermos: true,
+    aceiteMarketing: dadosPessoais?.aceiteMarketing === true,
+    consentimentoEm: serverTimestamp(),
+    consentimentoVersao: VERSAO_POLITICA_PRIVACIDADE,
     criadoEm: serverTimestamp()
   };
 
@@ -188,13 +208,13 @@ export async function loginComGoogle() {
 // Campos do perfil que o próprio usuário pode editar (C5). Qualquer outra
 // chave passada para atualizarPerfil é IGNORADA — nunca use spread de um
 // objeto vindo de formulário direto no updateDoc.
-const CAMPOS_PERFIL_EDITAVEIS = ["nome", "telefone", "fotoURL"];
+const CAMPOS_PERFIL_EDITAVEIS = ["nome", "telefone", "fotoURL", "dataNascimento", "aceiteMarketing"];
 
 /**
  * Atualiza dados do perfil no Firestore e, quando aplicável, também no
  * próprio Firebase Auth (nome/foto). Só os campos da allowlist passam.
  * @param {import("https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js").User} usuario
- * @param {{nome?: string, telefone?: string, fotoURL?: string}} dados
+ * @param {{nome?: string, telefone?: string, fotoURL?: string, dataNascimento?: string, aceiteMarketing?: boolean}} dados
  */
 export async function atualizarPerfil(usuario, dados) {
   const atualizacoesAuth = {};

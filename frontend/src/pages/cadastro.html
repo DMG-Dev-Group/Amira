@@ -26,6 +26,15 @@
                 <input id="cad-email" placeholder="E-mail" type="email" required autocomplete="email">
                 <i class="bx bxs-user"></i>
             </div>
+            <div class="input-box">
+                <input id="cad-telefone" placeholder="Telefone / WhatsApp" type="tel" required autocomplete="tel" inputmode="numeric" maxlength="16">
+                <i class="bx bxs-phone"></i>
+            </div>
+            <div class="input-box input-box--data">
+                <label for="cad-nascimento">Data de nascimento</label>
+                <input id="cad-nascimento" type="date" required autocomplete="bday">
+            </div>
+            <p class="tipo-conta-info">Usamos o telefone e a data de nascimento para falar sobre o seu pedido e enviar ofertas — inclusive no seu aniversário, se você autorizar abaixo.</p>
 
             <div id="campos-revendedor" style="display:none;">
                 <div class="input-box">
@@ -48,8 +57,22 @@
                 <i class="bx bx-lock" id="toggle-senha"></i>
             </div>
 
+            <div class="consentimentos">
+                <label class="consentimento">
+                    <input type="checkbox" id="cad-aceite-termos" required>
+                    <span>Li e concordo com a
+                        <a href="./privacidade.html" target="_blank" rel="noopener">Política de Privacidade e Cookies</a>
+                        e com os termos de uso da Amira.</span>
+                </label>
+                <label class="consentimento">
+                    <input type="checkbox" id="cad-aceite-marketing">
+                    <span>Quero receber ofertas, novidades e mensagem de aniversário por e-mail e WhatsApp.
+                        Posso cancelar quando quiser.</span>
+                </label>
+            </div>
+
             <button type="submit" class="login" id="btn-cadastro">Cadastre-se</button>
-            
+
 
             
 
@@ -63,7 +86,9 @@
                 Continuar com Google
             </button>
             <p class="form-msg" id="cadastro-msg"></p>
-            <p class="tipo-conta-info">Ao continuar com Google, sua conta é criada como cliente (sem CNPJ). Para revendedor, use o formulário acima.</p>
+            <p class="tipo-conta-info">Ao continuar com Google, sua conta é criada como cliente (sem CNPJ) e você aceita a
+                <a href="./privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a>.
+                Complete o telefone e a data de nascimento depois, em "Minha Conta".</p>
 
             <div class="register-link">
                 <p>Já tem uma conta? <a href="./login.html">faça login</a></p>
@@ -72,5 +97,6 @@
         </form>
     </main>
     <script type="module" src="./js/cadastro.js"></script>
+    <script type="module" src="./services/consentimento-cookies.js"></script>
 </body>
 </html>

@@ -5,14 +5,12 @@
 // coisas diferentes.
 
 import { listarProdutosIphone } from "../services/iphones.js";
-import { listarCategorias } from "../services/categorias.js";
 import { infoPreco, estoquePorModo, disponivelNoModo, ordenarProdutos } from "../services/produtos.js";
 import { escapeHtml, urlImagemSegura } from "../services/seguranca.js";
 
 const grid = document.getElementById("iphones-grid");
 const contagem = document.getElementById("iphones-contagem");
 const selectOrdenar = document.getElementById("select-ordenar-iphones");
-const dropdownCategoriasLista = document.getElementById("dropdown-categorias-lista");
 
 let produtos = [];
 
@@ -63,24 +61,9 @@ function renderizar() {
   contagem.textContent = `${lista.length} ${lista.length === 1 ? "aparelho disponível" : "aparelhos disponíveis"}`;
 }
 
-// O dropdown de categorias da navbar é preenchido pelo catálogo; aqui a
-// página monta o dela para o menu não vir vazio.
-async function montarDropdownCategorias() {
-  if (!dropdownCategoriasLista) return;
-  try {
-    const categorias = await listarCategorias();
-    dropdownCategoriasLista.innerHTML = categorias.map(
-      (cat) => `<li><a href="produtos.html?categoria=${encodeURIComponent(cat.slug)}">${escapeHtml(cat.nome)}</a></li>`
-    ).join("");
-  } catch (erro) {
-    console.error("Erro ao montar o dropdown de categorias:", erro);
-  }
-}
-
 selectOrdenar?.addEventListener("change", renderizar);
 
 async function iniciar() {
-  montarDropdownCategorias();
   try {
     produtos = await listarProdutosIphone();
     renderizar();

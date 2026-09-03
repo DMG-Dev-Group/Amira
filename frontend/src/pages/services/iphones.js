@@ -1,52 +1,50 @@
 // ── Seção de iPhones — Amira ───────────────────────────────────────────────
 // Os iPhones não são um tipo de dado novo: são produtos comuns da coleção
-// "produtos", marcados com uma CATEGORIA cujo slug contém "iphone". Isso
-// mantém o painel admin, o carrinho, os pedidos e o frete funcionando sem
-// nenhuma alteração — muda só onde eles aparecem na loja.
+// "produtos", marcados na CAMADA PRINCIPAL de filtros com uma opção cujo
+// slug começa com "iphone". Isso mantém o painel admin, o carrinho, os
+// pedidos e o frete funcionando sem nenhuma alteração — muda só onde eles
+// aparecem na loja.
 //
-// Para a loja cadastrar: criar a categoria "iPhones" em Admin > Categorias
-// (o slug sai automaticamente como "iphones") e escolher essa categoria ao
-// cadastrar cada aparelho em Admin > Produtos.
-//
-// O reconhecimento é por PREFIXO para não quebrar se a loja preferir nomes
-// como "iPhone Seminovos" ou "iPhones Lacrados" — todas essas categorias
-// aparecem na seção.
+// Para a loja cadastrar: em Admin > Camadas de filtro, adicione a opção
+// "iPhones" (ou "iPhone Seminovos", "iPhones Lacrados"…) na camada
+// principal e marque essa opção ao cadastrar cada aparelho em
+// Admin > Produtos. O reconhecimento é por PREFIXO — todas essas opções
+// entram na seção.
 
-import { listarCategorias } from "./categorias.js";
-import { listarProdutos } from "./produtos.js";
+import { listarCamadas, camadaPrincipal } from "./camadas.js";
+import { listarProdutos, filtrosDoProduto } from "./produtos.js";
 
-/** Slug usado quando ainda não existe nenhuma categoria de iPhone cadastrada. */
+/** Slug usado como referência quando não há opção de iPhone cadastrada. */
 export const SLUG_IPHONE_PADRAO = "iphones";
 
-/** A categoria pertence à seção de iPhones? (slug ou nome começando com "iphone") */
-export function ehCategoriaIphone(categoria) {
-  const slug = (categoria?.slug || "").toLowerCase();
-  const nome = (categoria?.nome || "").toLowerCase();
-  return slug.startsWith("iphone") || nome.startsWith("iphone");
+/** O slug (ou nome) pertence à seção de iPhones? */
+export function slugEhIphone(valor) {
+  return String(valor || "").toLowerCase().startsWith("iphone");
 }
 
-/** Categorias cadastradas que formam a seção de iPhones. */
-export async function listarCategoriasIphone() {
-  const todas = await listarCategorias();
-  return todas.filter(ehCategoriaIphone);
+/** Opções da camada principal que formam a seção de iPhones. */
+export async function listarOpcoesIphone(camadas = null) {
+  const lista = camadas || (await listarCamadas());
+  const principal = camadaPrincipal(lista);
+  if (!principal) return [];
+  return principal.opcoes.filter((o) => slugEhIphone(o.slug) || slugEhIphone(o.nome));
 }
 
 /**
- * Todos os produtos ativos da seção de iPhones.
- * Sem categoria cadastrada ainda, tenta o slug padrão — assim a seção já
- * funciona se a loja tiver marcado produtos antes de criar a categoria.
+ * Filtra uma lista de produtos já carregada, ficando só com os da seção
+ * de iPhones. Puro — o painel admin reaproveita sem refazer a busca.
  */
+export function filtrarProdutosIphone(produtos, camadas) {
+  const principalSlug = camadaPrincipal(camadas)?.slug || null;
+  return produtos.filter((p) => {
+    const doProduto = filtrosDoProduto(p, principalSlug);
+    const naPrincipal = principalSlug ? (doProduto[principalSlug] || []) : [];
+    return naPrincipal.some(slugEhIphone) || slugEhIphone(p.categoria);
+  });
+}
+
+/** Todos os produtos ativos da seção de iPhones. */
 export async function listarProdutosIphone() {
-  const categorias = await listarCategoriasIphone();
-  const slugs = categorias.length > 0
-    ? categorias.map((c) => c.slug)
-    : [SLUG_IPHONE_PADRAO];
-
-  const listas = await Promise.all(slugs.map((slug) => listarProdutos({ categoria: slug })));
-
-  // Um produto só tem uma categoria, mas a deduplicação protege caso duas
-  // categorias de iPhone acabem com o mesmo slug por engano.
-  const porId = new Map();
-  listas.flat().forEach((p) => porId.set(p.id, p));
-  return [...porId.values()];
+  const [camadas, produtos] = await Promise.all([listarCamadas(), listarProdutos()]);
+  return filtrarProdutosIphone(produtos, camadas);
 }

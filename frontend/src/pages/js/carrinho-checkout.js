@@ -208,7 +208,7 @@ function renderizarItens() {
     return `
     <div class="carrinho-item" data-produto-id="${escapeHtml(item.produtoId)}" data-modo="${escapeHtml(item.modo)}">
       <div class="carrinho-item-img">
-        <img src="${urlImagemSegura(item.imagemURL)}" alt="${escapeHtml(item.nome)}">
+        <img src="${urlImagemSegura((produto && produto.imagemURL) || item.imagemURL)}" alt="${escapeHtml(item.nome)}">
       </div>
       <div class="carrinho-item-info">
         <h3>${escapeHtml(item.nome)}
