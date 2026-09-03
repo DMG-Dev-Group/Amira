@@ -5,8 +5,9 @@
 //   • revendedor pendente/rejeitado → vê preços, mas compra bloqueada com aviso;
 //   • cliente sem CNPJ             → aviso para cadastrar CNPJ no perfil;
 //   • visitante sem conta          → aviso para criar conta.
-// A permissão que vale é a do servidor (Cloud Function criarPedido +
-// firestore.rules) — este arquivo só cuida da experiência.
+// A permissão que vale é a das firestore.rules (o create de "pedidos"
+// exige ehRevendedorAprovado quando há item de atacado) — este arquivo
+// só cuida da experiência.
 
 import { observarAuth } from "../services/auth.js";
 import { listarProdutosAtacado, estoquePorModo, infoPreco } from "../services/produtos.js";

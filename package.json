@@ -1,6 +1,9 @@
 {
   "dependencies": {
     "boxicons": "^2.1.4",
-    "firebase": "^12.15.0"
+    "firebase": "^12.18.0"
+  },
+  "devDependencies": {
+    "firebase-admin": "^14.3.0"
   }
 }

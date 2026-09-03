@@ -8,7 +8,7 @@ const paginaAtual = window.location.pathname.split("/").pop().replace(".html", "
 const itensMenu = [
   { id: "index", href: "index.html", label: "Dashboard" },
   { id: "produtos", href: "produtos.html", label: "Produtos" },
-  { id: "categorias", href: "categorias.html", label: "Categorias" },
+  { id: "camadas", href: "camadas.html", label: "Camadas de filtro" },
   { id: "pedidos", href: "pedidos.html", label: "Pedidos" },
   { id: "revendedores", href: "revendedores.html", label: "Revendedores" }
 ];

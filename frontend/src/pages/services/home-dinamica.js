@@ -5,7 +5,7 @@
 // urlImagemSegura (C4).
 
 import { listarDestaques, listarBannerHero, listarProdutosRecentes, infoPreco, disponivelNoModo } from "./produtos.js";
-import { listarCategorias } from "./categorias.js";
+import { listarCamadas, camadaPrincipal } from "./camadas.js";
 import { observarAuth } from "./auth.js";
 import { adicionarAoCarrinho } from "./carrinho.js";
 import { ativarReveals } from "./script.js";
@@ -129,26 +129,29 @@ async function carregarGaleriaIphones() {
 }
 
 // ── "Nossas categorias" ───────────────────────────────────────────────────
+// São as opções da CAMADA PRINCIPAL de filtros (services/camadas.js). A
+// capa de cada card é a "imagemURL" da opção; o link já leva o filtro
+// aplicado no catálogo (?<slugCamada>=<slugOpcao>).
 async function carregarCategoriasVisuais() {
   const grid = document.getElementById("grid-categorias-home");
   if (!grid) return;
 
   try {
-    const categorias = await listarCategorias();
+    const principal = camadaPrincipal(await listarCamadas());
 
-    if (categorias.length === 0) {
+    if (!principal || principal.opcoes.length === 0) {
       grid.innerHTML = `<p class="catalogo-vazio">Nenhuma categoria cadastrada ainda.</p>`;
       return;
     }
 
-    grid.innerHTML = categorias.map((c) => `
-      <a class="cat-card reveal" href="produtos.html?categoria=${encodeURIComponent(c.slug)}" style="text-decoration:none; display:block;">
+    grid.innerHTML = principal.opcoes.map((op) => `
+      <a class="cat-card reveal" href="produtos.html?${encodeURIComponent(principal.slug)}=${encodeURIComponent(op.slug)}" style="text-decoration:none; display:block;">
         <div class="cat-imagem-generica">
-          <img src="${urlImagemSegura(c.imagemURL)}" alt="${escapeHtml(c.nome)}">
+          <img src="${urlImagemSegura(op.imagemURL)}" alt="${escapeHtml(op.nome)}">
         </div>
         <div class="cat-overlay"></div>
         <div class="cat-label">
-          <span class="cat-name">${escapeHtml(c.nome)}</span>
+          <span class="cat-name">${escapeHtml(op.nome)}</span>
         </div>
         <div class="cat-arrow">→</div>
       </a>

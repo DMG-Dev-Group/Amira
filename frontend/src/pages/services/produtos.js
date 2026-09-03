@@ -8,7 +8,13 @@
 //   codigoBarras: string,         // EAN/GTIN
 //   peso: number,                 // em gramas
 //   descricao: string,
-//   categoria: string,            // slug de uma categoria (ver services/categorias.js)
+//   filtros: { [camadaSlug]: string[] },  // opções marcadas por camada de
+//                                 //   filtro (ver services/camadas.js) — a
+//                                 //   fonte de verdade da filtragem
+//   categoria: string,            // LEGADO: slug da opção principal. Mantido
+//                                 //   como ponte p/ produtos e links antigos;
+//                                 //   sempre gravado com a 1ª opção da camada
+//                                 //   principal marcada em "filtros"
 //   imagemURL: string,
 //   imagensExtras: string[],
 //   precoVarejo: number,
@@ -33,8 +39,11 @@
 // }
 //
 // ⚠️ SEGURANÇA: os preços/descontos daqui são usados só para EXIBIÇÃO.
-// O valor cobrado num pedido é sempre recalculado pela Cloud Function
-// criarPedido, que lê esta mesma coleção no servidor.
+// NÃO há Cloud Functions (plano Spark). O documento de pedido gravado
+// pelo cliente não carrega nenhum valor monetário — a allowlist de
+// chaves em firestore.rules rejeita campos de preço/total. Preço,
+// desconto, frete e total são derivados desta coleção (que só o admin
+// escreve) na hora de exibir checkout, confirmação e painel.
 
 import { db } from "./firebase-config.js";
 import {
@@ -118,19 +127,15 @@ export function podeSerEntregue(produto) {
 // ── Listagens ─────────────────────────────────────────────────────────────
 
 /**
- * Lista produtos ativos, opcionalmente filtrando por categoria.
- * A busca textual é feita no cliente (Firestore não tem full-text search
- * nativo); para um catálogo de porte pequeno/médio isso é suficiente.
+ * Lista TODOS os produtos ativos (mais recentes primeiro).
+ * A filtragem por camadas e a busca textual são feitas no cliente
+ * (Firestore aceita só um array-contains por consulta — cruzar várias
+ * camadas no servidor custaria mais leituras e latência que filtrar em
+ * memória no porte deste catálogo; ver docs/ROADMAP_FUTURO.md §3.2).
  */
-export async function listarProdutos({ categoria = null } = {}) {
+export async function listarProdutos() {
   const colecaoRef = collection(db, COLECAO);
-  const condicoes = [where("ativo", "==", true)];
-
-  if (categoria) {
-    condicoes.push(where("categoria", "==", categoria));
-  }
-
-  const q = query(colecaoRef, ...condicoes, orderBy("criadoEm", "desc"));
+  const q = query(colecaoRef, where("ativo", "==", true), orderBy("criadoEm", "desc"));
   const snap = await getDocs(q);
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 }
@@ -138,18 +143,16 @@ export async function listarProdutos({ categoria = null } = {}) {
 /**
  * Lista paginada por cursor (B3/A8): carrega o catálogo em blocos em vez
  * de baixar a coleção inteira — escala com o crescimento do catálogo.
- * @param {{categoria?: string|null, tamanhoPagina?: number, aposDoc?: object|null}} opcoes
+ * Usada só na navegação SEM filtro; quando há qualquer filtro de camada,
+ * busca ou preço, o catálogo carrega a lista completa uma vez e cruza em
+ * memória (js/produtos-catalogo.js).
+ * @param {{tamanhoPagina?: number, aposDoc?: object|null}} opcoes
  * @returns {{ produtos: Array, ultimoDoc: object|null, temMais: boolean }}
  */
-export async function listarProdutosPaginado({ categoria = null, tamanhoPagina = 24, aposDoc = null } = {}) {
+export async function listarProdutosPaginado({ tamanhoPagina = 24, aposDoc = null } = {}) {
   const colecaoRef = collection(db, COLECAO);
-  const condicoes = [where("ativo", "==", true)];
 
-  if (categoria) {
-    condicoes.push(where("categoria", "==", categoria));
-  }
-
-  const partes = [...condicoes, orderBy("criadoEm", "desc")];
+  const partes = [where("ativo", "==", true), orderBy("criadoEm", "desc")];
   if (aposDoc) partes.push(startAfter(aposDoc));
   partes.push(limitarQtd(tamanhoPagina));
 
@@ -200,8 +203,8 @@ export async function listarBannerHero() {
  * O filtro é feito no cliente — para o tamanho de catálogo de uma loja,
  * é mais simples que manter um índice composto dedicado.
  */
-export async function listarProdutosAtacado({ categoria = null } = {}) {
-  const todos = await listarProdutos({ categoria });
+export async function listarProdutosAtacado() {
+  const todos = await listarProdutos();
   return todos.filter((p) => disponivelNoModo(p, "atacado"));
 }
 
@@ -214,11 +217,66 @@ export async function buscarProdutoPorId(id) {
   return snap.exists() ? { id: snap.id, ...snap.data() } : null;
 }
 
+// ── Filtro por camadas (B) ───────────────────────────────────────────────
+
+/**
+ * As opções que um produto tem em cada camada, já normalizadas.
+ * PONTE: se o produto não tiver nada gravado em "filtros" para a camada
+ * principal, usa o campo legado "categoria" — produtos e links antigos
+ * continuam funcionando sem migração.
+ * @returns {{ [camadaSlug: string]: string[] }}
+ */
+export function filtrosDoProduto(produto, camadaPrincipalSlug = null) {
+  const cru = (produto && produto.filtros && typeof produto.filtros === "object") ? produto.filtros : {};
+  const norm = {};
+  for (const [camada, opcoes] of Object.entries(cru)) {
+    norm[camada] = Array.isArray(opcoes) ? opcoes.map(String) : [];
+  }
+  if (
+    camadaPrincipalSlug &&
+    (!norm[camadaPrincipalSlug] || norm[camadaPrincipalSlug].length === 0) &&
+    produto && produto.categoria
+  ) {
+    norm[camadaPrincipalSlug] = [String(produto.categoria)];
+  }
+  return norm;
+}
+
+/**
+ * O produto atende a uma seleção de filtros?
+ * - Dentro de uma camada, as opções SOMAM (OU).
+ * - Entre camadas, as escolhas se CRUZAM (E).
+ * @param {object} produto
+ * @param {{ [camadaSlug: string]: string[] }} selecao  só as camadas com opção marcada
+ * @param {string|null} camadaPrincipalSlug  para a ponte do campo legado
+ */
+export function produtoAtendeCamadas(produto, selecao = {}, camadaPrincipalSlug = null) {
+  const doProduto = filtrosDoProduto(produto, camadaPrincipalSlug);
+  return Object.entries(selecao).every(([camada, marcadas]) => {
+    if (!marcadas || marcadas.length === 0) return true;
+    const tem = doProduto[camada] || [];
+    return marcadas.some((op) => tem.includes(op));
+  });
+}
+
 /**
  * Filtra uma lista de produtos já carregada por termo de busca
- * (nome, SKU ou descrição) e faixa de preço. Tudo no cliente.
+ * (nome, SKU ou descrição), faixa de preço e seleção de camadas. Tudo no
+ * cliente.
+ * @param {object} opcoes
+ * @param {string} [opcoes.termo]
+ * @param {number|null} [opcoes.precoMin]
+ * @param {number|null} [opcoes.precoMax]
+ * @param {{ [camadaSlug: string]: string[] }} [opcoes.selecaoCamadas]
+ * @param {string|null} [opcoes.camadaPrincipalSlug]
  */
-export function filtrarProdutos(produtos, { termo = "", precoMin = null, precoMax = null } = {}) {
+export function filtrarProdutos(produtos, {
+  termo = "",
+  precoMin = null,
+  precoMax = null,
+  selecaoCamadas = {},
+  camadaPrincipalSlug = null
+} = {}) {
   const termoNormalizado = termo.trim().toLowerCase();
 
   return produtos.filter((p) => {
@@ -226,6 +284,8 @@ export function filtrarProdutos(produtos, { termo = "", precoMin = null, precoMa
       const alvo = `${p.nome} ${p.sku} ${p.descricao}`.toLowerCase();
       if (!alvo.includes(termoNormalizado)) return false;
     }
+    if (!produtoAtendeCamadas(p, selecaoCamadas, camadaPrincipalSlug)) return false;
+
     const { precoFinal } = infoPreco(p);
     if (precoMin !== null && precoFinal < precoMin) return false;
     if (precoMax !== null && precoFinal > precoMax) return false;

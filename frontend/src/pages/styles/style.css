@@ -1,46 +1,52 @@
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&display=swap');
 /* ── Paleta oficial Amira ────────────────────────────────────────────
-   Bordô profundo + rosé sobre quase-pretos avinhados (tema escuro) e um
-   creme rosado no tema claro. Os nomes antigos (--gold, --black…) foram
-   MANTIDOS como apelidos semânticos para não exigir mudança em milhares
-   de linhas: --gold = "cor de acento", --black/--dark = "texto sobre a
-   cor de acento". */
+   Família quente: mocha + nude sobre um marrom quase-preto (tema escuro)
+   e um creme no tema claro. Base da marca: #9B6B5E (mocha), #FEF5EF
+   (creme), #ECC1A0 (nude). Os acentos foram ESCURECIDOS onde o mocha
+   original reprovava em contraste (WCAG AA):
+     • tema claro, acento de texto: #7A5147 (6.31:1 sobre o creme)
+     • tema claro, botão cheio:     #8A5B4E + texto creme (5.29:1)
+     • tema escuro, acento:         nude #ECC1A0 sobre #1C1512 (10.9:1)
+   Os nomes antigos (--gold, --black…) seguem como apelidos semânticos
+   para não mexer nos componentes: --gold = "cor de acento",
+   --black/--dark = "texto sobre a cor de acento". NENHUM componente deve
+   ganhar hex fixo — só estes dois blocos definem cor. */
 :root {
-  --color-1: #8E1526;   /* bordô principal */
-  --color-2: #5E0E1B;   /* bordô profundo — o do círculo da logo */
-  --color-3: #D2566C;   /* rosé-bordô — acento legível sobre o escuro */
-  --color-4: #E9A3B0;   /* rosé claro */
-  --color-5: #F6E8EA;   /* creme rosado */
+  --color-1: #7A5147;   /* mocha escurecido — acento de texto no tema claro */
+  --color-2: #5C3B33;   /* mocha profundo */
+  --color-3: #ECC1A0;   /* nude — acento legível sobre o escuro */
+  --color-4: #F3D8C4;   /* nude claro */
+  --color-5: #FEF5EF;   /* creme */
 
-  /* Cor de marca: o mesmo bordô nos dois temas, sempre com texto claro */
-  --brand: #6E101C;
-  --brand-strong: var(--color-2);
-  --on-brand: #FDF3F4;
+  /* Cor de marca: mesmo mocha nos dois temas, sempre com texto creme */
+  --brand: #8A5B4E;
+  --brand-strong: #75463B;
+  --on-brand: #FEF5EF;
 
-  /* Tema escuro (padrão): fundos quase pretos com fundo de vinho */
-  --bg: #150A0D;
-  --surface: #201115;
-  --surface-soft: rgba(21, 10, 13, 0.92);
+  /* Tema escuro (padrão): marrom quase-preto */
+  --bg: #1C1512;
+  --surface: #241A17;
+  --surface-soft: rgba(28, 21, 18, 0.92);
   --gold: var(--color-3);
   --gold-light: var(--color-4);
   --gold-cream: var(--color-5);
-  --gold-dark: var(--color-1);
+  --gold-dark: #C99873;
   --cream: var(--color-5);
   --cream-dark: var(--color-4);
-  --black: #2A0509;
+  --black: #1C1512;
   --dark: var(--black);
-  --charcoal: #2A161B;
+  --charcoal: #2A201C;
   --rose: var(--color-4);
   --text-main: var(--color-5);
-  --text-muted: rgba(246, 232, 234, 0.65);
-  --border: rgba(210, 86, 108, 0.25);
-  --bg-alt: #0E0508;
+  --text-muted: rgba(254, 245, 239, 0.68);
+  --border: rgba(236, 193, 160, 0.22);
+  --bg-alt: #150F0D;
 
-  /* Estados — afastados do bordô da marca para não se confundirem com ele */
-  --danger: #F2665C;
-  --success: #4FBF6A;
-  --warning: #E4A93F;
+  /* Estados — mesma família quente, mas distintos do mocha da marca */
+  --danger: #F08A7E;
+  --success: #7DBE86;
+  --warning: #E8B25C;
 }
 
 html { scroll-behavior: smooth; }
@@ -53,29 +59,29 @@ body {
   transition: background 0.35s ease, color 0.35s ease;
 }
 
-/* Tema claro: creme rosado de fundo, bordô como texto/acento */
+/* Tema claro: creme de fundo, mocha escurecido como texto/acento */
 body[data-theme="light"] {
-  --bg: #FAF4F4;
+  --bg: #FEF5EF;
   --surface: #FFFFFF;
-  --surface-soft: rgba(250, 244, 244, 0.94);
+  --surface-soft: rgba(254, 245, 239, 0.94);
   --gold: var(--color-1);
   --gold-light: var(--color-2);
   --gold-cream: var(--color-2);
   --gold-dark: var(--color-2);
-  --cream: #3A1218;
+  --cream: #3A2A24;
   --cream-dark: var(--color-2);
-  --black: #FDF3F4;
+  --black: #FEF5EF;
   --dark: var(--black);
-  --charcoal: #F3E6E8;
+  --charcoal: #F6E7DC;
   --rose: var(--color-1);
-  --text-main: #3A1218;
-  --text-muted: rgba(58, 18, 24, 0.7);
-  --border: rgba(142, 21, 38, 0.20);
-  --bg-alt: #F2E4E6;
+  --text-main: #3A2A24;
+  --text-muted: rgba(58, 42, 36, 0.70);
+  --border: rgba(122, 81, 71, 0.22);
+  --bg-alt: #F7E6DA;
 
-  --danger: #C0271C;
-  --success: #1D7A3B;
-  --warning: #8F6410;
+  --danger: #C0392B;
+  --success: #2E7D46;
+  --warning: #9A6B12;
 }
 
 /* ── NAV ─────────────────────────────── */
@@ -117,7 +123,7 @@ body[data-theme="light"] nav:not(.scrolled) .nav-carrinho-btn,
 body[data-theme="light"] nav:not(.scrolled) .nav-categorias-btn,
 body[data-theme="light"] nav:not(.scrolled) .mobile-menu-btn {
   color: var(--on-brand);
-  border-color: rgba(253, 243, 244, 0.5);
+  border-color: rgba(254, 245, 239, 0.5);
 }
 
 .footer-logo {
@@ -210,8 +216,8 @@ body[data-theme="light"] nav:not(.scrolled) .mobile-menu-btn {
 }
 
 .nav-account-btn:hover {
-  background: rgba(210, 86, 108, 0.1);
-  border-color: rgba(210, 86, 108, 0.3);
+  background: rgba(236, 193, 160, 0.1);
+  border-color: rgba(236, 193, 160, 0.3);
   color: var(--gold);
   border: 1.4px solid var(--gold-dark);
 }
@@ -242,8 +248,8 @@ body[data-theme="light"] nav:not(.scrolled) .mobile-menu-btn {
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--gold);
-  background: rgba(210, 86, 108, 0.08);
-  border: 0.5px solid rgba(210, 86, 108, 0.3);
+  background: rgba(236, 193, 160, 0.08);
+  border: 0.5px solid rgba(236, 193, 160, 0.3);
   padding: 0.55rem 1.1rem;
   border-radius: 4px;
   cursor: pointer;
@@ -253,7 +259,7 @@ body[data-theme="light"] nav:not(.scrolled) .mobile-menu-btn {
 
 .nav-categorias-btn:hover,
 .nav-categorias-btn.active {
-  background: rgba(210, 86, 108, 0.16);
+  background: rgba(236, 193, 160, 0.16);
   border-color: var(--gold);
 }
 
@@ -276,7 +282,7 @@ body[data-theme="light"] nav:not(.scrolled) .mobile-menu-btn {
   min-width: 250px;
 
   background: var(--surface);
-  border: 1px solid rgba(210, 86, 108,.15);
+  border: 1px solid rgba(236, 193, 160,.15);
   border-radius: 12px;
   box-shadow: 0 12px 40px rgba(0,0,0,.35);
 
@@ -324,7 +330,7 @@ body[data-theme="light"] .nav-categorias-dropdown {
 }
 
 .dropdown-list li a:hover {
-  background: rgba(210, 86, 108, 0.08);
+  background: rgba(236, 193, 160, 0.08);
   color: var(--gold);
 }
 
@@ -521,7 +527,7 @@ body[data-theme="light"] .theme-toggle:hover {
 .hero-subtitle {
   font-size: 1rem;
   font-weight: 300;
-  color: rgba(253, 243, 244, 0.9);
+  color: rgba(254, 245, 239, 0.9);
   letter-spacing: 0.06em;
   line-height: 1.3;
   max-width: 520px;
@@ -703,7 +709,7 @@ body[data-theme="light"] .theme-toggle:hover {
 }
 
 .categories-grid::-webkit-scrollbar-thumb {
-  background: rgba(210, 86, 108, 0.4);
+  background: rgba(236, 193, 160, 0.4);
   border-radius: 3px;
 }
 
@@ -891,24 +897,24 @@ body[data-theme="light"] .theme-toggle:hover {
 }
 
 .products-grid::-webkit-scrollbar-thumb {
-  background: rgba(210, 86, 108, 0.7);
+  background: rgba(236, 193, 160, 0.7);
   border-radius: 999px;
 }
 
 .products-grid::-webkit-scrollbar-thumb:hover {
-  background: #D2566C;
+  background: var(--gold);
 }
 
 .product-card {
   background: var(--charcoal);
-  border: 0.5px solid rgba(210, 86, 108,0.1);
+  border: 0.5px solid rgba(236, 193, 160,0.1);
   transition: border-color 0.3s, transform 0.3s;
   cursor: pointer;
   flex: 0 0 280px;
   max-width: 1150px;
 }
 .product-card:hover {
-  border-color: rgba(210, 86, 108,0.4);
+  border-color: rgba(236, 193, 160,0.4);
   transform: translateY(-4px);
 }
 .product-featured {
@@ -966,7 +972,7 @@ body[data-theme="light"] .theme-toggle:hover {
 .product-add {
   width: 32px;
   height: 32px;
-  border: 0.5px solid rgba(210, 86, 108,0.4);
+  border: 0.5px solid rgba(236, 193, 160,0.4);
   background: transparent;
   color: var(--gold);
   font-size: 1.2rem;
@@ -1007,7 +1013,7 @@ body[data-theme="light"] .theme-toggle:hover {
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  border: 1px solid rgba(210, 86, 108, 0.3);
+  border: 1px solid rgba(236, 193, 160, 0.3);
   background: transparent;
   color: var(--cream);
   display: flex;
@@ -1018,7 +1024,7 @@ body[data-theme="light"] .theme-toggle:hover {
 }
 
 .highlight-nav-btn:hover {
-  background: rgba(210, 86, 108, 0.1);
+  background: rgba(236, 193, 160, 0.1);
   border-color: var(--gold);
   color: var(--gold);
 }
@@ -1041,7 +1047,7 @@ body[data-theme="light"] .theme-toggle:hover {
   width: min(320px, 70vw);
   height: min(320px, 70vw);
   border-radius: 50%;
-  border: 0.5px solid rgba(210, 86, 108, 0.2);
+  border: 0.5px solid rgba(236, 193, 160, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1061,7 +1067,7 @@ body[data-theme="light"] .theme-toggle:hover {
   position: absolute;
   inset: -20px;
   border-radius: 50%;
-  border: 0.5px solid rgba(210, 86, 108, 0.08);
+  border: 0.5px solid rgba(236, 193, 160, 0.08);
 }
 .highlight-tag {
   position: absolute;
@@ -1102,7 +1108,7 @@ body[data-theme="light"] .theme-toggle:hover {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--gold);
-  border: 0.5px solid rgba(210, 86, 108,0.3);
+  border: 0.5px solid rgba(236, 193, 160,0.3);
   padding: 0.4rem 0.9rem;
 }
 .highlight-price {
@@ -1136,7 +1142,7 @@ body[data-theme="light"] .theme-toggle:hover {
 }
 .review-card {
   background: var(--charcoal);
-  border: 0.5px solid rgba(210, 86, 108,0.1);
+  border: 0.5px solid rgba(236, 193, 160,0.1);
   padding: 2rem;
   text-align: left;
 }
@@ -1164,7 +1170,7 @@ body[data-theme="light"] .theme-toggle:hover {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: rgba(210, 86, 108,0.15);
+  background: rgba(236, 193, 160,0.15);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1197,7 +1203,7 @@ body[data-theme="light"] .theme-toggle:hover {
   width: 600px;
   height: 600px;
   border-radius: 50%;
-  border: 0.5px solid rgba(210, 86, 108,0.08);
+  border: 0.5px solid rgba(236, 193, 160,0.08);
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
@@ -1231,7 +1237,7 @@ body[data-theme="light"] .theme-toggle:hover {
   flex: 1;
   padding: 0.9rem 1.25rem;
   background: rgba(246,232,234,0.07);
-  border: 0.5px solid rgba(210, 86, 108,0.3);
+  border: 0.5px solid rgba(236, 193, 160,0.3);
   border-right: none;
   color: var(--cream);
   font-family: 'Jost', sans-serif;
@@ -1260,7 +1266,7 @@ body[data-theme="light"] .theme-toggle:hover {
 /* ── FOOTER ──────────────────────────── */
 footer {
   background: var(--surface);
-  border-top: 0.5px solid rgba(210, 86, 108,0.12);
+  border-top: 0.5px solid rgba(236, 193, 160,0.12);
   padding: 4rem 4rem 2rem;
 }
 
@@ -1274,7 +1280,7 @@ body[data-theme="light"] footer {
   gap: 3rem;
   margin-bottom: 3rem;
   padding-bottom: 3rem;
-  border-bottom: 0.5px solid rgba(210, 86, 108,0.08);
+  border-bottom: 0.5px solid rgba(236, 193, 160,0.08);
 }
 
 body[data-theme="light"] .footer-top {
@@ -1332,11 +1338,11 @@ body[data-theme="light"] .footer-copy {
 .social-btn {
   width: 36px;
   height: 36px;
-  border: 0.5px solid rgba(210, 86, 108,0.2);
+  border: 0.5px solid rgba(236, 193, 160,0.2);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(210, 86, 108,0.6);
+  color: rgba(236, 193, 160,0.6);
   font-size: 0.85rem;
   text-decoration: none;
   transition: border-color 0.2s, color 0.2s;
@@ -1515,7 +1521,7 @@ body[data-theme="light"] .social-btn {
   }
 
   .newsletter-input {
-    border-right: 0.5px solid rgba(210, 86, 108,0.3);
+    border-right: 0.5px solid rgba(236, 193, 160,0.3);
   }
 
   .footer-top {
@@ -1619,14 +1625,14 @@ body[data-theme="light"] .social-btn {
   border-radius: 4px;
   overflow: hidden;
   cursor: pointer;
-  border: 0.5px solid rgba(210, 86, 108,0.15);
+  border: 0.5px solid rgba(236, 193, 160,0.15);
   box-shadow: 0 4px 18px rgba(0,0,0,0.3);
   transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s;
 }
 .carousel-card:hover {
   transform: translateY(-6px) scale(1.02);
   box-shadow: 0 12px 32px rgba(0,0,0,0.5);
-  border-color: rgba(210, 86, 108,0.5);
+  border-color: rgba(236, 193, 160,0.5);
 }
 .carousel-card img {
   width: 100%;
@@ -1661,10 +1667,10 @@ body[data-theme="light"] .social-btn {
 .carousel-btn--prev {
   background: transparent;
   color: var(--gold);
-  border: 0.5px solid rgba(210, 86, 108,0.4);
+  border: 0.5px solid rgba(236, 193, 160,0.4);
 }
 .carousel-btn--prev:hover {
-  background: rgba(210, 86, 108,0.08);
+  background: rgba(236, 193, 160,0.08);
   border-color: var(--gold);
   transform: translateX(-3px);
 }
@@ -1819,7 +1825,7 @@ body[data-theme="light"] .social-btn {
   border-radius: 6px;
 }
 .mobile-menu-link:hover {
-  background: rgba(210, 86, 108, 0.08);
+  background: rgba(236, 193, 160, 0.08);
 }
 .mobile-menu-link svg {
   width: 18px;
@@ -2058,4 +2064,14 @@ body[data-theme="light"] .social-btn {
 /* ── Sentinela do scroll infinito (B3) ────────────────────────────────── */
 #catalogo-sentinela {
   height: 1px;
+}
+
+/* ── Acessibilidade: respeitar "reduzir movimento" do sistema ─────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

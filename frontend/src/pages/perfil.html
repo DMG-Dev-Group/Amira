@@ -142,18 +142,41 @@
         </div>
         <div class="perfil-campo">
           <label for="campo-telefone">Celular / WhatsApp</label>
-          <input type="tel" id="campo-telefone" placeholder="(98) 9xxxx-xxxx" maxlength="15">
+          <input type="tel" id="campo-telefone" placeholder="(98) 9xxxx-xxxx" maxlength="16">
+        </div>
+        <div class="perfil-campo">
+          <label for="campo-nascimento">Data de nascimento</label>
+          <input type="date" id="campo-nascimento" min="1900-01-01">
         </div>
         <div class="perfil-campo">
           <label for="campo-foto">URL da foto de perfil</label>
           <input type="url" id="campo-foto" placeholder="https://exemplo.com/minha-foto.jpg">
           <small>Cole o link de uma imagem hospedada na web. Deixe vazio para usar suas iniciais.</small>
         </div>
+        <div class="perfil-campo">
+          <label class="perfil-check">
+            <input type="checkbox" id="campo-marketing">
+            <span>Quero receber ofertas, novidades e mensagem de aniversário por e-mail e WhatsApp.</span>
+          </label>
+        </div>
         <div class="perfil-acoes">
           <button type="submit" class="btn-primary" id="btn-salvar-dados">Salvar alterações</button>
           <span class="perfil-msg" id="msg-dados"></span>
         </div>
       </form>
+
+      <div class="perfil-privacidade">
+        <h3>Privacidade e seus dados (LGPD)</h3>
+        <p>
+          Você pode pedir uma cópia dos seus dados ou a exclusão da conta a qualquer momento.
+          Nós respondemos pelo WhatsApp da loja. Detalhes na
+          <a href="privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a>.
+        </p>
+        <div class="perfil-privacidade-acoes">
+          <button type="button" class="btn-outline" id="btn-baixar-dados">Baixar meus dados</button>
+          <button type="button" class="btn-outline btn-outline--danger" id="btn-excluir-conta">Excluir minha conta</button>
+        </div>
+      </div>
     </section>
 
     <!-- Aba: Segurança -->
@@ -250,5 +273,6 @@
   <script type="module" src="services/nav-carrinho.js"></script>
   <script type="module" src="./js/perfil.js"></script>
   <script type="module" src="services/nav-mobile-menu.js"></script>
+  <script type="module" src="services/consentimento-cookies.js"></script>
 </body>
 </html>

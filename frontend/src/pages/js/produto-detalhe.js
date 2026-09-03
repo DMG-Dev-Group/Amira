@@ -1,8 +1,9 @@
-import { buscarProdutoPorId, infoPreco, estoquePorModo, disponivelNoModo, podeSerEntregue } from "../services/produtos.js";
-import { listarCategorias } from "../services/categorias.js";
+import { buscarProdutoPorId, infoPreco, estoquePorModo, disponivelNoModo, podeSerEntregue, filtrosDoProduto } from "../services/produtos.js";
+import { listarCamadas, camadaPrincipal } from "../services/camadas.js";
 import { observarAuth } from "../services/auth.js";
 import { adicionarAoCarrinho } from "../services/carrinho.js";
 import { registrarVisita } from "../services/metricas.js";
+import { consentiuAnalytics } from "../services/consentimento-cookies.js";
 import { escapeHtml, urlImagemSegura } from "../services/seguranca.js";
 
 // ⚠️ Miguel: para mudar o tempo de troca automática das imagens do
@@ -17,7 +18,7 @@ const trilhaNome = document.getElementById("trilha-nome");
 
 let usuarioAtual = null;
 let produtoAtual = null;
-let categoriasCache = [];
+let camadasCache = [];
 
 observarAuth(({ usuario }) => {
   usuarioAtual = usuario;
@@ -33,6 +34,22 @@ function formatarPeso(gramas) {
   if (!gramas) return "—";
   if (gramas >= 1000) return `${(gramas / 1000).toFixed(2).replace(".00", "")} kg`;
   return `${gramas} g`;
+}
+
+// Uma linha por camada de filtro em que o produto tem opção marcada
+// (Tipo, Origem, Gênero…). Substitui a antiga linha única "Categoria".
+function linhasCamadas(produto) {
+  const principalSlug = camadaPrincipal(camadasCache)?.slug || null;
+  const filtros = filtrosDoProduto(produto, principalSlug);
+  const linhas = camadasCache
+    .map((camada) => {
+      const slugs = filtros[camada.slug] || [];
+      if (slugs.length === 0) return "";
+      const nomes = slugs.map((s) => camada.opcoes.find((o) => o.slug === s)?.nome || s);
+      return `<div><span>${escapeHtml(camada.nome)}</span><span>${escapeHtml(nomes.join(", "))}</span></div>`;
+    })
+    .filter(Boolean);
+  return linhas.join("") || `<div><span>Categoria</span><span>—</span></div>`;
 }
 
 async function carregarProduto() {
@@ -53,16 +70,16 @@ async function carregarProduto() {
   }
 
   try {
-    categoriasCache = await listarCategorias();
+    camadasCache = await listarCamadas();
   } catch (erro) {
-    console.error("Erro ao carregar categorias:", erro);
+    console.error("Erro ao carregar camadas:", erro);
   }
 
   const p = produtoAtual;
   trilhaNome.textContent = p.nome;
   document.title = `${p.nome} — Amira`;
 
-  registrarVisita(`produto:${p.id}`, "produto");
+  if (consentiuAnalytics()) registrarVisita(`produto:${p.id}`, "produto");
 
   // Estoque de varejo e atacado são independentes (A4). O varejo é
   // OPCIONAL (R2 6.1): um produto pode existir só no atacado — nesse
@@ -152,7 +169,7 @@ async function carregarProduto() {
         </div>
 
         <div class="produto-detalhes-tabela">
-          <div><span>Categoria</span><span>${escapeHtml(categoriasCache.find((c) => c.slug === p.categoria)?.nome || p.categoria || "—")}</span></div>
+          ${linhasCamadas(p)}
           <div><span>Peso</span><span>${formatarPeso(p.peso)}</span></div>
           <div><span>Código de barras</span><span>${escapeHtml(p.codigoBarras || "—")}</span></div>
         </div>

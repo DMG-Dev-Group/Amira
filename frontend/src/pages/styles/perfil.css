@@ -203,3 +203,62 @@
   .perfil-main { padding: 6.5rem 1.2rem 4rem; }
   .perfil-tabs { overflow-x: auto; }
 }
+
+/* ── Consentimento de marketing + direitos LGPD ───────────────────────── */
+.perfil-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--text-main);
+  cursor: pointer;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.perfil-check input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  flex-shrink: 0;
+  accent-color: var(--gold);
+  cursor: pointer;
+}
+
+.perfil-privacidade {
+  margin-top: 2.2rem;
+  padding-top: 1.6rem;
+  border-top: 1px solid var(--border);
+}
+
+.perfil-privacidade h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.05rem;
+  margin-bottom: 0.5rem;
+}
+
+.perfil-privacidade p {
+  font-size: 0.86rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+.perfil-privacidade p a { color: var(--gold); }
+
+.perfil-privacidade-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+}
+
+.btn-outline--danger {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.btn-outline--danger:hover {
+  background: var(--danger);
+  color: var(--on-brand);
+}

@@ -18,6 +18,17 @@ function refCarrinho(uid) {
   return doc(db, "carrinhos", uid);
 }
 
+// As fotos de produto podem ser data URIs (upload direto no admin, sem
+// Storage). Guardá-las no carrinho encheria o documento rápido — então o
+// carrinho fica só com o produtoId e a imagem é buscada do produto na
+// hora de exibir (js/carrinho-checkout.js).
+function semImagemPesada(item) {
+  if (typeof item.imagemURL === "string" && item.imagemURL.startsWith("data:")) {
+    return { ...item, imagemURL: "" };
+  }
+  return item;
+}
+
 /**
  * Retorna os itens do carrinho do usuário (lista vazia se não existir).
  */
@@ -39,7 +50,7 @@ export async function adicionarAoCarrinho(uid, item) {
   if (indiceExistente >= 0) {
     itens[indiceExistente].quantidade += item.quantidade;
   } else {
-    itens.push(item);
+    itens.push(semImagemPesada(item));
   }
 
   await setDoc(refCarrinho(uid), { itens });
@@ -53,7 +64,8 @@ export async function atualizarQuantidade(uid, produtoId, modo, quantidade) {
   const itens = await obterCarrinho(uid);
   const novosItens = itens
     .map((i) => (i.produtoId === produtoId && i.modo === modo ? { ...i, quantidade } : i))
-    .filter((i) => i.quantidade > 0);
+    .filter((i) => i.quantidade > 0)
+    .map(semImagemPesada);
 
   await setDoc(refCarrinho(uid), { itens: novosItens });
   return novosItens;

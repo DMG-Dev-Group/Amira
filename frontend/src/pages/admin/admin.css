@@ -8,47 +8,47 @@
    são definidas aqui também (mesmos valores de styles/style.css). O switch
    de tema alterna via body[data-theme], igual à loja (services/tema.js). */
 :root {
-  --color-1: #8E1526;
-  --color-2: #5E0E1B;
-  --color-3: #D2566C;
-  --color-4: #E9A3B0;
-  --color-5: #F6E8EA;
+  --color-1: #7A5147;
+  --color-2: #5C3B33;
+  --color-3: #ECC1A0;
+  --color-4: #F3D8C4;
+  --color-5: #FEF5EF;
 
-  --brand: #6E101C;
-  --brand-strong: var(--color-2);
-  --on-brand: #FDF3F4;
+  --brand: #8A5B4E;
+  --brand-strong: #75463B;
+  --on-brand: #FEF5EF;
 
-  --bg: #150A0D;
-  --surface: #201115;
-  --surface-soft: rgba(21, 10, 13, 0.92);
+  --bg: #1C1512;
+  --surface: #241A17;
+  --surface-soft: rgba(28, 21, 18, 0.92);
   --gold: var(--color-3);
-  --gold-dark: var(--color-1);
-  --black: #2A0509;
+  --gold-dark: #C99873;
+  --black: #1C1512;
   --text-main: var(--color-5);
-  --text-muted: rgba(246, 232, 234, 0.62);
-  --border: rgba(210, 86, 108, 0.25);
+  --text-muted: rgba(254, 245, 239, 0.66);
+  --border: rgba(236, 193, 160, 0.22);
 
-  --danger: #F2665C;
-  --success: #4FBF6A;
-  --warning: #E4A93F;
-  --info: #6C9BF0;
-  --roxo: #A87CF0;
+  --danger: #F08A7E;
+  --success: #7DBE86;
+  --warning: #E8B25C;
+  --info: #7FA6E6;
+  --roxo: #B99BE0;
 }
 
 body[data-theme="light"] {
-  --bg: #FAF4F4;
+  --bg: #FEF5EF;
   --surface: #FFFFFF;
-  --surface-soft: rgba(250, 244, 244, 0.94);
+  --surface-soft: rgba(254, 245, 239, 0.94);
   --gold: var(--color-1);
   --gold-dark: var(--color-2);
-  --black: #FDF3F4;
-  --text-main: #3A1218;
-  --text-muted: rgba(58, 18, 24, 0.7);
-  --border: rgba(142, 21, 38, 0.24);
+  --black: #FEF5EF;
+  --text-main: #3A2A24;
+  --text-muted: rgba(58, 42, 36, 0.70);
+  --border: rgba(122, 81, 71, 0.24);
 
-  --danger: #C0271C;
-  --success: #1D7A3B;
-  --warning: #8F6410;
+  --danger: #C0392B;
+  --success: #2E7D46;
+  --warning: #9A6B12;
   --info: #2B57B8;
   --roxo: #6B3FB8;
 }
@@ -127,7 +127,7 @@ body {
 /* ── Sidebar ───────────────────────────────────────────────────────────── */
 .admin-sidebar {
   background: var(--surface, #201115);
-  border-right: 1px solid var(--border, rgba(210, 86, 108,0.15));
+  border-right: 1px solid var(--border, rgba(236, 193, 160,0.15));
   padding: 1.5rem 1rem;
   display: flex;
   flex-direction: column;
@@ -148,7 +148,7 @@ body {
   height: 36px;
   flex-shrink: 0;
   border-radius: 6px;
-  border: 1px solid var(--border, rgba(210, 86, 108,0.2));
+  border: 1px solid var(--border, rgba(236, 193, 160,0.2));
   background: transparent;
   color: var(--text-main, #F6E8EA);
   cursor: pointer;
@@ -162,13 +162,13 @@ body {
 .admin-logo {
   font-family: 'Playfair Display', serif;
   font-size: 1.2rem;
-  color: var(--gold, #D2566C);
+  color: var(--gold);
   margin-bottom: 0.3rem;
   padding: 0 0.5rem;
 }
 
 .admin_logo_nome {
-   color: var(--gold, #D2566C);
+   color: var(--gold);
    text-decoration: none;
 }
 
@@ -202,20 +202,20 @@ body {
 }
 
 .admin-nav a:hover {
-  background: rgba(210, 86, 108,0.08);
-  color: var(--gold, #D2566C);
+  background: rgba(236, 193, 160,0.08);
+  color: var(--gold);
 }
 
 .admin-nav a.active {
-  background: rgba(210, 86, 108,0.12);
-  color: var(--gold, #D2566C);
+  background: rgba(236, 193, 160,0.12);
+  color: var(--gold);
   font-weight: 600;
 }
 
 .admin-sidebar-rodape {
   margin-top: auto;
   padding-top: 1rem;
-  border-top: 1px solid var(--border, rgba(210, 86, 108,0.15));
+  border-top: 1px solid var(--border, rgba(236, 193, 160,0.15));
 }
 
 .admin-sidebar-rodape a {
@@ -227,7 +227,7 @@ body {
 }
 
 .admin-sidebar-rodape a:hover {
-  color: var(--gold, #D2566C);
+  color: var(--gold);
 }
 
 /* ── Conteúdo principal ────────────────────────────────────────────────── */
@@ -265,7 +265,7 @@ body {
 
 .admin-card-metrica {
   background: var(--surface, #201115);
-  border: 1px solid var(--border, rgba(210, 86, 108,0.15));
+  border: 1px solid var(--border, rgba(236, 193, 160,0.15));
   border-radius: 8px;
   padding: 1.3rem;
 }
@@ -273,7 +273,7 @@ body {
 .admin-card-metrica .valor {
   font-family: 'Playfair Display', serif;
   font-size: 1.9rem;
-  color: var(--gold, #D2566C);
+  color: var(--gold);
   margin-bottom: 0.3rem;
 }
 
@@ -287,7 +287,7 @@ body {
 /* ── Seções / blocos ───────────────────────────────────────────────────── */
 .admin-bloco {
   background: var(--surface, #201115);
-  border: 1px solid var(--border, rgba(210, 86, 108,0.15));
+  border: 1px solid var(--border, rgba(236, 193, 160,0.15));
   border-radius: 8px;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
@@ -301,14 +301,13 @@ body {
   text-transform: uppercase;
   margin-bottom: 1.2rem;
   padding-bottom: 0.8rem;
-  border-bottom: 1px solid var(--border, rgba(210, 86, 108,0.15));
+  border-bottom: 1px solid var(--border, rgba(236, 193, 160,0.15));
 }
 
 /* ── Tabelas ───────────────────────────────────────────────────────────── */
 #tabela-produtos,
 #tabela-pedidos,
 #tabela-revendedores,
-#tabela-categorias,
 #lista-paginas,
 #lista-pedidos-recentes{
   width: 100%;
@@ -335,17 +334,17 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-muted, #999);
-  border-bottom: 1px solid var(--border, rgba(210, 86, 108,0.15));
+  border-bottom: 1px solid var(--border, rgba(236, 193, 160,0.15));
 }
 
 .admin-tabela td {
   padding: 0.7rem 0.6rem;
-  border-bottom: 1px solid rgba(210, 86, 108,0.08);
+  border-bottom: 1px solid rgba(236, 193, 160,0.08);
   vertical-align: middle;
 }
 
 .admin-tabela tr:hover td {
-  background: rgba(210, 86, 108,0.04);
+  background: rgba(236, 193, 160,0.04);
 }
 
 .admin-tabela img.thumb {
@@ -394,13 +393,13 @@ body {
 }
 
 .admin-btn-primary {
-  background: var(--gold, #D2566C);
+  background: var(--gold);
   color: var(--black, #2A0509);
 }
 
 .admin-btn-outline {
   background: transparent;
-  border: 1px solid var(--border, rgba(210, 86, 108,0.3));
+  border: 1px solid var(--border, rgba(236, 193, 160,0.3));
   color: var(--text-main, #F6E8EA);
 }
 
@@ -434,7 +433,7 @@ body {
 
 .admin-modal {
   background: var(--surface, #201115);
-  border: 1px solid var(--border, rgba(210, 86, 108,0.2));
+  border: 1px solid var(--border, rgba(236, 193, 160,0.2));
   border-radius: 10px;
   padding: 2rem;
   max-width: 560px;
@@ -469,7 +468,7 @@ body {
   padding: 0.65rem 0.8rem;
   font-family: 'Jost', sans-serif;
   font-size: 0.88rem;
-  border: 1px solid var(--border, rgba(210, 86, 108,0.2));
+  border: 1px solid var(--border, rgba(236, 193, 160,0.2));
   border-radius: 5px;
   background: var(--bg, #150A0D);
   color: var(--text-main, #F6E8EA);
@@ -479,7 +478,7 @@ body {
 .admin-campo input:focus,
 .admin-campo select:focus,
 .admin-campo textarea:focus {
-  border-color: var(--gold, #D2566C);
+  border-color: var(--gold);
 }
 
 .admin-campo-grid {
@@ -522,6 +521,157 @@ body {
   gap: 1rem;
 }
 
+/* ── Camadas de filtro (admin/camadas.html) ────────────────────────────── */
+.camada-card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.1rem 1.2rem;
+  margin-bottom: 1rem;
+  background: var(--bg);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.camada-card:last-child { margin-bottom: 0; }
+
+.camada-card:hover {
+  border-color: var(--gold-dark);
+}
+
+.camada-card-topo {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.camada-card-titulo {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+}
+
+.camada-card-titulo h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.05rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.camada-card-titulo h3 .badge {
+  font-size: 0.58rem;
+}
+
+.camada-slug {
+  display: inline-block;
+  margin-top: 0.15rem;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.camada-reordenar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.camada-reordenar .admin-btn {
+  min-width: 32px;
+  padding: 0.28rem 0.5rem;
+  line-height: 1;
+  font-size: 0.85rem;
+  transition: opacity 0.2s ease, background 0.2s ease, color 0.2s ease, transform 0.12s ease;
+}
+
+.camada-reordenar .admin-btn:not([disabled]):active {
+  transform: translateY(1px);
+}
+
+.camada-reordenar .admin-btn[disabled] {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.camada-card .admin-tabela {
+  min-width: 420px;
+  margin-top: 0.9rem;
+}
+
+.camada-card .btn-nova-opcao {
+  transition: opacity 0.2s ease, background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+#lista-camadas {
+  transition: opacity 0.2s ease;
+}
+
+/* ── Camadas no cadastro de produto ────────────────────────────────────── */
+.p-camadas {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.p-camada-grupo {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.65rem 0.9rem 0.8rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.1rem;
+  transition: border-color 0.2s ease;
+}
+
+.p-camada-grupo:focus-within {
+  border-color: var(--gold-dark);
+}
+
+.p-camada-grupo legend {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  padding: 0 0.4rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.p-camada-grupo legend .badge {
+  font-size: 0.56rem;
+  padding: 0.1rem 0.4rem;
+}
+
+.p-camada-opcao {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: color 0.18s ease;
+}
+
+.p-camada-opcao:hover,
+.p-camada-opcao:has(input:checked) {
+  color: var(--gold);
+}
+
+.p-camada-opcao:has(input:checked) {
+  font-weight: 600;
+}
+
+.p-camada-opcao input {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--gold);
+  cursor: pointer;
+}
+
 @media (max-width: 900px) {
   .admin-layout {
     grid-template-columns: 1fr;
@@ -531,7 +681,7 @@ body {
   .admin-sidebar {
     padding: 0.9rem 1.2rem;
     border-right: none;
-    border-bottom: 1px solid var(--border, rgba(210, 86, 108,0.15));
+    border-bottom: 1px solid var(--border, rgba(236, 193, 160,0.15));
     position: sticky;
     top: 0;
     z-index: 50;
@@ -651,4 +801,80 @@ body {
   .admin-acoes-linha {
     flex-wrap: wrap;
   }
+}
+/* ── Acessibilidade: respeitar "reduzir movimento" do sistema ─────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── Fotos do produto (upload de arquivo, sem Firebase Storage) ────────── */
+#lista-imagens-produto {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.img-slot {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.7rem 0.8rem;
+  background: var(--bg);
+}
+
+.img-slot-preview {
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.img-slot-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.img-slot-acoes {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.img-slot-tag {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-right: 0.2rem;
+}
+
+.img-slot-escolher {
+  position: relative;
+  cursor: pointer;
+}
+
+.img-slot-escolher.processando {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.img-slot-msg {
+  width: 100%;
+  margin: 0.2rem 0 0;
+  font-size: 0.76rem;
+  color: var(--danger);
 }

@@ -4,10 +4,30 @@ import { formatarCNPJ, validarCNPJ, consultarCNPJ } from "../services/cnpj.js";
 const form = document.getElementById("form-cadastro");
 const inputNome = document.getElementById("cad-nome");
 const inputEmail = document.getElementById("cad-email");
+const inputTelefone = document.getElementById("cad-telefone");
+const inputNascimento = document.getElementById("cad-nascimento");
 const inputSenha = document.getElementById("cad-senha");
 const inputConfirma = document.getElementById("cad-confirma");
+const inputAceiteTermos = document.getElementById("cad-aceite-termos");
+const inputAceiteMarketing = document.getElementById("cad-aceite-marketing");
 const btnCadastro = document.getElementById("btn-cadastro");
 const msg = document.getElementById("cadastro-msg");
+
+// Data de nascimento não pode ser futura nem anterior a 1900.
+if (inputNascimento) {
+  inputNascimento.max = new Date().toISOString().slice(0, 10);
+  inputNascimento.min = "1900-01-01";
+}
+
+// Máscara de telefone BR: (00) 00000-0000
+inputTelefone?.addEventListener("input", () => {
+  let v = inputTelefone.value.replace(/\D/g, "").slice(0, 11);
+  if (v.length > 10) v = v.replace(/(\d{2})(\d{5})(\d{0,4})/, "($1) $2-$3");
+  else if (v.length > 6) v = v.replace(/(\d{2})(\d{4})(\d{0,4})/, "($1) $2-$3");
+  else if (v.length > 2) v = v.replace(/(\d{2})(\d{0,5})/, "($1) $2");
+  else if (v.length > 0) v = v.replace(/(\d{0,2})/, "($1");
+  inputTelefone.value = v.trim().replace(/[-\s(]+$/, "");
+});
 
 const camposRevendedor = document.getElementById("campos-revendedor");
 const inputCnpj = document.getElementById("cad-cnpj");
@@ -104,16 +124,34 @@ form.addEventListener("submit", async (evento) => {
 
   const nome = inputNome.value.trim();
   const email = inputEmail.value.trim();
+  const telefoneDigitos = inputTelefone.value.replace(/\D/g, "");
+  const dataNascimento = inputNascimento.value; // "YYYY-MM-DD"
   const senha = inputSenha.value;
   const confirma = inputConfirma.value;
 
-  if (!nome || !email || !senha || !confirma) {
+  if (!nome || !email || !telefoneDigitos || !dataNascimento || !senha || !confirma) {
     mostrarMensagem("Preencha todos os campos.");
     return;
   }
 
   if (!emailTemFormatoValido(email)) {
     mostrarMensagem("Informe um e-mail válido e existente — enviaremos um link de confirmação para ele.");
+    return;
+  }
+
+  if (telefoneDigitos.length < 10 || telefoneDigitos.length > 11) {
+    mostrarMensagem("Informe um telefone com DDD (10 ou 11 dígitos).");
+    return;
+  }
+
+  const nascimento = new Date(`${dataNascimento}T00:00:00`);
+  if (Number.isNaN(nascimento.getTime()) || nascimento > new Date() || nascimento.getFullYear() < 1900) {
+    mostrarMensagem("Informe uma data de nascimento válida.");
+    return;
+  }
+
+  if (!inputAceiteTermos.checked) {
+    mostrarMensagem("Para criar a conta, é preciso aceitar a Política de Privacidade.");
     return;
   }
 
@@ -155,7 +193,11 @@ form.addEventListener("submit", async (evento) => {
   btnCadastro.textContent = "Criando conta...";
 
   try {
-    await cadastrarUsuario(nome, email, senha, dadosRevendedor);
+    await cadastrarUsuario(nome, email, senha, dadosRevendedor, {
+      telefone: telefoneDigitos,
+      dataNascimento,
+      aceiteMarketing: inputAceiteMarketing.checked
+    });
 
     // Por exigir e-mail confirmado, não deixamos a pessoa entrar direto.
     // Ela é deslogada e enviada para o login, com a tela de verificação.

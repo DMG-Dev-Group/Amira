@@ -2,7 +2,8 @@ import { protegerPaginaAdmin } from "./admin-auth.js";
 import { escapeHtml } from "../../services/seguranca.js";
 import { buscarMetricas } from "../../services/metricas.js";
 import { listarProdutos, infoPreco, estoquePorModo } from "../../services/produtos.js";
-import { listarCategoriasIphone, ehCategoriaIphone } from "../../services/iphones.js";
+import { filtrarProdutosIphone } from "../../services/iphones.js";
+import { listarCamadas } from "../../services/camadas.js";
 import { derivarTotaisDePedidos } from "../../services/pedidos.js";
 import { db } from "../../services/firebase-config.js";
 import {
@@ -112,20 +113,19 @@ function renderizarBlocoIphones(produtosIphone, categoriasIphone) {
 }
 
 async function carregarDashboard() {
-  const [metricas, produtos, pedidos, categoriasIphone] = await Promise.all([
+  const [metricas, produtos, pedidos, camadas] = await Promise.all([
     buscarMetricas(30),
     listarProdutos(),
     buscarTodosPedidos(),
-    listarCategoriasIphone()
+    // Sem camadas cadastradas ainda, o dashboard não pode quebrar por isso.
+    listarCamadas().catch(() => [])
   ]);
 
-  // A seção de iPhones é um recorte da coleção "produtos" por categoria —
-  // mesma regra usada pela loja (services/iphones.js), para os números do
-  // painel baterem com o que o cliente vê em iphones.html.
-  const slugsIphone = new Set(categoriasIphone.map((c) => c.slug));
-  const produtosIphone = produtos.filter(
-    (p) => slugsIphone.has(p.categoria) || ehCategoriaIphone({ slug: p.categoria || "" })
-  );
+  // A seção de iPhones é um recorte da coleção "produtos" pela camada
+  // principal de filtros — mesma regra usada pela loja
+  // (services/iphones.js), para os números do painel baterem com o que o
+  // cliente vê em iphones.html.
+  const produtosIphone = filtrarProdutosIphone(produtos, camadas);
 
   // ── Cards de métricas gerais ────────────────────────────────────────────
   // Pedidos não guardam valores (arquitetura Spark): o faturamento é

@@ -3,9 +3,10 @@ import {
   criarProduto,
   atualizarProduto,
   excluirProduto,
-  estoquePorModo
+  estoquePorModo,
+  filtrosDoProduto
 } from "../../services/produtos.js";
-import { listarCategorias } from "../../services/categorias.js";
+import { listarCamadas, camadaPrincipal } from "../../services/camadas.js";
 import { escapeHtml, urlImagemSegura } from "../../services/seguranca.js";
 import { db } from "../../services/firebase-config.js";
 import {
@@ -16,7 +17,8 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
 let produtosCache = [];
-let categoriasCache = [];
+let camadasCache = [];
+let camadaPrincipalSlug = null;
 let produtoEditandoId = null;
 
 const tabela = document.getElementById("tabela-produtos");
@@ -28,7 +30,7 @@ const modalMsg = document.getElementById("modal-msg");
 const btnSalvar = document.getElementById("btn-salvar-produto");
 const selectOrdenar = document.getElementById("select-ordenar-admin");
 const inputBusca = document.getElementById("busca-produtos-admin");
-const selectCategoria = document.getElementById("p-categoria");
+const camadasContainer = document.getElementById("p-camadas");
 const selectBannerHero = document.getElementById("p-banner-hero");
 const camposBannerHero = document.getElementById("campos-banner-hero");
 const selectDescontoAtivo = document.getElementById("p-desconto-ativo");
@@ -49,15 +51,55 @@ async function buscarTodosProdutosAdmin() {
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 }
 
-async function carregarCategoriasNoSelect() {
-  categoriasCache = await listarCategorias();
-  if (categoriasCache.length === 0) {
-    selectCategoria.innerHTML = `<option value="" disabled selected>Nenhuma categoria cadastrada — crie uma em "Categorias"</option>`;
+async function carregarCamadasNoForm() {
+  camadasCache = await listarCamadas();
+  camadaPrincipalSlug = camadaPrincipal(camadasCache)?.slug || null;
+
+  if (camadasCache.length === 0) {
+    camadasContainer.innerHTML = `<p style="color:var(--danger); font-size:0.8rem;">Nenhuma camada cadastrada — crie uma em "Camadas de filtro".</p>`;
     return;
   }
-  selectCategoria.innerHTML = categoriasCache
-    .map((c) => `<option value="${c.slug}"> ${c.nome}</option>`)
-    .join("");
+
+  camadasContainer.innerHTML = camadasCache.map((camada, i) => `
+    <fieldset class="p-camada-grupo">
+      <legend>${escapeHtml(camada.nome)}${i === 0 ? " <span class=\"badge badge-aprovado\">principal</span>" : ""}</legend>
+      ${camada.opcoes.length === 0
+        ? `<span style="color:var(--text-muted,#999); font-size:0.76rem;">Sem opções nesta camada.</span>`
+        : camada.opcoes.map((op) => `
+          <label class="p-camada-opcao">
+            <input type="checkbox" data-camada="${escapeHtml(camada.slug)}" value="${escapeHtml(op.slug)}">
+            <span>${escapeHtml(op.nome)}</span>
+          </label>
+        `).join("")}
+    </fieldset>
+  `).join("");
+}
+
+/** Lê os checkboxes marcados no form como { [camadaSlug]: string[] }. */
+function lerFiltrosDoForm() {
+  const filtros = {};
+  camadasContainer.querySelectorAll('input[type="checkbox"]:checked').forEach((cb) => {
+    (filtros[cb.dataset.camada] ||= []).push(cb.value);
+  });
+  return filtros;
+}
+
+/** Marca os checkboxes do form a partir de um produto (com ponte legada). */
+function marcarFiltrosNoForm(produto) {
+  const doProduto = filtrosDoProduto(produto, camadaPrincipalSlug);
+  camadasContainer.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
+    cb.checked = (doProduto[cb.dataset.camada] || []).includes(cb.value);
+  });
+}
+
+/** Rótulo de camada principal de um produto (para a tabela). */
+function rotuloPrincipal(produto) {
+  const doProduto = filtrosDoProduto(produto, camadaPrincipalSlug);
+  const slugs = camadaPrincipalSlug ? (doProduto[camadaPrincipalSlug] || []) : [];
+  const principal = camadaPrincipal(camadasCache);
+  if (!principal || slugs.length === 0) return "—";
+  const nomes = slugs.map((s) => principal.opcoes.find((o) => o.slug === s)?.nome || s);
+  return nomes.join(", ");
 }
 
 // ── Busca + ordenação combinadas ─────────────────────────────────────────
@@ -65,7 +107,7 @@ function ordenarLista(lista, criterio) {
   const copia = [...lista];
   switch (criterio) {
     case "categoria-az":
-      return copia.sort((a, b) => (a.categoria || "").localeCompare(b.categoria || "", "pt-BR"));
+      return copia.sort((a, b) => rotuloPrincipal(a).localeCompare(rotuloPrincipal(b), "pt-BR"));
     case "preco-maior":
       return copia.sort((a, b) => (b.precoVarejo || 0) - (a.precoVarejo || 0));
     case "preco-menor":
@@ -83,13 +125,11 @@ function filtrarPorBusca(lista, termo) {
   const termoNormalizado = termo.trim().toLowerCase();
   if (!termoNormalizado) return lista;
   return lista.filter((p) => {
-    const alvo = `${p.nome || ""} ${p.sku || ""}`.toLowerCase();
+    // "sku" não é mais editável, mas produtos antigos ainda podem tê-lo —
+    // manter na busca não atrapalha e ajuda a achar cadastro legado.
+    const alvo = `${p.nome || ""} ${p.sku || ""} ${p.codigoBarras || ""}`.toLowerCase();
     return alvo.includes(termoNormalizado);
   });
-}
-
-function nomeCategoria(slug) {
-  return categoriasCache.find((c) => c.slug === slug)?.nome || slug || "—";
 }
 
 function renderizarTabela() {
@@ -111,8 +151,7 @@ function renderizarTabela() {
         <tr>
           <th></th>
           <th>Nome</th>
-          <th>SKU</th>
-          <th>Categoria</th>
+          <th>${escapeHtml(camadaPrincipal(camadasCache)?.nome || "Filtro")}</th>
           <th>Preço</th>
           <th>Est. varejo</th>
           <th>Est. atacado</th>
@@ -130,8 +169,7 @@ function renderizarTabela() {
               ${p.freteDisponivel === false ? '<span class="badge badge-preparando" title="Sem entrega — cliente só pode retirar na loja">SÓ RETIRADA</span>' : ""}
               ${!(Number(p.precoVarejo) > 0) ? '<span class="badge badge-enviado" title="Sem preço de varejo — vendido apenas no atacado">SÓ ATACADO</span>' : ""}
             </td>
-            <td>${escapeHtml(p.sku || "—")}</td>
-            <td>${escapeHtml(nomeCategoria(p.categoria))}</td>
+            <td>${escapeHtml(rotuloPrincipal(p))}</td>
             <td>${formatarPreco(p.precoVarejo)}</td>
             <td>${estoquePorModo(p, "varejo")}</td>
             <td>${estoquePorModo(p, "atacado")}</td>
@@ -167,43 +205,144 @@ async function carregarTabela() {
   renderizarTabela();
 }
 
-// ── Lista dinâmica de campos de imagem ───────────────────────────────────
-function criarLinhaImagem(valor = "", ehPrincipal = false) {
-  const linha = document.createElement("div");
-  linha.className = "linha-imagem-produto";
-  linha.style.display = "flex";
-  linha.style.gap = "0.5rem";
-  linha.style.marginBottom = "0.5rem";
+// ── Fotos do produto: upload de arquivo → data URI comprimida ────────────
+// Sem Firebase Storage (custo zero): a foto escolhida do computador é
+// redimensionada num <canvas> e salva como data URI dentro do próprio
+// documento do produto. O Firestore limita 1 MB por documento, então a
+// compressão é agressiva e o total é conferido antes de salvar.
+const MAX_FOTOS = 5;
+const ALVO_BYTES_POR_FOTO = 300 * 1024; // orçamento aproximado por foto
 
-  linha.innerHTML = `
-    <input type="url" class="input-imagem-produto" placeholder="${ehPrincipal ? 'https://... (imagem principal)' : 'https://... (imagem adicional)'}" value="${valor}" style="flex:1;">
-    ${!ehPrincipal ? `<button type="button" class="admin-btn admin-btn-danger admin-btn-sm btn-remover-imagem">Remover</button>` : ""}
+function lerArquivoComoDataURL(arquivo) {
+  return new Promise((resolve, reject) => {
+    if (!arquivo || !arquivo.type.startsWith("image/")) {
+      reject(new Error("Escolha um arquivo de imagem (JPG, PNG, WEBP...)."));
+      return;
+    }
+    const leitor = new FileReader();
+    leitor.onload = () => resolve(leitor.result);
+    leitor.onerror = () => reject(new Error("Não foi possível ler o arquivo."));
+    leitor.readAsDataURL(arquivo);
+  });
+}
+
+function redimensionar(dataURL, maxLado, qualidade) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      let { width, height } = img;
+      const maior = Math.max(width, height);
+      if (maior > maxLado) {
+        const escala = maxLado / maior;
+        width = Math.round(width * escala);
+        height = Math.round(height * escala);
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#ffffff"; // fundo branco: PNG transparente vira JPEG limpo
+      ctx.fillRect(0, 0, width, height);
+      ctx.drawImage(img, 0, 0, width, height);
+      resolve(canvas.toDataURL("image/jpeg", qualidade));
+    };
+    img.onerror = () => reject(new Error("Imagem inválida ou corrompida."));
+    img.src = dataURL;
+  });
+}
+
+async function comprimirFoto(arquivo) {
+  const bruto = await lerArquivoComoDataURL(arquivo);
+  // Passos progressivamente mais apertados até caber no orçamento.
+  const tentativas = [
+    [1100, 0.72],
+    [950, 0.62],
+    [800, 0.55],
+    [640, 0.5]
+  ];
+  let saida = await redimensionar(bruto, 1100, 0.72);
+  for (const [lado, q] of tentativas) {
+    if (saida.length <= ALVO_BYTES_POR_FOTO * 1.37) break; // 1.37 ≈ overhead do base64
+    saida = await redimensionar(bruto, lado, q);
+  }
+  return saida;
+}
+
+// Cada "slot" guarda a foto atual (data URI ou URL antiga) em dataset.valor.
+function criarSlotImagem(valor = "", ehPrincipal = false) {
+  const slot = document.createElement("div");
+  slot.className = "img-slot";
+  slot.dataset.valor = valor || "";
+
+  slot.innerHTML = `
+    <div class="img-slot-preview">
+      <img alt="" src="${valor ? urlImagemSegura(valor, '../images/amira-placeholder.svg') : '../images/amira-placeholder.svg'}">
+    </div>
+    <div class="img-slot-acoes">
+      <span class="img-slot-tag">${ehPrincipal ? "Foto principal" : "Foto adicional"}</span>
+      <label class="admin-btn admin-btn-outline admin-btn-sm img-slot-escolher">
+        ${valor ? "Trocar foto" : "Escolher foto"}
+        <input type="file" accept="image/*" hidden>
+      </label>
+      ${!ehPrincipal ? `<button type="button" class="admin-btn admin-btn-danger admin-btn-sm btn-remover-imagem">Remover</button>` : ""}
+    </div>
+    <p class="img-slot-msg" style="display:none;"></p>
   `;
 
-  const btnRemover = linha.querySelector(".btn-remover-imagem");
-  if (btnRemover) {
-    btnRemover.addEventListener("click", () => linha.remove());
+  const input = slot.querySelector('input[type="file"]');
+  const preview = slot.querySelector("img");
+  const escolher = slot.querySelector(".img-slot-escolher");
+  const msg = slot.querySelector(".img-slot-msg");
+
+  function setRotuloEscolher(texto) {
+    escolher.childNodes[0].nodeValue = `${texto} `;
   }
 
-  return linha;
+  input.addEventListener("change", async () => {
+    const arquivo = input.files && input.files[0];
+    if (!arquivo) return;
+    msg.style.display = "none";
+    escolher.classList.add("processando");
+    setRotuloEscolher("Processando...");
+    try {
+      const dataURI = await comprimirFoto(arquivo);
+      slot.dataset.valor = dataURI;
+      preview.src = dataURI;
+      setRotuloEscolher("Trocar foto");
+    } catch (erro) {
+      console.error(erro);
+      msg.textContent = erro.message || "Não foi possível processar essa imagem.";
+      msg.style.display = "block";
+      setRotuloEscolher(slot.dataset.valor ? "Trocar foto" : "Escolher foto");
+    } finally {
+      input.value = "";
+      escolher.classList.remove("processando");
+    }
+  });
+
+  slot.querySelector(".btn-remover-imagem")?.addEventListener("click", () => slot.remove());
+  return slot;
+}
+
+function slotsAtuais() {
+  return Array.from(listaImagens.querySelectorAll(".img-slot"));
 }
 
 function resetarListaImagens() {
   listaImagens.innerHTML = "";
-  listaImagens.appendChild(criarLinhaImagem("", true));
+  listaImagens.appendChild(criarSlotImagem("", true));
 }
 
 function preencherListaImagens(produto) {
   listaImagens.innerHTML = "";
-  listaImagens.appendChild(criarLinhaImagem(produto.imagemURL || "", true));
+  listaImagens.appendChild(criarSlotImagem(produto.imagemURL || "", true));
   (produto.imagensExtras || []).forEach((url) => {
-    listaImagens.appendChild(criarLinhaImagem(url, false));
+    listaImagens.appendChild(criarSlotImagem(url, false));
   });
 }
 
 function coletarImagens() {
-  const inputs = Array.from(listaImagens.querySelectorAll(".input-imagem-produto"));
-  const valores = inputs.map((i) => i.value.trim()).filter(Boolean);
+  const valores = slotsAtuais().map((s) => s.dataset.valor || "").filter(Boolean);
   return {
     imagemURL: valores[0] || "",
     imagensExtras: valores.slice(1)
@@ -211,7 +350,11 @@ function coletarImagens() {
 }
 
 btnAddImagem.addEventListener("click", () => {
-  listaImagens.appendChild(criarLinhaImagem("", false));
+  if (slotsAtuais().length >= MAX_FOTOS) {
+    alert(`Máximo de ${MAX_FOTOS} fotos por produto.`);
+    return;
+  }
+  listaImagens.appendChild(criarSlotImagem("", false));
 });
 
 // ── Modal de criar/editar produto ────────────────────────────────────────
@@ -247,9 +390,8 @@ function abrirModalEdicao(id) {
   modalTitulo.textContent = "Editar produto";
 
   document.getElementById("p-nome").value = p.nome || "";
-  document.getElementById("p-sku").value = p.sku || "";
   document.getElementById("p-codigo-barras").value = p.codigoBarras || "";
-  if (p.categoria) selectCategoria.value = p.categoria;
+  marcarFiltrosNoForm(p);
   document.getElementById("p-peso").value = p.peso || "";
   document.getElementById("p-descricao").value = p.descricao || "";
   preencherListaImagens(p);
@@ -325,11 +467,16 @@ form.addEventListener("submit", async (evento) => {
   const descontoPercentual = Number(document.getElementById("p-desconto-percentual").value) || 0;
   const { imagemURL, imagensExtras } = coletarImagens();
 
+  const filtros = lerFiltrosDoForm();
+  // Campo legado "categoria": 1ª opção marcada na camada principal — ponte
+  // p/ produtos e links antigos (ver services/produtos.js).
+  const categoriaLegado = (camadaPrincipalSlug && filtros[camadaPrincipalSlug]?.[0]) || "";
+
   const dados = {
     nome: document.getElementById("p-nome").value.trim(),
-    sku: document.getElementById("p-sku").value.trim(),
     codigoBarras: document.getElementById("p-codigo-barras").value.trim(),
-    categoria: selectCategoria.value,
+    filtros,
+    categoria: categoriaLegado,
     peso: Number(document.getElementById("p-peso").value) || 0,
     descricao: document.getElementById("p-descricao").value.trim(),
     imagemURL,
@@ -361,15 +508,15 @@ form.addEventListener("submit", async (evento) => {
     bannerOrdem: bannerHero ? Number(document.getElementById("p-banner-ordem").value) || 0 : 0
   };
 
-  if (!dados.nome || !dados.sku) {
-    modalMsg.textContent = "Nome e SKU são obrigatórios.";
+  if (!dados.nome) {
+    modalMsg.textContent = "O nome é obrigatório.";
     modalMsg.classList.remove("sucesso");
     modalMsg.style.display = "block";
     return;
   }
 
-  if (!dados.categoria) {
-    modalMsg.textContent = "Selecione uma categoria (crie uma em \"Categorias\" se a lista estiver vazia).";
+  if (!camadaPrincipalSlug || !(filtros[camadaPrincipalSlug]?.length)) {
+    modalMsg.textContent = "Marque ao menos uma opção na camada principal (a primeira). Crie camadas em \"Camadas de filtro\" se a lista estiver vazia.";
     modalMsg.classList.remove("sucesso");
     modalMsg.style.display = "block";
     return;
@@ -393,6 +540,16 @@ form.addEventListener("submit", async (evento) => {
 
   if ((dados.precoAtacado || 0) > 0 && dados.estoqueAtacado <= 0) {
     modalMsg.textContent = "Produto com preço de atacado precisa de estoque de atacado (ou zere o preço de atacado).";
+    modalMsg.classList.remove("sucesso");
+    modalMsg.style.display = "block";
+    return;
+  }
+
+  // As fotos ficam embutidas no documento; o Firestore limita ~1 MB por
+  // documento. Confere o tamanho total antes de tentar salvar.
+  const pesoDoc = new Blob([JSON.stringify(dados)]).size;
+  if (pesoDoc > 950 * 1024) {
+    modalMsg.textContent = `As fotos deste produto somam ${(pesoDoc / 1024 / 1024).toFixed(2)} MB e o limite é 1 MB. Remova alguma foto ou use imagens menores.`;
     modalMsg.classList.remove("sucesso");
     modalMsg.style.display = "block";
     return;
@@ -422,7 +579,7 @@ form.addEventListener("submit", async (evento) => {
 
 protegerPaginaAdmin(async () => {
   try {
-    await carregarCategoriasNoSelect();
+    await carregarCamadasNoForm();
     await carregarTabela();
   } catch (erro) {
     console.error("Erro ao carregar produtos:", erro);
