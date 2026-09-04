@@ -30,16 +30,20 @@ function temaInicial() {
     const salvo = localStorage.getItem(CHAVE_TEMA) ?? localStorage.getItem(CHAVE_TEMA_LEGADA);
     if (salvo === "light" || salvo === "dark") return salvo;
   } catch {
-    // segue para a preferência do sistema
+    // localStorage indisponível — cai no padrão abaixo
   }
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  // Padrão da loja: tema CLARO. Só a escolha manual salva muda isso
+  // (antes seguia o prefers-color-scheme do sistema).
+  return "light";
 }
 
-document.querySelectorAll(".theme-toggle").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    const proximo = document.body.dataset.theme === "light" ? "dark" : "light";
-    aplicarTema(proximo);
-  });
+// Delegação de evento: pega o clique em QUALQUER .theme-toggle, inclusive
+// os que são injetados por JS depois deste script — como o botão da
+// sidebar do admin (admin-sidebar.js roda como módulo, ou seja, depois).
+document.addEventListener("click", (evento) => {
+  const botao = evento.target.closest(".theme-toggle");
+  if (!botao) return;
+  aplicarTema(document.body.dataset.theme === "light" ? "dark" : "light");
 });
 
 aplicarTema(temaInicial());

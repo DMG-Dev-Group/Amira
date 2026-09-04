@@ -53,8 +53,13 @@ function montarSidebar() {
     </aside>
   `;
 
-  // O switch de tema é ligado por services/tema.js, que roda DEPOIS deste
-  // script (ordem dos <script> na página) — o botão precisa existir antes.
+  // O clique no switch de tema funciona por delegação de evento em
+  // services/tema.js (script clássico, roda ANTES deste módulo). Aqui só
+  // sincronizamos o estado visual do botão recém-criado com o tema atual.
+  document.getElementById("theme-toggle-admin")?.classList.toggle(
+    "active",
+    document.body.dataset.theme === "light"
+  );
 
   const sidebar = document.getElementById("admin-sidebar");
   const toggle = document.getElementById("admin-sidebar-toggle");
