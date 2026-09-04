@@ -551,14 +551,31 @@ preparo os arquivos; a execução final é sua (precisa de acesso ao console).
 
 ## Fase 4 — Pagamento (não adiado — decisão 04/09)
 
-23. **PIX via Mercado Pago primeiro** (§4.6): Vercel Functions `/api/pagamento`
-    + `/api/webhook-mp`, segredos em Environment Variables, Admin SDK
-    escrevendo `pedidos/{id}.pagamento.status`.
-24. **Cartão** logo em seguida, reusando a infra: tipo de pagamento na
-    preferência + `parcelasSemJuros(totalCarrinho)` (§4.4).
-25. Ajuste nas `firestore.rules` (`pagamento.metodo in [...]`, `provedorId`).
-26. Mercado Pago entra na `privacidade.html` como operador.
-27. Testes ponta a ponta no sandbox do Mercado Pago.
+**Esqueleto pronto** (branch `feat/producao-fase-1`):
+- `api/pagamento.js`, `api/webhook-mp.js`, `api/_lib/*` — funções serverless
+  da Vercel (CJS). `pagamento.js` recalcula o total no servidor, cria a
+  preferência do Mercado Pago (Checkout Pro: PIX + cartão) e devolve a URL;
+  `webhook-mp.js` valida a assinatura e atualiza `pedidos/{id}.pagamento.status`.
+- `vercel.json` já declara as duas funções; `firebase-admin` virou
+  dependência normal.
+- `firestore.rules`: `pagamento.metodo in ['pix_whatsapp','mercadopago']` no
+  create de `pedidos`. **Requer re-deploy.**
+- `.env.example` + `api/README.md` com o passo a passo.
+- `services/parcelamento.js` (front) + `api/_lib/parcelamento.js` (server):
+  a regra do §4.4, espelhada.
+
+**Falta para ativar:**
+23. Conta Mercado Pago + credenciais de teste + webhook configurado →
+    preencher as Environment Variables na Vercel.
+24. Ligar o front (`carrinho-checkout.js`): criar o pedido com
+    `metodo: 'mercadopago'`, chamar `/api/pagamento`, redirecionar para
+    `init_point`. Mostrar `parcelasSemJuros` no checkout.
+25. Fechar os `TODO` de `api/pagamento.js`: total com desconto/atacado/frete
+    (hoje é placeholder de varejo cheio) + config de "sem juros até Nx" no
+    painel do MP.
+26. Re-deploy das `firestore.rules`.
+27. Mercado Pago entra na `privacidade.html` como operador.
+28. Testes ponta a ponta no sandbox do Mercado Pago.
 
 ## Fase 5 — dívida técnica
 
