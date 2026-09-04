@@ -10,7 +10,8 @@ const itensMenu = [
   { id: "produtos", href: "produtos.html", label: "Produtos" },
   { id: "camadas", href: "camadas.html", label: "Camadas de filtro" },
   { id: "pedidos", href: "pedidos.html", label: "Pedidos" },
-  { id: "revendedores", href: "revendedores.html", label: "Revendedores" }
+  { id: "revendedores", href: "revendedores.html", label: "Revendedores" },
+  { id: "configuracoes", href: "configuracoes.html", label: "Configurações" }
 ];
 
 function montarSidebar() {

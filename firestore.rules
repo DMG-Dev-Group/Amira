@@ -29,6 +29,13 @@ service cloud.firestore {
          get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.role == "admin");
     }
 
+    // Modo atacado ligado? Sem o campo (ou sem o documento), o padrão é
+    // LIGADO — o admin desliga em configuracoes/atacado.ativo.
+    function atacadoLigado() {
+      return !exists(/databases/$(database)/documents/configuracoes/atacado) ||
+        get(/databases/$(database)/documents/configuracoes/atacado).data.get("ativo", true) == true;
+    }
+
     // ── usuarios/{uid} ───────────────────────────────────────────────────
     // Cada pessoa só lê/edita o próprio perfil. Admin pode ler todos
     // (necessário para o painel administrativo), mas ninguém pode escrever
@@ -185,7 +192,8 @@ service cloud.firestore {
         request.resource.data.itens.size() >= 1 &&
         request.resource.data.itens.size() <= 30 &&
         request.resource.data.temItemAtacado is bool &&
-        (request.resource.data.temItemAtacado == false || ehRevendedorAprovado()) &&
+        (request.resource.data.temItemAtacado == false ||
+          (ehRevendedorAprovado() && atacadoLigado())) &&
         request.resource.data.modoEntrega in ['entrega', 'retirada'] &&
         (
           (request.resource.data.modoEntrega == 'retirada' &&

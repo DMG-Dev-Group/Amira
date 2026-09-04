@@ -526,9 +526,9 @@ preparo os arquivos; a execução final é sua (precisa de acesso ao console).
 | 7 | Tema claro como padrão (3.3) | ✅ feito — `feat/producao-fase-1` |
 | 8 | Switch de tema do admin (3.4) | ✅ feito — `feat/producao-fase-1` |
 | 9 | Gap do menu sanduíche (3.6) | ✅ feito — `feat/producao-fase-1` |
-| 10 | Estoque compartilhado (3.1) | a fazer — `estoquePorModo` + form do admin (1 campo) + script de migração |
-| 11 | Toggle liga/desliga atacado (3.5) | a fazer — `configuracoes/atacado.ativo` + nova aba "Configurações" no admin + regra no `create` de `pedidos` |
-| 12 | Inputs de foto restantes por arquivo (3.2) | a fazer — extrair `services/imagem-upload.js` e reusar em banner / camadas / home |
+| 10 | Estoque compartilhado (3.1) | ✅ feito — `estoquePorModo()` devolve `produto.estoque` (fallback: maior dos legados); form do admin com 1 campo; tabela/ordenação. Falta só o **script de migração** dos produtos antigos (Fase 5, item 29). |
+| 11 | Toggle liga/desliga atacado (3.5) | ✅ feito — `configuracoes/atacado.ativo`; nova página **Configurações** no admin (atacado + PIX); navbar esconde "Atacado" e a página avisa "indisponível" quando desligado; `firestore.rules` nega pedido de atacado com o modo desligado (`atacadoLigado()`). **Requer re-deploy das rules.** |
+| 12 | Inputs de foto restantes por arquivo (3.2) | ✅ feito — `services/imagem-upload.js` (novo, compartilhado); banner "Produto da Estação" e capa de opção de camada agora são upload de arquivo. Home (`configuracoes/homeCarrossel`/`homeIphones`) segue sem UI no admin — vira tarefa própria (não é "input existente"). |
 
 ## Fase 2 — Endurecimento de segurança (🟡)
 

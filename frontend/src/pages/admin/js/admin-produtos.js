@@ -7,6 +7,7 @@ import {
   filtrosDoProduto
 } from "../../services/produtos.js";
 import { listarCamadas, camadaPrincipal } from "../../services/camadas.js";
+import { comprimirImagem, montarUploadFoto } from "../../services/imagem-upload.js";
 import { escapeHtml, urlImagemSegura } from "../../services/seguranca.js";
 import { db } from "../../services/firebase-config.js";
 import {
@@ -37,6 +38,15 @@ const selectDescontoAtivo = document.getElementById("p-desconto-ativo");
 const camposDesconto = document.getElementById("campos-desconto");
 const listaImagens = document.getElementById("lista-imagens-produto");
 const btnAddImagem = document.getElementById("btn-add-imagem");
+
+// Imagem do banner "Produto da Estação" — upload de arquivo (imagem larga,
+// então um teto de lado maior). O valor fica em bannerUpload.valor().
+const bannerUpload = montarUploadFoto(document.getElementById("p-banner-imagem-upload"), {
+  placeholder: "../images/amira-placeholder.svg",
+  textoVazio: "Escolher imagem do banner",
+  maxLado: 1400,
+  alvoBytes: 320 * 1024
+});
 
 function formatarPreco(valor) {
   return (valor || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -113,9 +123,9 @@ function ordenarLista(lista, criterio) {
     case "preco-menor":
       return copia.sort((a, b) => (a.precoVarejo || 0) - (b.precoVarejo || 0));
     case "estoque-maior":
-      return copia.sort((a, b) => estoquePorModo(b, "varejo") - estoquePorModo(a, "varejo"));
+      return copia.sort((a, b) => estoquePorModo(b) - estoquePorModo(a));
     case "estoque-menor":
-      return copia.sort((a, b) => estoquePorModo(a, "varejo") - estoquePorModo(b, "varejo"));
+      return copia.sort((a, b) => estoquePorModo(a) - estoquePorModo(b));
     default:
       return copia; // "recentes" = ordem original (mais recentes primeiro)
   }
@@ -153,8 +163,7 @@ function renderizarTabela() {
           <th>Nome</th>
           <th>${escapeHtml(camadaPrincipal(camadasCache)?.nome || "Filtro")}</th>
           <th>Preço</th>
-          <th>Est. varejo</th>
-          <th>Est. atacado</th>
+          <th>Estoque</th>
           <th>Status</th>
           <th>Ações</th>
         </tr>
@@ -171,8 +180,7 @@ function renderizarTabela() {
             </td>
             <td>${escapeHtml(rotuloPrincipal(p))}</td>
             <td>${formatarPreco(p.precoVarejo)}</td>
-            <td>${estoquePorModo(p, "varejo")}</td>
-            <td>${estoquePorModo(p, "atacado")}</td>
+            <td>${estoquePorModo(p)}</td>
             <td><span class="badge ${p.ativo ? 'badge-aprovado' : 'badge-rejeitado'}">${p.ativo ? 'Ativo' : 'Inativo'}</span></td>
             <td>
               <div class="admin-acoes-linha">
@@ -206,67 +214,10 @@ async function carregarTabela() {
 }
 
 // ── Fotos do produto: upload de arquivo → data URI comprimida ────────────
-// Sem Firebase Storage (custo zero): a foto escolhida do computador é
-// redimensionada num <canvas> e salva como data URI dentro do próprio
-// documento do produto. O Firestore limita 1 MB por documento, então a
-// compressão é agressiva e o total é conferido antes de salvar.
+// A compressão (lê arquivo → redimensiona no <canvas> → data URI JPEG) vive
+// em services/imagem-upload.js e é compartilhada com o banner, as capas de
+// camada e a home. Aqui fica só a UI de múltiplas fotos por produto.
 const MAX_FOTOS = 5;
-const ALVO_BYTES_POR_FOTO = 300 * 1024; // orçamento aproximado por foto
-
-function lerArquivoComoDataURL(arquivo) {
-  return new Promise((resolve, reject) => {
-    if (!arquivo || !arquivo.type.startsWith("image/")) {
-      reject(new Error("Escolha um arquivo de imagem (JPG, PNG, WEBP...)."));
-      return;
-    }
-    const leitor = new FileReader();
-    leitor.onload = () => resolve(leitor.result);
-    leitor.onerror = () => reject(new Error("Não foi possível ler o arquivo."));
-    leitor.readAsDataURL(arquivo);
-  });
-}
-
-function redimensionar(dataURL, maxLado, qualidade) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => {
-      let { width, height } = img;
-      const maior = Math.max(width, height);
-      if (maior > maxLado) {
-        const escala = maxLado / maior;
-        width = Math.round(width * escala);
-        height = Math.round(height * escala);
-      }
-      const canvas = document.createElement("canvas");
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext("2d");
-      ctx.fillStyle = "#ffffff"; // fundo branco: PNG transparente vira JPEG limpo
-      ctx.fillRect(0, 0, width, height);
-      ctx.drawImage(img, 0, 0, width, height);
-      resolve(canvas.toDataURL("image/jpeg", qualidade));
-    };
-    img.onerror = () => reject(new Error("Imagem inválida ou corrompida."));
-    img.src = dataURL;
-  });
-}
-
-async function comprimirFoto(arquivo) {
-  const bruto = await lerArquivoComoDataURL(arquivo);
-  // Passos progressivamente mais apertados até caber no orçamento.
-  const tentativas = [
-    [1100, 0.72],
-    [950, 0.62],
-    [800, 0.55],
-    [640, 0.5]
-  ];
-  let saida = await redimensionar(bruto, 1100, 0.72);
-  for (const [lado, q] of tentativas) {
-    if (saida.length <= ALVO_BYTES_POR_FOTO * 1.37) break; // 1.37 ≈ overhead do base64
-    saida = await redimensionar(bruto, lado, q);
-  }
-  return saida;
-}
 
 // Cada "slot" guarda a foto atual (data URI ou URL antiga) em dataset.valor.
 function criarSlotImagem(valor = "", ehPrincipal = false) {
@@ -305,7 +256,7 @@ function criarSlotImagem(valor = "", ehPrincipal = false) {
     escolher.classList.add("processando");
     setRotuloEscolher("Processando...");
     try {
-      const dataURI = await comprimirFoto(arquivo);
+      const dataURI = await comprimirImagem(arquivo);
       slot.dataset.valor = dataURI;
       preview.src = dataURI;
       setRotuloEscolher("Trocar foto");
@@ -367,9 +318,9 @@ function limparForm() {
   document.getElementById("p-banner-nome-secao").value = "Produto da estação";
   selectDescontoAtivo.value = "false";
   camposDesconto.style.display = "none";
-  document.getElementById("p-estoque-varejo").value = 0;
-  document.getElementById("p-estoque-atacado").value = 0;
+  document.getElementById("p-estoque").value = 0;
   document.getElementById("p-frete-disponivel").value = "true";
+  bannerUpload.definir("");
   modalMsg.style.display = "none";
   resetarListaImagens();
 }
@@ -396,11 +347,9 @@ function abrirModalEdicao(id) {
   document.getElementById("p-descricao").value = p.descricao || "";
   preencherListaImagens(p);
   document.getElementById("p-preco-varejo").value = p.precoVarejo || "";
-  // Compatibilidade: produtos antigos guardavam tudo em "estoque" — ele
-  // vale como estoque de varejo até o produto ser salvo de novo.
-  document.getElementById("p-estoque-varejo").value = estoquePorModo(p, "varejo");
   document.getElementById("p-preco-atacado").value = p.precoAtacado || "";
-  document.getElementById("p-estoque-atacado").value = estoquePorModo(p, "atacado");
+  // Estoque compartilhado (produtos.js normaliza os campos legados).
+  document.getElementById("p-estoque").value = estoquePorModo(p);
   document.getElementById("p-ativo").value = String(p.ativo !== false);
   document.getElementById("p-destaque").value = String(p.destaque === true);
   document.getElementById("p-frete-disponivel").value = String(p.freteDisponivel !== false);
@@ -411,7 +360,7 @@ function abrirModalEdicao(id) {
 
   selectBannerHero.value = String(p.bannerHero === true);
   camposBannerHero.style.display = p.bannerHero ? "block" : "none";
-  document.getElementById("p-banner-imagem").value = p.bannerImagemURL || "";
+  bannerUpload.definir(p.bannerImagemURL || "");
   document.getElementById("p-banner-nome-secao").value = p.bannerNomeSecao || "Produto da estação";
   document.getElementById("p-banner-etiqueta").value = p.bannerEtiqueta || "";
   document.getElementById("p-banner-titulo").value = p.bannerTitulo || "";
@@ -482,11 +431,11 @@ form.addEventListener("submit", async (evento) => {
     imagemURL,
     imagensExtras,
     precoVarejo: Number(document.getElementById("p-preco-varejo").value) || 0,
-    // Estoques independentes (A4). O campo legado "estoque" é zerado para
-    // não conflitar com estoqueVarejo daqui pra frente.
-    estoqueVarejo: Number(document.getElementById("p-estoque-varejo").value) || 0,
-    estoqueAtacado: Number(document.getElementById("p-estoque-atacado").value) || 0,
-    estoque: null,
+    // Estoque COMPARTILHADO entre varejo e atacado — um número só. Os campos
+    // legados são zerados para não confundir a leitura daqui pra frente.
+    estoque: Number(document.getElementById("p-estoque").value) || 0,
+    estoqueVarejo: null,
+    estoqueAtacado: null,
     precoAtacado: Number(document.getElementById("p-preco-atacado").value) || null,
     // Desconto opcional (A2) — o preço final é derivado da coleção produtos.
     descontoAtivo,
@@ -497,7 +446,7 @@ form.addEventListener("submit", async (evento) => {
     ativo: document.getElementById("p-ativo").value === "true",
     destaque: document.getElementById("p-destaque").value === "true",
     bannerHero,
-    bannerImagemURL: bannerHero ? document.getElementById("p-banner-imagem").value.trim() : "",
+    bannerImagemURL: bannerHero ? bannerUpload.valor() : "",
     bannerNomeSecao: bannerHero ? (document.getElementById("p-banner-nome-secao").value.trim() || "Produto da estação") : "",
     bannerEtiqueta: bannerHero ? document.getElementById("p-banner-etiqueta").value.trim() : "",
     bannerTitulo: bannerHero ? document.getElementById("p-banner-titulo").value.trim() : "",
@@ -533,13 +482,6 @@ form.addEventListener("submit", async (evento) => {
   // MENOS uma modalidade — senão não aparece em lugar nenhum da loja.
   if ((dados.precoVarejo || 0) <= 0 && (dados.precoAtacado || 0) <= 0) {
     modalMsg.textContent = "Configure pelo menos uma modalidade: preço de varejo e/ou preço de atacado.";
-    modalMsg.classList.remove("sucesso");
-    modalMsg.style.display = "block";
-    return;
-  }
-
-  if ((dados.precoAtacado || 0) > 0 && dados.estoqueAtacado <= 0) {
-    modalMsg.textContent = "Produto com preço de atacado precisa de estoque de atacado (ou zere o preço de atacado).";
     modalMsg.classList.remove("sucesso");
     modalMsg.style.display = "block";
     return;

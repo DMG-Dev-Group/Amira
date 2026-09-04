@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configurações — Painel Admin Amira</title>
+  <link rel="icon" type="image/svg+xml" href="../images/amira-favicon.svg">
+  <link rel="alternate icon" type="image/x-icon" href="../images/amira-favicon.ico">
+  <link rel="apple-touch-icon" href="../images/amira-apple-touch.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body data-theme="dark">
+
+  <div class="admin-layout">
+    <div id="admin-sidebar-slot"></div>
+
+    <main class="admin-conteudo">
+      <div class="admin-topo">
+        <div>
+          <h1>Configurações</h1>
+          <p>Ajustes globais da loja — atacado e pagamento por PIX.</p>
+        </div>
+      </div>
+
+      <!-- ── Atacado ─────────────────────────────────────────────── -->
+      <div class="admin-bloco">
+        <h2>Atacado</h2>
+
+        <div class="admin-campo config-linha">
+          <div>
+            <label for="cfg-atacado-ativo">Modo atacado</label>
+            <p class="config-ajuda">
+              Desligado: o botão "Atacado" some da loja, a página de atacado avisa
+              que está indisponível e nenhum pedido de atacado é aceito.
+            </p>
+          </div>
+          <label class="config-switch">
+            <input type="checkbox" id="cfg-atacado-ativo">
+            <span class="config-switch-trilho"></span>
+          </label>
+        </div>
+
+        <div class="admin-campo">
+          <label for="cfg-atacado-minimo">Mínimo de unidades por carrinho</label>
+          <input type="number" id="cfg-atacado-minimo" min="1" value="6">
+          <p class="config-ajuda">
+            Soma das unidades de todos os itens em modo atacado para o pedido
+            ser aceito.
+          </p>
+        </div>
+
+        <div class="admin-modal-acoes" style="justify-content:flex-start;">
+          <button class="admin-btn admin-btn-primary" id="btn-salvar-atacado">Salvar atacado</button>
+        </div>
+        <p class="admin-msg" id="msg-atacado" style="display:none;"></p>
+      </div>
+
+      <!-- ── Pagamento PIX ───────────────────────────────────────── -->
+      <div class="admin-bloco">
+        <h2>Pagamento por PIX</h2>
+        <p style="font-size:0.8rem; color:var(--text-muted,#999); margin-bottom:1rem;">
+          Exibido na tela de confirmação do pedido enquanto o pagamento
+          automático (Mercado Pago) não está no ar.
+        </p>
+
+        <div class="admin-campo">
+          <label for="cfg-pix-chave">Chave PIX</label>
+          <input type="text" id="cfg-pix-chave" placeholder="CNPJ, e-mail, telefone ou chave aleatória">
+        </div>
+        <div class="admin-campo">
+          <label for="cfg-pix-nome">Nome do favorecido</label>
+          <input type="text" id="cfg-pix-nome" placeholder="Razão social ou nome que aparece no comprovante">
+        </div>
+        <div class="admin-campo">
+          <label for="cfg-pix-instrucoes">Instruções (opcional)</label>
+          <textarea id="cfg-pix-instrucoes" rows="3" placeholder="Ex: envie o comprovante no WhatsApp para confirmar o pedido."></textarea>
+        </div>
+
+        <div class="admin-modal-acoes" style="justify-content:flex-start;">
+          <button class="admin-btn admin-btn-primary" id="btn-salvar-pix">Salvar PIX</button>
+        </div>
+        <p class="admin-msg" id="msg-pix" style="display:none;"></p>
+      </div>
+    </main>
+  </div>
+
+  <script type="module" src="js/admin-sidebar.js"></script>
+  <script src="../services/tema.js"></script>
+  <script type="module" src="js/admin-configuracoes.js"></script>
+</body>
+</html>

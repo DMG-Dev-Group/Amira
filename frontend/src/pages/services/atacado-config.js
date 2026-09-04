@@ -1,9 +1,15 @@
 // ── Configuração do atacado — Amira ─────────────────────────────────
-// O mínimo para liberar a compra em atacado é contado POR CARRINHO (soma
-// das unidades de todos os itens em modo atacado), não por produto (A3).
-// O valor fica em configuracoes/atacado.qtdMinimaCarrinho — editável no
-// Firestore sem mexer em código. Este serviço só serve para a INTERFACE
-// avisar o cliente; a validação que vale é a da Cloud Function criarPedido.
+// configuracoes/atacado:
+//   { ativo: boolean, qtdMinimaCarrinho: number }
+//
+// - "ativo": liga/desliga o modo atacado da loja inteira (editável na aba
+//   Configurações do admin). Sem o campo, o atacado é considerado LIGADO.
+// - "qtdMinimaCarrinho": mínimo de unidades (somando todos os itens em modo
+//   atacado) para o pedido ser aceito (A3).
+//
+// Este serviço serve à INTERFACE. A validação que vale é a das
+// firestore.rules (o create de "pedidos" exige revendedor aprovado + o
+// atacado ligado quando há item de atacado).
 
 import { db } from "./firebase-config.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
@@ -11,6 +17,23 @@ import { doc, getDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase
 export const MINIMO_ATACADO_CARRINHO_PADRAO = 6;
 
 let cacheMinimo = null;
+let cacheAtivo = null;
+
+/**
+ * O modo atacado está ligado? Sem o campo `ativo` (ou sem o documento), o
+ * padrão é LIGADO — não quebra nada antes de o admin configurar.
+ * Cacheado por carregamento de página.
+ */
+export async function atacadoEstaAtivo() {
+  if (cacheAtivo !== null) return cacheAtivo;
+  try {
+    const snap = await getDoc(doc(db, "configuracoes", "atacado"));
+    cacheAtivo = snap.exists() ? snap.data().ativo !== false : true;
+  } catch {
+    cacheAtivo = true;
+  }
+  return cacheAtivo;
+}
 
 /**
  * Retorna o mínimo de unidades (modo atacado) por carrinho.

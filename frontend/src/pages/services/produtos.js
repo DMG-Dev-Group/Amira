@@ -19,9 +19,10 @@
 //   imagensExtras: string[],
 //   precoVarejo: number,
 //   precoAtacado: number,         // preço por unidade no modo atacado (0/ausente = sem atacado)
-//   estoqueVarejo: number,        // estoque da modalidade varejo (A4)
-//   estoqueAtacado: number,       // estoque da modalidade atacado (A4)
-//   estoque: number,              // LEGADO: produtos antigos; vale como estoqueVarejo
+//   estoque: number,              // estoque COMPARTILHADO (varejo e atacado
+//                                 //   consomem o mesmo número)
+//   estoqueVarejo / estoqueAtacado: LEGADO — produtos ainda não re-salvos;
+//                                 //   estoquePorModo() usa o maior dos dois
 //   descontoAtivo: boolean,       // desconto opcional configurado pelo admin (A2)
 //   descontoTipo: "percentual",   // por ora só percentual (campo previsto p/ futuros tipos)
 //   descontoPercentual: number,   // 1..90 — aplicado sobre precoVarejo
@@ -91,17 +92,18 @@ export function infoPreco(produto, modo = "varejo") {
 // ── Estoque por modalidade (A4) ───────────────────────────────────────────
 
 /**
- * Estoque disponível na modalidade. Produtos antigos (só com "estoque")
- * continuam funcionando: o campo legado vale como estoque de varejo.
+ * Estoque disponível. É COMPARTILHADO entre varejo e atacado — um número só
+ * (`produto.estoque`). O parâmetro `modo` é aceito mas ignorado, só para
+ * não quebrar as chamadas antigas.
+ * Produtos ainda não re-salvos (com `estoqueVarejo`/`estoqueAtacado`
+ * separados) usam o MAIOR dos dois, para nenhuma unidade "sumir".
  */
-export function estoquePorModo(produto, modo = "varejo") {
-  if (modo === "atacado") {
-    return Number(produto.estoqueAtacado) || 0;
-  }
-  if (typeof produto.estoqueVarejo === "number") {
-    return produto.estoqueVarejo;
-  }
-  return Number(produto.estoque) || 0;
+export function estoquePorModo(produto, _modo) {
+  if (typeof produto.estoque === "number") return produto.estoque;
+  return Math.max(
+    Number(produto.estoqueVarejo) || 0,
+    Number(produto.estoqueAtacado) || 0
+  );
 }
 
 /**
