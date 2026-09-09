@@ -182,9 +182,8 @@ análogo, e o estado de cada um:
   tamanho — não só `ehAdmin()`.
 
 **Ação 🟡:** escrever a suíte de testes das rules no emulador
-(`@firebase/rules-unit-testing`). O roteiro manual de `FALHAS_REMANESCENTES.md`
-§5 vira teste quase 1:1. É isso que garante que uma regra não afrouxou sem
-ninguém ver.
+(`@firebase/rules-unit-testing`). O roteiro do **Apêndice A** vira teste
+quase 1:1. É isso que garante que uma regra não afrouxou sem ninguém ver.
 
 ## 2.4 Rate limit
 
@@ -504,9 +503,9 @@ preparo os arquivos; a execução final é sua (precisa de acesso ao console).
 
 1. **Projeto Firebase de produção** separado do `flora-5754a`. Console
    Firebase → criar projeto → registrar app web → copiar a nova config para
-   `services/firebase-config.js` e o id para `.firebaserc`. Checklist em
-   `docs/MANUAL_CONFIGURACAO.md` §5. Publicar as rules e os índices no
-   projeto novo (`firebase use <novo>` + `firebase deploy --only firestore`).
+   `services/firebase-config.js` e o id para `.firebaserc`. Checklist no
+   **Apêndice B**. Publicar as rules e os índices no projeto novo
+   (`firebase use <novo>` + `firebase deploy --only firestore`).
 2. **App Check + reCAPTCHA v3** com **Enforce** em Firestore e Auth (no
    projeto de produção). Colar a *site key* em `RECAPTCHA_V3_SITE_KEY`.
 3. **Restringir a `apiKey`** no Google Cloud → Credenciais (referrer HTTP +
@@ -516,8 +515,8 @@ preparo os arquivos; a execução final é sua (precisa de acesso ao console).
    `amira.com.br` — isso destrava a Fase 2 (Cloudflare).
 5. **Preencher `privacidade.html`** (razão social, CNPJ, endereço,
    Encarregado) + revisão jurídica.
-6. Roteiro de teste de `FALHAS_REMANESCENTES.md` §5 **contra o servidor
-   real**, logado como cliente comum.
+6. Roteiro de teste do **Apêndice A** **contra o servidor real**, logado
+   como cliente comum.
 
 ## Fase 1 — Alterações de produto (🟠)
 
@@ -581,8 +580,8 @@ preparo os arquivos; a execução final é sua (precisa de acesso ao console).
 
 28. Retenção automatizada de dados (script/rotina mensal de anonimização).
 29. Migração dos campos `estoqueVarejo`/`estoqueAtacado` legados (script).
-30. Rebrand incompleto na documentação (`README`, `ROADMAP_FUTURO`,
-    `REVIEW_DMG_2026-07` ainda dizem "Flora Beauty").
+30. Varrer o código por menções remanescentes a "Flora Beauty" / `flora-5754a`
+    hardcoded fora do `firebase-config.js`.
 
 ---
 
@@ -600,3 +599,101 @@ Fase 0 andar:
 Enquanto isso, eu sigo pela Fase 1 (itens 10–12) e preparo os arquivos da
 Fase 4 (as Vercel Functions e o `vercel.json` de rotas) para você só plugar
 as credenciais.
+
+---
+
+# Apêndice A — Roteiro de teste de segurança
+
+Rodar **contra o servidor real** (não o emulador), logado como **cliente
+comum**, pelo console do navegador. Substitui o antigo `FALHAS_REMANESCENTES.md §5`.
+
+1. **Preço não gravável:** `addDoc` em `pedidos` com um campo `total` →
+   deve falhar (`permission-denied` — allowlist de chaves).
+2. **Pedido legítimo:** checkout normal → pedido criado; a confirmação
+   mostra o total derivado; o painel admin mostra o MESMO total.
+3. **Adulteração detectável:** criar pedido com `modo: "atacado"` e
+   `temItemAtacado: false` via console → o painel exibe ⚠ no pedido.
+4. **Atacado sem aprovação:** pedido com `temItemAtacado: true` numa conta
+   não aprovada → rejeitado pelas rules.
+5. **Atacado desligado:** com `configuracoes/atacado.ativo == false`, um
+   pedido com `temItemAtacado: true` → rejeitado (`atacadoLigado()`).
+6. **Metricas:** `addDoc` em `metricas` com um campo extra → rejeitado.
+7. **usuarios:** `set` em `usuarios/{meu-uid}` com uma chave fora da
+   allowlist (ex.: `role: "admin"`) → rejeitado.
+8. **camadas:** `set` em `camadas/{x}` como cliente → rejeitado (só admin).
+9. **Cadastro:** e-mail inventado → nunca ativa, `usuarios/{uid}` não existe.
+10. **Frete por produto:** carrinho com item "só retirada" → opção Entrega
+    desabilitada com aviso.
+11. **XSS:** produto com nome `<img src=x onerror=alert(1)>` → aparece como
+    texto literal em todas as telas.
+
+---
+
+# Apêndice B — Passos de console (Firebase / Google Cloud)
+
+Substitui o antigo `MANUAL_CONFIGURACAO.md`. Só o que precisa ser feito no
+console/CLI.
+
+## Deploy
+
+```bash
+firebase deploy --only firestore:rules      # só as regras
+firebase deploy --only firestore            # regras + índices
+firebase deploy --only firestore:rules,firestore:indexes,hosting   # tudo (Firebase Hosting)
+firebase emulators:start                    # testar local (Firestore + Auth)
+```
+
+O host oficial é a **Vercel** — o deploy do site é o `git push` na branch
+que a Vercel publica. O `firebase deploy --only hosting` só serve se
+mantiver o `flora-5754a.web.app` no ar em paralelo.
+
+## App Check + reCAPTCHA v3 (anti-bot — gratuito no Spark)
+
+1. Console Firebase → **App Check** → aba *Apps* → registrar o app web com
+   **reCAPTCHA v3**. O console gera a *site key* (ligada aos domínios).
+2. No **admin do reCAPTCHA** (`google.com/recaptcha/admin`), a lista de
+   domínios da chave precisa ter **todos** os domínios onde o site roda:
+   `amira-phi.vercel.app`, `localhost` (dev), e o domínio próprio quando
+   existir.
+3. Colar a *site key* em `RECAPTCHA_V3_SITE_KEY` (já está — `firebase-config.js`).
+4. App Check → aba *APIs* → deixar em **"Monitorar"** por alguns dias;
+   conferir na aba de métricas que ~100% das requisições chegam
+   verificadas; só então **"Aplicar" (Enforce)** para **Firestore** e
+   **Authentication**.
+   > Enforçar com um domínio faltando na chave = site 100% fora do ar
+   > (`permission-denied` até em leitura pública).
+5. Testar em `localhost` com Enforce ligado: descomentar
+   `self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;` no `firebase-config.js`,
+   abrir o site, copiar o token do console e registrar em App Check →
+   Apps → ⋮ → *Gerenciar tokens de depuração*. **Nunca deixar essa linha
+   descomentada em produção.**
+
+## Restringir a `apiKey` (Google Cloud Console)
+
+APIs e Serviços → Credenciais → a "Browser key":
+- **Restrição de aplicativo:** Referenciadores HTTP → só os domínios reais
+  + `localhost` para dev.
+- **Restrição de API:** só Identity Toolkit, Cloud Firestore, Firebase
+  Installations, Token Service.
+
+## Migrar para o projeto de PRODUÇÃO
+
+1. Criar o projeto no console → registrar app web.
+2. `frontend/src/pages/services/firebase-config.js` → trocar o bloco
+   `firebaseConfig`; `.firebaserc` → trocar o id.
+3. `firebase deploy --only firestore` no projeto novo.
+4. Refazer o App Check (a chave reCAPTCHA é por projeto **e** domínio).
+5. Recriar a conta admin: `usuarios/{uid}` com `role: "admin"` (definir
+   manualmente no console) e os documentos de `configuracoes`.
+6. Firebase Auth → **Domínios autorizados** → adicionar o domínio da Vercel.
+7. Re-semear os dados (`node seed-produtos.js` com o `service-account.json`
+   do projeto novo) ou migrar.
+
+## Documentos de `configuracoes` (leitura pública, escrita só admin)
+
+| Documento | Campos | Onde se edita |
+|---|---|---|
+| `atacado` | `ativo` (bool), `qtdMinimaCarrinho` (number) | Admin → Configurações |
+| `pagamento` | `pixChave`, `pixNome`, `instrucoes` (strings) | Admin → Configurações |
+| `homeCarrossel` | `imagens` (array), `intervaloMs` (number) | ainda só no Firestore |
+| `homeIphones` | `imagens` (array) | ainda só no Firestore |

@@ -177,9 +177,10 @@ service cloud.firestore {
     // Cada item guarda só {produtoId, quantidade, modo}; preço, desconto,
     // frete e total são DERIVADOS da coleção "produtos" (que só o admin
     // escreve) na hora de exibir (checkout, confirmação e painel admin).
-    // Risco residual documentado em docs/FALHAS_REMANESCENTES.md: o shape
-    // de cada elemento de "itens" não é validável em rules (sem loops);
-    // a conferência humana do PIX barra qualquer pedido adulterado.
+    // Risco residual (ver docs/PLANO_PRODUCAO_2026-09.md, Apêndice A): o
+    // shape de cada elemento de "itens" não é validável em rules (sem
+    // loops). A função /api/pagamento recalcula o total no servidor antes
+    // de cobrar; no PIX manual, a conferência humana barra adulteração.
     match /pedidos/{pedidoId} {
       allow read: if estaLogado() &&
         (resource.data.uidComprador == request.auth.uid || ehAdmin());
