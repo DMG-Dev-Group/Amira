@@ -14,7 +14,7 @@
 // ESQUELETO: os pontos marcados com TODO precisam ser fechados antes de ir
 // para produção (cálculo de desconto/atacado/frete e a config de juros).
 
-const { db } = require("./_lib/firebase-admin");
+const { getDb } = require("./_lib/firebase-admin");
 const { criarPreferencia } = require("./_lib/mercadopago");
 const { parcelasSemJuros } = require("./_lib/parcelamento");
 const { precoFinal, calcularFrete } = require("./_lib/precos");
@@ -29,6 +29,7 @@ module.exports = async (req, res) => {
     const { pedidoId } = req.body || {};
     if (!pedidoId) return res.status(400).json({ erro: "pedidoId é obrigatório" });
 
+    const db = getDb();
     const pedidoRef = db.collection("pedidos").doc(String(pedidoId));
     const pedidoSnap = await pedidoRef.get();
     if (!pedidoSnap.exists) return res.status(404).json({ erro: "Pedido não encontrado" });
