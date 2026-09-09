@@ -133,7 +133,8 @@ export function podeSerEntregue(produto) {
  * A filtragem por camadas e a busca textual são feitas no cliente
  * (Firestore aceita só um array-contains por consulta — cruzar várias
  * camadas no servidor custaria mais leituras e latência que filtrar em
- * memória no porte deste catálogo; ver docs/ROADMAP_FUTURO.md §3.2).
+ * memória no porte deste catálogo. Reavaliar (busca facetada dedicada)
+ * a partir de ~1.000 produtos ativos.
  */
 export async function listarProdutos() {
   const colecaoRef = collection(db, COLECAO);

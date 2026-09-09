@@ -9,7 +9,8 @@
 // preço) está ativo, o catálogo carrega a lista completa uma vez e cruza
 // em memória — o Firestore aceita só um array-contains por consulta, e
 // cruzar três camadas no servidor custaria mais leituras e latência do
-// que vale neste porte de catálogo (ROADMAP_FUTURO.md §3.2).
+// que vale neste porte de catálogo. Vira dívida a partir de ~1.000
+// produtos ativos — aí é busca facetada dedicada (Algolia/Typesense).
 //
 // Estado na URL: produtos.html?tipo=perfumes,decante&origem=arabe — o
 // filtro é compartilhável e sobrevive ao F5. Links antigos com

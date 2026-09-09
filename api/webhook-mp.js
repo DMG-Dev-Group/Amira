@@ -12,7 +12,7 @@
 // e com pagamentos de sandbox antes de ligar em produção.
 
 const crypto = require("crypto");
-const { db } = require("./_lib/firebase-admin");
+const { getDb } = require("./_lib/firebase-admin");
 const { buscarPagamento } = require("./_lib/mercadopago");
 const { FieldValue } = require("firebase-admin/firestore");
 
@@ -82,7 +82,7 @@ module.exports = async (req, res) => {
       return res.status(200).end();
     }
 
-    await db.collection("pedidos").doc(String(pedidoId)).set(
+    await getDb().collection("pedidos").doc(String(pedidoId)).set(
       {
         pagamento: {
           provedorPagamentoId: String(pagamentoId),

@@ -4,9 +4,8 @@
 //
 // ⚠️ Projeto atual: "flora-5754a" — usado como AMBIENTE DE TESTES.
 // Quando migrar para o projeto de produção, além de trocar os valores
-// abaixo é preciso refazer: a chave do App Check/reCAPTCHA (ligada ao
-// domínio), a configuração das Cloud Functions e o .firebaserc.
-// Ver docs/MANUAL_CONFIGURACAO.md.
+// abaixo é preciso refazer a chave do App Check/reCAPTCHA (ligada ao
+// domínio) e o .firebaserc. Ver docs/PLANO_PRODUCAO_2026-09.md, Apêndice B.
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
 import {
@@ -41,7 +40,7 @@ export const app = initializeApp(firebaseConfig);
 // emitido apenas para o site real rodando no domínio registrado.
 //
 // O App Check é GRATUITO no plano Spark e não exige cartão.
-// PASSOS PARA ATIVAR (detalhes em docs/MANUAL_CONFIGURACAO.md):
+// PASSOS PARA ATIVAR (detalhes em docs/PLANO_PRODUCAO_2026-09.md, Apêndice B):
 //   1. Console Firebase → App Check → registrar o app web com reCAPTCHA v3
 //      (o console gera a chave do site, ligada ao domínio).
 //   2. Colar a chave em RECAPTCHA_V3_SITE_KEY abaixo.
@@ -67,7 +66,7 @@ if (!RECAPTCHA_V3_SITE_KEY.startsWith("COLE_AQUI")) {
 } else {
   console.warn(
     "[Amira] App Check DESATIVADO — configure a chave reCAPTCHA v3 em " +
-    "services/firebase-config.js (ver docs/MANUAL_CONFIGURACAO.md)."
+    "services/firebase-config.js (ver docs/PLANO_PRODUCAO_2026-09.md, Apêndice B)."
   );
 }
 

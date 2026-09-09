@@ -1,14 +1,20 @@
-// ── Confirmação de pedido + pagamento provisório (A7) ─────────────────────
-// Enquanto o gateway de pagamento real não é configurado (ver
-// docs/MANUAL_PAGAMENTO.md), o pedido nasce "aguardando_pagamento" e esta
-// página instrui o cliente a pagar por PIX ou combinar pelo WhatsApp.
-// Os dados de PIX são lidos de configuracoes/pagamento (editável pelo
-// admin no Firestore, sem mexer em código):
-//   { pixChave: "...", pixNome: "...", instrucoes: "..." }
+// ── Confirmação de pedido + pagamento ────────────────────────────────────
+// O pedido nasce "aguardando_pagamento". Esta página oferece:
+//   1. "Pagar agora" → chama /api/pagamento (Vercel Function), que cria a
+//      preferência do Mercado Pago e devolve a URL do checkout (PIX +
+//      cartão). Ver api/README.md.
+//   2. Fallback PIX manual + WhatsApp — usado quando a função de pagamento
+//      não está configurada (sem credenciais na Vercel) ou falha. Os
+//      dados de PIX vêm de configuracoes/pagamento (Admin → Configurações):
+//        { pixChave, pixNome, instrucoes }
+//
+// O STATUS do pagamento é atualizado pelo webhook /api/webhook-mp — esta
+// página só reflete o que já está gravado em pedidos/{id}.pagamento.status.
 
 import { exigirLogin } from "../services/auth.js";
 import { buscarPedidoPorId, derivarTotaisDoPedido } from "../services/pedidos.js";
 import { escapeHtml } from "../services/seguranca.js";
+import { textoParcelamento } from "../services/parcelamento.js";
 import { db } from "../services/firebase-config.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
@@ -31,16 +37,16 @@ async function buscarConfigPagamento() {
   }
 }
 
-function blocoPagamento(pedido, config, total) {
+// ── Fallback: PIX manual + WhatsApp ─────────────────────────────────────
+function blocoPixManual(pedido, config, total) {
   const linkWhatsApp = `https://wa.me/${WHATSAPP_LOJA}?text=${encodeURIComponent(
     `Olá! Acabei de fazer o pedido ${pedido.id} no valor de ${formatarPreco(total)} e quero combinar o pagamento.`
   )}`;
-
   const temPix = Boolean(config?.pixChave);
 
   return `
     <div class="pagamento-bloco">
-      <h2>Como pagar</h2>
+      <h2>Pagar por PIX manual</h2>
       ${temPix ? `
         <p class="pagamento-linha">
           <strong>PIX</strong> — chave: <code id="pix-chave">${escapeHtml(config.pixChave)}</code>
@@ -63,6 +69,74 @@ function blocoPagamento(pedido, config, total) {
   `;
 }
 
+// ── Bloco de pagamento conforme o status ───────────────────────────────
+function blocoPagamento(pedido, config, total) {
+  const status = pedido.pagamento?.status;
+
+  if (status === "aprovado") {
+    return `
+      <div class="pagamento-bloco">
+        <h2 style="color: var(--success);">✅ Pagamento confirmado</h2>
+        <p class="pagamento-linha">Seu pedido está com o pagamento confirmado. Já estamos preparando tudo.</p>
+      </div>
+    `;
+  }
+
+  if (status === "recusado") {
+    return `
+      <div class="pagamento-bloco">
+        <h2 style="color: var(--danger);">Pagamento não aprovado</h2>
+        <p class="pagamento-linha">O pagamento anterior não foi aprovado. Você pode tentar de novo:</p>
+        <button class="btn-primary" id="btn-pagar-online" style="margin-top:0.6rem;">Tentar pagamento de novo</button>
+        <p class="pagamento-linha" id="msg-pagamento" style="display:none;"></p>
+      </div>
+      ${blocoPixManual(pedido, config, total)}
+    `;
+  }
+
+  // pendente / sem status → oferece o pagamento online + o PIX manual
+  return `
+    <div class="pagamento-bloco">
+      <h2>Como pagar</h2>
+      <p class="pagamento-linha">
+        Valor: <strong>${formatarPreco(total)}</strong> — no cartão, ${escapeHtml(textoParcelamento(total))}.
+      </p>
+      <button class="btn-primary" id="btn-pagar-online" style="margin-top:0.6rem;">Pagar agora (PIX ou cartão)</button>
+      <p class="pagamento-linha" id="msg-pagamento" style="display:none;"></p>
+    </div>
+    <div id="area-pix-manual" hidden>${blocoPixManual(pedido, config, total)}</div>
+  `;
+}
+
+async function iniciarPagamentoOnline(btn, msg) {
+  btn.disabled = true;
+  const rotuloOriginal = btn.textContent;
+  btn.textContent = "Abrindo o pagamento...";
+  msg.style.display = "none";
+
+  try {
+    const resp = await fetch("/api/pagamento", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pedidoId })
+    });
+
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const dados = await resp.json();
+    const url = dados.init_point || dados.sandbox_init_point;
+    if (!url) throw new Error("Resposta sem URL de checkout");
+
+    window.location.href = url;
+  } catch (erro) {
+    console.error("Pagamento online indisponível:", erro);
+    msg.textContent = "Pagamento online indisponível no momento — use o PIX manual abaixo.";
+    msg.style.display = "block";
+    document.getElementById("area-pix-manual")?.removeAttribute("hidden");
+    btn.disabled = false;
+    btn.textContent = rotuloOriginal;
+  }
+}
+
 exigirLogin(async ({ usuario }) => {
   if (!pedidoId) {
     conteudo.innerHTML = `<p class="carrinho-vazio">Pedido não encontrado.</p>`;
@@ -81,8 +155,9 @@ exigirLogin(async ({ usuario }) => {
     return;
   }
 
-  // O pedido não guarda valores (arquitetura Spark) — o total é derivado
-  // dos preços atuais da coleção "produtos" + frete do bairro salvo.
+  // O pedido não guarda valores — o total é derivado dos preços atuais da
+  // coleção "produtos" + frete do bairro salvo. A função /api/pagamento
+  // recalcula esse mesmo total no servidor antes de cobrar.
   const [config, totais] = await Promise.all([
     buscarConfigPagamento(),
     derivarTotaisDoPedido(pedido)
@@ -102,12 +177,16 @@ exigirLogin(async ({ usuario }) => {
       ${blocoPagamento(pedido, config, totais.total)}
       <p style="font-family:'Jost', sans-serif; font-size: 0.85rem; color: var(--text-muted); margin: 1.5rem 0 2rem;">
         ${pedido.modoEntrega === "retirada"
-          ? "Retire seu pedido no Monumental Shopping, 2º piso, assim que recebermos a confirmação do pagamento."
+          ? "Retire seu pedido no Monumental Shopping, 2º piso, assim que o pagamento for confirmado."
           : "Assim que o pagamento for confirmado, entraremos em contato para combinar a entrega."}
       </p>
       <a href="produtos.html" class="btn-primary" style="text-decoration:none;">Continuar comprando</a>
     </div>
   `;
+
+  document.getElementById("btn-pagar-online")?.addEventListener("click", (e) => {
+    iniciarPagamentoOnline(e.currentTarget, document.getElementById("msg-pagamento"));
+  });
 
   const btnCopiar = document.getElementById("btn-copiar-pix");
   btnCopiar?.addEventListener("click", async () => {

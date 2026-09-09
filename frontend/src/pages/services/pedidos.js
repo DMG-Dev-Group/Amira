@@ -7,10 +7,11 @@
 // "produtos" (que só o admin escreve) na hora de exibir — no checkout,
 // na confirmação e no painel admin (ver derivarTotaisDePedidos).
 //
-// Risco residual (documentado em docs/FALHAS_REMANESCENTES.md): sem
-// servidor, quantidades/itens não são revalidados fora das rules. O
-// pagamento é manual (PIX + WhatsApp) e a loja confere o valor derivado
-// antes de enviar — um pedido adulterado é barrado na conferência humana.
+// Risco residual (ver docs/PLANO_PRODUCAO_2026-09.md, Apêndice A): sem
+// servidor, quantidades/itens não são revalidados fora das rules. A
+// função /api/pagamento RECALCULA o total no servidor antes de cobrar
+// (é ela a trava de integridade de preço); no PIX manual de fallback, a
+// conferência humana do comprovante cumpre esse papel.
 //
 // Estrutura de pedidos/{id} (exatamente o que as rules permitem):
 // {

@@ -1,37 +1,97 @@
-# Funções serverless (`/api`) — pagamento Mercado Pago
+# Pagamento — Mercado Pago (Vercel Functions)
 
-**Estado: esqueleto.** A estrutura está pronta; falta plugar credenciais e
-fechar os `TODO` marcados no código antes de ir para produção.
+## Estado atual
 
-## Arquivos
-
-| Arquivo | O quê |
+| Parte | Situação |
 |---|---|
-| `pagamento.js` | `POST /api/pagamento` `{ pedidoId }` → recalcula o total no servidor, cria a preferência do Mercado Pago (Checkout Pro: PIX + cartão), grava `pedidos/{id}.pagamento` e devolve a URL do checkout. |
-| `webhook-mp.js` | `POST /api/webhook-mp` → recebe a notificação do MP, valida a assinatura, consulta o status real e atualiza `pedidos/{id}.pagamento.status`. |
-| `_lib/firebase-admin.js` | Inicializa o Admin SDK a partir de `FIREBASE_SERVICE_ACCOUNT`. |
-| `_lib/mercadopago.js` | Cliente mínimo da API do MP (só `fetch`, sem SDK). |
-| `_lib/parcelamento.js` | Regra de parcelas sem juros (espelho de `frontend/src/pages/services/parcelamento.js`). |
+| `api/pagamento.js` | ✅ pronto — recalcula subtotal + frete no servidor, cria a preferência do Mercado Pago (Checkout Pro: PIX + cartão), grava `pedidos/{id}.pagamento` e devolve `init_point`. |
+| `api/webhook-mp.js` | ✅ pronto — valida a assinatura `x-signature`, consulta o status real na API do MP e atualiza `pedidos/{id}.pagamento.status`. |
+| `api/_lib/*` | ✅ Admin SDK, cliente do MP, regra de parcelas, cópia server-side de preço/frete. |
+| Front (`js/pedido-confirmado.js`) | ✅ botão "Pagar agora (PIX ou cartão)" → chama `/api/pagamento` → redireciona pro checkout. Se a função falhar/estiver sem credenciais, cai no **PIX manual + WhatsApp**. |
+| `firestore.rules` | ✅ o create de `pedidos` aceita `pagamento.metodo == 'mercadopago'`. **Precisa de re-deploy.** |
+| **Credenciais + webhook no painel do MP** | ❌ **você precisa fazer** (passos abaixo). |
+| Config de "sem juros até Nx" | ❌ ajuste no painel do MP (passo 5). |
 
-## Setup (quando for ativar)
+Enquanto as credenciais não estiverem na Vercel, `/api/pagamento` responde
+500 e o site usa automaticamente o PIX manual — nada quebra.
 
-1. **Conta Mercado Pago** → criar uma aplicação → pegar as credenciais de
-   **teste** (prefixo `TEST-`). Configurar o webhook apontando para
-   `https://<dominio>/api/webhook-mp` e copiar a "assinatura secreta".
-2. **Vercel → Settings → Environment Variables**: preencher tudo que está
-   em `.env.example` (`MP_ACCESS_TOKEN`, `MP_WEBHOOK_SECRET`,
-   `FIREBASE_SERVICE_ACCOUNT`, `PUBLIC_BASE_URL`).
-3. **`firestore.rules`**: já aceita `pagamento.metodo == 'mercadopago'` no
-   `create` de `pedidos`. Fazer `firebase deploy --only firestore:rules`.
-4. **Front (`carrinho-checkout.js`)** — ainda NÃO está ligado. Falta:
-   - criar o pedido com `pagamento: { metodo: 'mercadopago', status: 'pendente' }`;
-   - `fetch('/api/pagamento', { method:'POST', body: JSON.stringify({ pedidoId }) })`;
-   - redirecionar para `init_point` (ou `sandbox_init_point` em teste).
-5. **Fechar os `TODO`** em `pagamento.js`: cálculo de desconto/atacado/frete
-   no total (hoje é placeholder de preço de varejo cheio) e a config de
-   "sem juros até Nx" no painel do MP.
+## Fluxo
+
+```
+Carrinho → cria pedidos/{id} (sem valores)
+        → pedido-confirmado.html
+             "Pagar agora" → POST /api/pagamento { pedidoId }
+                  → recalcula subtotal+frete no servidor
+                  → cria preferência no Mercado Pago
+                  → grava pedidos/{id}.pagamento { metodo, provedorId, total, ... }
+                  → devolve init_point
+             redireciona → checkout do Mercado Pago (PIX ou cartão)
+        → cliente paga
+Mercado Pago → POST /api/webhook-mp
+                  → valida assinatura → consulta status real
+                  → atualiza pedidos/{id}.pagamento.status = aprovado | recusado
+        → pedido-confirmado.html reflete o status
+```
+
+## Passo a passo (setup)
+
+### 1. Conta e aplicação no Mercado Pago
+- `mercadopago.com.br/developers` → **Suas integrações** → criar aplicação
+  ("Pagamentos online" / "Checkout Pro").
+- Em **Credenciais de teste**, copiar o **Access Token** (`TEST-...`).
+
+### 2. Webhook
+- Na aplicação → **Webhooks / Notificações** → adicionar a URL:
+  `https://<seu-domínio>/api/webhook-mp`
+- Evento: **Pagamentos** (`payment`).
+- Copiar a **assinatura secreta** que o painel gera.
+
+### 3. Environment Variables na Vercel
+Project → **Settings → Environment Variables** — preencher com base no
+[`.env.example`](../.env.example):
+
+| Variável | Valor |
+|---|---|
+| `MP_ACCESS_TOKEN` | o Access Token de teste (`TEST-...`) |
+| `MP_WEBHOOK_SECRET` | a assinatura secreta do webhook |
+| `FIREBASE_SERVICE_ACCOUNT` | JSON da service account do projeto Firebase, **numa linha só** |
+| `PUBLIC_BASE_URL` | ex. `https://amira-phi.vercel.app` (sem barra no fim) |
+
+Redeployar depois de salvar.
+
+### 4. Deploy das rules
+```bash
+firebase deploy --only firestore:rules
+```
+
+### 5. Parcelas sem juros
+A regra (carrinho > R$ 1.000 → só 1x sem juros; ≤ R$ 1.000 → até 4x) é
+calculada em `api/_lib/parcelamento.js` e exibida no checkout. No **Checkout
+Pro**, quem define até quantas parcelas ficam sem juros é o painel do MP:
+**Suas integrações → sua aplicação → Checkout Pro → Parcelamento**. Se
+precisar variar por pedido, migrar para **Checkout Transparente**.
+
+### 6. Testar (sandbox)
+- Usar os **cartões de teste** do MP (`mercadopago.com.br/developers` →
+  documentação → cartões de teste) e o **usuário de teste** comprador.
+- Fazer um pedido → "Pagar agora" → pagar no sandbox → conferir que
+  `pedidos/{id}.pagamento.status` vira `aprovado` (o webhook fez isso).
+- Testar recusa (cartão de teste que recusa) e PIX de teste.
+
+### 7. Produção
+- Trocar `MP_ACCESS_TOKEN` pelo de **produção** (`APP_USR-...`) e o
+  `MP_WEBHOOK_SECRET` correspondente.
+- Conferir `PUBLIC_BASE_URL` com o domínio real.
+
+## Manutenção
+
+- `api/_lib/precos.js` é **cópia** da lógica de preço (`services/produtos.js`
+  → `infoPreco`) e frete (`services/frete.js`). Se mudar desconto ou tabela
+  de frete no front, mudar aqui também.
+- `api/_lib/parcelamento.js` ↔ `services/parcelamento.js` — mesma regra,
+  manter em sincronia.
 
 ## Rodar local
 
-`vercel dev` na raiz do projeto (usa o `.env` local, que você cria a partir
-do `.env.example`). As funções ficam em `http://localhost:3000/api/*`.
+`vercel dev` na raiz (lê o `.env` local). Funções em
+`http://localhost:3000/api/*`.

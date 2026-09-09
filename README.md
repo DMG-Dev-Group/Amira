@@ -1,93 +1,106 @@
-# Flora Beauty — E-commerce (Flora Boutique)
+# Amira — E-commerce
 
-Loja virtual de perfumes, maquiagem e acessórios (varejo + atacado para revendedores com CNPJ), operando em São Luís–MA. Projeto da DMG.
+Loja virtual de **perfumes, decantes, miniaturas e periféricos de celular**
+(varejo + atacado para revendedores com CNPJ), São Luís–MA. Projeto da DMG.
 
-> **Nota histórica:** versões antigas deste README descreviam um plano com React/Express/PostgreSQL/Prisma que **nunca foi implementado**. Este documento reflete a stack REAL do projeto. Não proponha mudanças baseadas na stack antiga.
+> Versões antigas do repositório se chamavam "Flora Beauty" e descreviam
+> uma stack React/Express/PostgreSQL que **nunca foi implementada**. Este
+> README reflete o estado real.
 
 ---
 
-## Stack real
+## Stack
 
 | Camada | Tecnologia |
 |--------|------------|
-| Frontend | **HTML/CSS/JavaScript vanilla** (módulos ES via CDN) — uma página por rota em `frontend/src/pages/` |
-| Banco de dados | **Cloud Firestore** (regras em `firestore.rules` — padrão: negar) |
-| Autenticação | **Firebase Auth** (e-mail/senha com verificação obrigatória + Google) |
-| Backend | **NENHUM — plano Spark (custo zero)**. Pedidos são criados pelo cliente **sem nenhum campo monetário** (allowlist nas rules); preço/frete/total são derivados da coleção `produtos` na exibição, e o valor é conferido manualmente no PIX (`docs/FALHAS_REMANESCENTES.md` §1) |
-| Anti-bot | **Firebase App Check** (reCAPTCHA v3, gratuito no Spark) — exige configuração no console, ver `docs/MANUAL_CONFIGURACAO.md` |
-| Pagamento | **PIX manual + WhatsApp** (`wa.me`, gratuito) — ver `docs/MANUAL_PAGAMENTO.md` |
-| Hospedagem | **Firebase Hosting** (serve `frontend/src/pages/`) |
-| Dependências npm | apenas `firebase` e `boxicons` (o site usa SDK via CDN; o pacote npm existe por compatibilidade) |
+| Frontend | **HTML/CSS/JS vanilla** (módulos ES via CDN), uma página por rota em `frontend/src/pages/`. Sem build. |
+| Banco | **Cloud Firestore** (regras em `firestore.rules` — padrão: negar) |
+| Auth | **Firebase Auth** (e-mail/senha com verificação obrigatória + Google) |
+| Funções serverless | **Vercel Functions** em `api/` (só pagamento — Mercado Pago) |
+| Anti-bot | **Firebase App Check** (reCAPTCHA v3) |
+| Pagamento | **Mercado Pago** (Checkout Pro: PIX + cartão) — em integração; fallback PIX manual + WhatsApp |
+| Hospedagem | **Vercel** (`vercel.json` aponta o output para `frontend/src/pages/`) |
+| npm | `firebase` (via CDN no site), `firebase-admin` (seed + funções) |
 
-**Projeto Firebase atual:** `flora-5754a` — **ambiente de testes**, plano **Spark**. A migração para produção está documentada em `docs/MANUAL_CONFIGURACAO.md` (seção 5).
+**Projeto Firebase atual:** `flora-5754a` — **ambiente de testes**. A
+migração para um projeto de produção está no Apêndice B do plano.
 
-> ⚠️ **Não reintroduza Cloud Functions sem alinhar orçamento**: elas exigem o plano Blaze (cartão + pré-pagamento), descartado na rodada 2. O plano de retorno está em `docs/ROADMAP_FUTURO.md` (item 0).
-
-## Estrutura de pastas
+## Estrutura
 
 ```
-├── frontend/src/pages/        # o site (cada .html é uma rota)
-│   ├── js/                    # scripts específicos de página
-│   ├── services/              # ÚNICA camada de acesso a dados (Firestore/Auth)
-│   ├── styles/                # CSS (paleta em style.css :root)
+├── frontend/src/pages/     # o site (cada .html é uma rota)
+│   ├── js/                 # scripts de página
+│   ├── services/           # ÚNICA camada de acesso a dados (Firestore/Auth)
+│   ├── styles/             # CSS (tokens de cor em style.css :root)
 │   ├── images/
-│   └── admin/                 # painel administrativo (produtos, pedidos, revendedores, categorias)
-├── docs/                      # documentação da revisão 2026-07 (manuais, alterações, roadmap)
-├── firestore.rules            # regras de segurança do banco (default-deny)
+│   └── admin/              # painel (produtos, camadas, pedidos, revendedores, configurações)
+├── api/                    # Vercel Functions — pagamento Mercado Pago (ver api/README.md)
+├── docs/PLANO_PRODUCAO_2026-09.md   # plano vigente + análise de segurança + apêndices
+├── firestore.rules         # regras do banco (default-deny)
 ├── firestore.indexes.json
-├── firebase.json              # hosting + firestore
-└── seed-produtos.js           # popular produtos de exemplo no ambiente de testes
+├── firebase.json           # config Firestore (o hosting é a Vercel)
+├── vercel.json
+├── .env.example            # env vars das funções (Mercado Pago, service account)
+└── seed-produtos.js        # popular camadas + produtos de exemplo (precisa de service-account.json)
 ```
 
-## Regras do projeto (leia antes de mexer)
+## Regras do projeto (ler antes de mexer)
 
-1. **Toda leitura/escrita de dados passa por `services/`** — páginas nunca falam com o Firestore direto. Isso mantém a troca futura de backend (ex.: integração Nuvemshop) barata.
-2. **Nenhum valor monetário do cliente é gravado ou confiado.** Pedidos não carregam preço (allowlist nas rules); totais são derivados de `produtos` na exibição; a conferência humana do PIX é a trava final.
-3. **Texto dinâmico nunca entra cru em `innerHTML`** — use `escapeHtml()` e `urlImagemSegura()` de `services/seguranca.js`.
-4. **Toda coleção nova precisa de regra correspondente** em `firestore.rules` (o padrão do banco é negar).
-5. Frete é calculado 100% no cliente, em `services/frete.js` — único lugar para editar zonas/valores.
+1. **Toda leitura/escrita de dados passa por `services/`** — páginas nunca
+   falam com o Firestore direto.
+2. **Nenhum valor monetário do cliente é gravado ou confiado.** O pedido
+   não carrega preço (allowlist nas rules); o total é recalculado **no
+   servidor** por `api/pagamento.js` antes de cobrar (no PIX manual de
+   fallback, a conferência humana do comprovante).
+3. **Texto dinâmico nunca entra cru em `innerHTML`** — `escapeHtml()` e
+   `urlImagemSegura()` de `services/seguranca.js`.
+4. **Toda coleção nova precisa de regra** em `firestore.rules`, com
+   allowlist de chaves e limite de tamanho — não só `ehAdmin()`.
+5. **Segredos** (token do Mercado Pago, service account) só em Environment
+   Variables da Vercel — nunca no cliente. A `apiKey` do Firebase no
+   `firebase-config.js` é **pública por design**, não é segredo.
+6. Frete é calculado em `services/frete.js` (cliente) e replicado em
+   `api/_lib/precos.js` (servidor) — manter os dois em sincronia.
+7. Imagens: upload de arquivo → data URI no próprio documento
+   (`services/imagem-upload.js`), sem Firebase Storage.
 
-## Rodando localmente
+## Rodar localmente
 
 ```bash
-# site estático (qualquer servidor serve):
+# site estático:
 python -m http.server 5500 --directory frontend/src/pages
+
+# funções de pagamento (precisa de .env a partir do .env.example):
+vercel dev
 
 # emuladores do Firebase (Firestore + Auth):
 firebase emulators:start
-# (descomente as linhas connect*Emulator em services/firebase-config.js)
 ```
+
+> Com o App Check enforçado no `flora-5754a`, o `localhost` precisa de um
+> debug token, ou o Firestore recusa tudo. Ver Apêndice B do plano.
 
 ## Deploy
 
-```bash
-firebase deploy --only hosting            # site
-firebase deploy --only firestore:rules    # regras
-```
-
-⚠️ As regras novas e o site **precisam ir ao ar juntos** — o front novo grava pedidos no formato que as rules novas exigem (sem campos de valor). Passo a passo: `docs/MANUAL_CONFIGURACAO.md`.
+- **Site:** `git push` na branch que a Vercel publica.
+- **Regras:** `firebase deploy --only firestore:rules`
+- **Índices:** `firebase deploy --only firestore:indexes`
 
 ## Documentação
 
 | Documento | Conteúdo |
 |-----------|----------|
-| [docs/ALTERACOES_2026-07_R2.md](docs/ALTERACOES_2026-07_R2.md) | **Rodada 2:** re-arquitetura custo zero (sem Cloud Functions) e ajustes de UX |
-| [docs/ALTERACOES_2026-07.md](docs/ALTERACOES_2026-07.md) | Rodada 1: o que mudou, por que e onde |
-| [docs/ESTADO_ANTERIOR.md](docs/ESTADO_ANTERIOR.md) | Diagnóstico do site antes da revisão (falhas e bugs) |
-| [docs/FALHAS_REMANESCENTES.md](docs/FALHAS_REMANESCENTES.md) | O que ainda falta / riscos conhecidos após a revisão |
-| [docs/MANUAL_CONFIGURACAO.md](docs/MANUAL_CONFIGURACAO.md) | Passos manuais: rules, App Check, rotina operacional, migração p/ produção |
-| [docs/MANUAL_PAGAMENTO.md](docs/MANUAL_PAGAMENTO.md) | PIX manual + WhatsApp (gratuito) e como cadastrar a chave PIX |
-| [docs/ROADMAP_FUTURO.md](docs/ROADMAP_FUTURO.md) | Integração Nuvemshop e próximas evoluções |
-| `INSTRUCOES_*.md` | Anotações históricas de etapas anteriores do projeto |
+| [docs/PLANO_PRODUCAO_2026-09.md](docs/PLANO_PRODUCAO_2026-09.md) | Plano vigente: fases para produção, análise de segurança/criptografia, decisões, e **Apêndice A** (roteiro de teste de segurança) + **Apêndice B** (passos de console Firebase/Google Cloud) |
+| [api/README.md](api/README.md) | Integração de pagamento Mercado Pago — arquitetura e passo a passo de setup |
 
 ## Modelo de dados (coleções)
 
 | Coleção | Leitura | Escrita | Observações |
 |---------|---------|---------|-------------|
-| `produtos` | pública | admin | preços, estoques por modalidade (`estoqueVarejo`/`estoqueAtacado`), desconto opcional |
-| `categorias` | pública | admin | slug estável usado nos filtros |
-| `configuracoes` | pública | admin | `atacado` (mínimo por carrinho), `pagamento` (PIX), `homeCarrossel` |
-| `usuarios/{uid}` | dono/admin | dono (restrito) | perfil só nasce com e-mail verificado; `role`/aprovação de revenda só via admin |
+| `produtos` | pública | admin | preços, `estoque` (compartilhado varejo/atacado), desconto opcional, `filtros` por camada, imagens como data URI |
+| `camadas` | pública | admin (shape validado) | eixos de filtro do catálogo (Tipo, Origem, Gênero…); a de menor `ordem` é a principal |
+| `configuracoes` | pública | admin | `atacado` (`ativo`, `qtdMinimaCarrinho`), `pagamento` (PIX), `homeCarrossel`, `homeIphones` |
+| `usuarios/{uid}` | dono/admin | dono (allowlist) | perfil só nasce com e-mail verificado; `role` e aprovação de revenda só via admin; telefone, nascimento, consentimento LGPD |
 | `carrinhos/{uid}` | dono | dono | valores de exibição; nada aqui é fonte de verdade de preço |
-| `pedidos` | dono/admin | dono (create restrito) | **sem campos monetários** (allowlist nas rules); totais derivados de `produtos` na exibição |
-| `metricas` | admin | create público com shape validado | telemetria anônima de visitas |
+| `pedidos` | dono/admin | dono (create com allowlist) | **sem campos monetários no create**; total gravado pela função de pagamento (Admin SDK); `pagamento.status` atualizado pelo webhook |
+| `metricas` | admin | create público (shape validado) | telemetria anônima de visitas; só roda com consentimento de cookies |
