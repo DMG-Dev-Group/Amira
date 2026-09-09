@@ -17,6 +17,7 @@
 const { db } = require("./_lib/firebase-admin");
 const { criarPreferencia } = require("./_lib/mercadopago");
 const { parcelasSemJuros } = require("./_lib/parcelamento");
+const { precoFinal, calcularFrete } = require("./_lib/precos");
 const { FieldValue } = require("firebase-admin/firestore");
 
 module.exports = async (req, res) => {
@@ -42,7 +43,8 @@ module.exports = async (req, res) => {
     if (itens.length === 0) return res.status(422).json({ erro: "Pedido sem itens" });
 
     const linhas = [];
-    let total = 0;
+    let subtotal = 0;
+    let pesoGramas = 0;
 
     for (const item of itens) {
       const prodSnap = await db.collection("produtos").doc(String(item.produtoId)).get();
@@ -50,14 +52,12 @@ module.exports = async (req, res) => {
         return res.status(422).json({ erro: `Produto ${item.produtoId} não existe mais` });
       }
       const prod = prodSnap.data();
-
-      // TODO: replicar a lógica de services/produtos.js -> infoPreco()
-      // (desconto do admin, preço de varejo x atacado conforme item.modo).
-      // Placeholder: preço de varejo cheio.
-      const precoUnit = Number(prod.precoVarejo) || 0;
+      const modo = item.modo === "atacado" ? "atacado" : "varejo";
       const qtd = Math.max(1, Number(item.quantidade) || 1);
+      const precoUnit = precoFinal(prod, modo); // desconto do admin + varejo/atacado
 
-      total += Math.round(precoUnit * qtd * 100) / 100;
+      subtotal += Math.round(precoUnit * qtd * 100) / 100;
+      pesoGramas += (Number(prod.peso) || 0) * qtd;
       linhas.push({
         title: String(prod.nome || "Produto").slice(0, 250),
         quantity: qtd,
@@ -66,9 +66,21 @@ module.exports = async (req, res) => {
       });
     }
 
-    // TODO: somar o frete quando pedido.modoEntrega === "entrega"
-    // (regra em frontend/src/pages/services/frete.js).
+    // Frete — só quando a entrega for em casa (retirada = grátis).
+    let frete = null;
+    if (pedido.modoEntrega === "entrega") {
+      frete = calcularFrete(pedido.endereco && pedido.endereco.bairro, pesoGramas);
+      if (frete.valor > 0) {
+        linhas.push({
+          title: `Frete${frete.zonaNome ? ` — ${frete.zonaNome}` : ""}`,
+          quantity: 1,
+          unit_price: frete.valor,
+          currency_id: "BRL"
+        });
+      }
+    }
 
+    const total = Math.round((subtotal + (frete ? frete.valor : 0)) * 100) / 100;
     if (total <= 0) return res.status(422).json({ erro: "Total do pedido inválido" });
 
     const maxSemJuros = parcelasSemJuros(total);
@@ -103,6 +115,8 @@ module.exports = async (req, res) => {
           metodo: "mercadopago",
           provedorId: pref.id,
           status: "pendente",
+          subtotal,
+          frete: frete ? frete.valor : 0,
           total,
           maxSemJuros,
           atualizadoEm: FieldValue.serverTimestamp()
