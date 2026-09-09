@@ -8,6 +8,7 @@ import {
   reordenarCamadas,
   gerarSlug
 } from "../../services/camadas.js";
+import { montarUploadFoto } from "../../services/imagem-upload.js";
 import { escapeHtml, urlImagemSegura } from "../../services/seguranca.js";
 
 let camadasCache = [];
@@ -29,8 +30,15 @@ const formOpcao = document.getElementById("form-opcao");
 const modalOpcaoTitulo = document.getElementById("modal-opcao-titulo");
 const modalOpcaoMsg = document.getElementById("modal-opcao-msg");
 const inputOpcaoNome = document.getElementById("opcao-nome");
-const inputOpcaoImagem = document.getElementById("opcao-imagem");
 const campoOpcaoImagem = document.getElementById("campo-opcao-imagem");
+const opcaoImagem = montarUploadFoto(document.getElementById("opcao-imagem-upload"), {
+  placeholder: "../images/amira-placeholder.svg",
+  textoVazio: "Escolher imagem de capa",
+  // As capas ficam TODAS dentro do mesmo documento da camada, que o
+  // Firestore corta em 1 MB — orçamento apertado por capa.
+  maxLado: 900,
+  alvoBytes: 110 * 1024
+});
 const btnSalvarOpcao = document.getElementById("btn-salvar-opcao");
 
 // ── Render ──────────────────────────────────────────────────────────────
@@ -226,9 +234,10 @@ function abrirModalOpcao(camadaId, indice) {
     const op = camada?.opcoes[indice];
     modalOpcaoTitulo.textContent = "Editar opção";
     inputOpcaoNome.value = op?.nome || "";
-    inputOpcaoImagem.value = op?.imagemURL || "";
+    opcaoImagem.definir(op?.imagemURL || "");
   } else {
     modalOpcaoTitulo.textContent = "Nova opção";
+    opcaoImagem.definir("");
   }
   modalOpcao.style.display = "flex";
 }
@@ -261,7 +270,7 @@ formOpcao.addEventListener("submit", async (evento) => {
   if (!camada) return;
 
   const nome = inputOpcaoNome.value.trim();
-  const imagemURL = inputOpcaoImagem.value.trim();
+  const imagemURL = opcaoImagem.valor();
   if (!nome) {
     modalOpcaoMsg.textContent = "Informe o nome da opção.";
     modalOpcaoMsg.style.display = "block";
@@ -287,6 +296,14 @@ formOpcao.addEventListener("submit", async (evento) => {
       return;
     }
     novas.push({ nome, slug, imagemURL });
+  }
+
+  // As capas ficam embutidas no documento da camada; o Firestore corta em
+  // ~1 MB. Confere o total antes de tentar salvar.
+  if (new Blob([JSON.stringify(novas)]).size > 900 * 1024) {
+    modalOpcaoMsg.textContent = "As imagens de capa desta camada somam perto de 1 MB. Use imagens menores ou dê capa a menos opções.";
+    modalOpcaoMsg.style.display = "block";
+    return;
   }
 
   btnSalvarOpcao.disabled = true;

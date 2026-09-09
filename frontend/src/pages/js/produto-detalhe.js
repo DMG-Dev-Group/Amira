@@ -81,12 +81,12 @@ async function carregarProduto() {
 
   if (consentiuAnalytics()) registrarVisita(`produto:${p.id}`, "produto");
 
-  // Estoque de varejo e atacado são independentes (A4). O varejo é
-  // OPCIONAL (R2 6.1): um produto pode existir só no atacado — nesse
-  // caso, esta página não mostra preço/quantidade de varejo.
+  // Estoque é compartilhado varejo/atacado. O varejo é OPCIONAL (R2 6.1):
+  // um produto pode existir só no atacado — nesse caso, esta página não
+  // mostra preço/quantidade de varejo.
   const temVarejo = disponivelNoModo(p, "varejo");
-  const estoqueVarejo = estoquePorModo(p, "varejo");
-  const disponivel = temVarejo && estoqueVarejo > 0;
+  const estoque = estoquePorModo(p);
+  const disponivel = temVarejo && estoque > 0;
   const preco = infoPreco(p, "varejo");
   const somenteRetirada = !podeSerEntregue(p);
   const todasImagens = [p.imagemURL, ...(p.imagensExtras || [])].filter(Boolean);
@@ -118,7 +118,7 @@ async function carregarProduto() {
       </div>
       <div class="produto-info">
         <h1>${escapeHtml(p.nome)}</h1>
-        <p class="produto-sku">SKU: ${escapeHtml(p.sku || "—")}</p>
+        ${p.sku ? `<p class="produto-sku">SKU: ${escapeHtml(p.sku)}</p>` : ""}
 
         ${temVarejo ? `
           <div class="produto-preco">
@@ -145,7 +145,7 @@ async function carregarProduto() {
 
         ${temVarejo ? `
           <p class="produto-estoque ${disponivel ? "disponivel" : "indisponivel"}">
-            ${disponivel ? `Em estoque (${estoqueVarejo} unidades)` : "Produto fora de estoque"}
+            ${disponivel ? `Em estoque (${estoque} unidades)` : "Produto fora de estoque"}
           </p>
         ` : ""}
 
@@ -153,7 +153,7 @@ async function carregarProduto() {
           <div class="produto-qtd-wrap">
             <div class="produto-qtd-controle">
               <button type="button" id="qtd-menos">−</button>
-              <input type="number" id="qtd-input" value="1" min="1" max="${estoqueVarejo}">
+              <input type="number" id="qtd-input" value="1" min="1" max="${estoque}">
               <button type="button" id="qtd-mais">+</button>
             </div>
           </div>

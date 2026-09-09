@@ -10,7 +10,8 @@ const itensMenu = [
   { id: "produtos", href: "produtos.html", label: "Produtos" },
   { id: "camadas", href: "camadas.html", label: "Camadas de filtro" },
   { id: "pedidos", href: "pedidos.html", label: "Pedidos" },
-  { id: "revendedores", href: "revendedores.html", label: "Revendedores" }
+  { id: "revendedores", href: "revendedores.html", label: "Revendedores" },
+  { id: "configuracoes", href: "configuracoes.html", label: "Configurações" }
 ];
 
 function montarSidebar() {
@@ -53,8 +54,13 @@ function montarSidebar() {
     </aside>
   `;
 
-  // O switch de tema é ligado por services/tema.js, que roda DEPOIS deste
-  // script (ordem dos <script> na página) — o botão precisa existir antes.
+  // O clique no switch de tema funciona por delegação de evento em
+  // services/tema.js (script clássico, roda ANTES deste módulo). Aqui só
+  // sincronizamos o estado visual do botão recém-criado com o tema atual.
+  document.getElementById("theme-toggle-admin")?.classList.toggle(
+    "active",
+    document.body.dataset.theme === "light"
+  );
 
   const sidebar = document.getElementById("admin-sidebar");
   const toggle = document.getElementById("admin-sidebar-toggle");

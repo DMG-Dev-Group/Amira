@@ -70,8 +70,11 @@
           <input type="text" id="opcao-nome" required placeholder="Ex: Árabe">
         </div>
         <div class="admin-campo" id="campo-opcao-imagem">
-          <label for="opcao-imagem">Imagem de capa (opcional)</label>
-          <input type="url" id="opcao-imagem" placeholder="https://... (usada na seção 'Nossas categorias' da home)">
+          <label>Imagem de capa (opcional)</label>
+          <div id="opcao-imagem-upload"></div>
+          <small style="display:block; margin-top:0.35rem; color:var(--text-muted,#999); font-size:0.72rem;">
+            Usada na seção "Nossas categorias" da home.
+          </small>
         </div>
         <p class="admin-msg" id="modal-opcao-msg" style="display:none;"></p>
         <div class="admin-modal-acoes">

@@ -1833,6 +1833,20 @@ body[data-theme="light"] .social-btn {
   flex-shrink: 0;
   color: var(--gold);
 }
+
+/* Opções da camada principal injetadas por navegacao-camadas.js — não têm
+   ícone, então o texto precisa recuar para alinhar com os itens que têm
+   (0.8rem de padding + 18px de ícone + 0.8rem de gap). */
+.mobile-menu-sublink {
+  padding-top: 0.6rem;
+  padding-bottom: 0.6rem;
+  padding-left: calc(0.8rem + 18px + 0.8rem);
+  font-size: 0.86rem;
+  color: var(--text-muted);
+}
+.mobile-menu-sublink:hover {
+  color: var(--text-main);
+}
 .mobile-menu-badge {
   margin-left: auto;
   background: var(--gold);

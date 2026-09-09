@@ -93,30 +93,23 @@
           </small>
         </div>
 
-        <!-- Varejo agora é OPCIONAL (R2 item 6.1): um produto pode existir
-             só no atacado. Deixe o preço de varejo vazio/zero para isso. -->
+        <!-- Varejo e atacado são OPCIONAIS (R2 item 6.1): um produto pode
+             existir só num dos dois. Deixe o preço vazio/zero para isso. -->
         <div class="admin-campo-grid">
           <div class="admin-campo">
             <label for="p-preco-varejo">Preço varejo (R$) — opcional</label>
             <input type="number" id="p-preco-varejo" min="0" step="0.01">
           </div>
           <div class="admin-campo">
-            <label for="p-estoque-varejo">Estoque varejo (unidades)</label>
-            <input type="number" id="p-estoque-varejo" min="0" value="0">
-          </div>
-        </div>
-
-        <!-- Estoques independentes por modalidade (A4): o produto pode
-             existir só no varejo, só no atacado, ou nos dois. -->
-        <div class="admin-campo-grid">
-          <div class="admin-campo">
             <label for="p-preco-atacado">Preço atacado/un. (R$) — opcional</label>
             <input type="number" id="p-preco-atacado" min="0" step="0.01">
           </div>
-          <div class="admin-campo">
-            <label for="p-estoque-atacado">Estoque atacado (unidades)</label>
-            <input type="number" id="p-estoque-atacado" min="0" value="0">
-          </div>
+        </div>
+
+        <!-- Estoque COMPARTILHADO: varejo e atacado consomem o mesmo número. -->
+        <div class="admin-campo">
+          <label for="p-estoque">Estoque (unidades)</label>
+          <input type="number" id="p-estoque" min="0" value="0">
         </div>
         <small style="display:block; margin:-0.4rem 0 1rem; color:var(--text-muted,#999); font-size:0.72rem;">
           O mínimo de atacado agora é por carrinho (não por produto) — configurável
@@ -193,8 +186,11 @@
             <input type="text" id="p-banner-nome-secao" placeholder="Produto da estação">
           </div>
           <div class="admin-campo">
-            <label for="p-banner-imagem">Imagem do banner (opcional)</label>
-            <input type="url" id="p-banner-imagem" placeholder="https://... (deixe vazio para usar a imagem principal do produto)">
+            <label>Imagem do banner (opcional)</label>
+            <div id="p-banner-imagem-upload"></div>
+            <small style="display:block; margin-top:0.35rem; color:var(--text-muted,#999); font-size:0.72rem;">
+              Deixe vazio para usar a foto principal do produto.
+            </small>
           </div>
           <div class="admin-campo">
             <label for="p-banner-etiqueta">Etiqueta (ex: Lançamento, Edição Limitada)</label>

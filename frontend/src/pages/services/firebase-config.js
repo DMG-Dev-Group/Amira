@@ -49,7 +49,10 @@ export const app = initializeApp(firebaseConfig);
 //
 // Enquanto a chave for o placeholder, o App Check fica desligado para não
 // derrubar o site — mas o item SÓ está completo depois dos passos acima.
-const RECAPTCHA_V3_SITE_KEY = "COLE_AQUI_A_CHAVE_RECAPTCHA_V3";
+// Chave PÚBLICA do reCAPTCHA v3 (site key) — pode ir no cliente. É por
+// DOMÍNIO: ao migrar para o projeto de produção / domínio próprio, refazer
+// no console. O App Check só passa a valer com "Aplicar" (Enforce) ligado.
+const RECAPTCHA_V3_SITE_KEY = "6Le2X6gtAAAAALP05OjPoG7YYzzUQCJtc1PBDL3S";
 
 // Para testar em localhost com App Check já ativado, descomente a linha
 // abaixo, recarregue a página e registre o token exibido no console do

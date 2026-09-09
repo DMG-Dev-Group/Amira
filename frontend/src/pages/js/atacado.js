@@ -13,7 +13,7 @@ import { observarAuth } from "../services/auth.js";
 import { listarProdutosAtacado, estoquePorModo, infoPreco } from "../services/produtos.js";
 import { adicionarAoCarrinho } from "../services/carrinho.js";
 import { escapeHtml, urlImagemSegura } from "../services/seguranca.js";
-import { obterMinimoAtacadoCarrinho } from "../services/atacado-config.js";
+import { obterMinimoAtacadoCarrinho, atacadoEstaAtivo } from "../services/atacado-config.js";
 
 const conteudo = document.getElementById("atacado-conteudo");
 
@@ -213,8 +213,21 @@ function configurarBotoesAtacado(produtos) {
 }
 
 // ── Inicialização ──────────────────────────────────────────────────────────
-observarAuth(({ usuario, perfil }) => {
+observarAuth(async ({ usuario, perfil }) => {
   usuarioAtual = usuario;
+
+  if (!(await atacadoEstaAtivo())) {
+    conteudo.innerHTML = `
+      <div class="atacado-cabecalho">
+        <h1>Atacado</h1>
+        <p>
+          O atacado está <strong>temporariamente indisponível</strong>. Fale com a
+          gente pelo WhatsApp para saber quando volta.
+        </p>
+        <a href="index.html" class="btn-outline" style="text-decoration:none; display:inline-block; margin-top:0.8rem;">Voltar para a loja</a>
+      </div>`;
+    return;
+  }
 
   const ehAdmin = perfil?.role === "admin";
   const ehRevendedorAprovado =
