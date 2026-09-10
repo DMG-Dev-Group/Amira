@@ -164,18 +164,26 @@
 
     <div class="catalogo-layout">
       <aside class="catalogo-filtros">
+        <div class="filtro-cabecalho">
+          <h2>Filtros</h2>
+          <button type="button" class="filtro-limpar-btn" id="btn-limpar-filtros" hidden>Limpar tudo</button>
+        </div>
         <div id="filtro-chips" class="filtro-chips" hidden></div>
         <div id="filtro-camadas"></div>
-        <div class="filtro-grupo">
-          <h3>Preço</h3>
+        <div class="filtro-grupo filtro-grupo--preco">
+          <h3>Faixa de preço</h3>
           <div class="filtro-preco-inputs">
-            <input type="number" id="filtro-preco-min" placeholder="Mín." min="0">
-            <span>—</span>
-            <input type="number" id="filtro-preco-max" placeholder="Máx." min="0">
+            <label class="filtro-preco-campo">
+              <span>Mínimo</span>
+              <input type="number" id="filtro-preco-min" placeholder="R$ 0" min="0" inputmode="numeric">
+            </label>
+            <label class="filtro-preco-campo">
+              <span>Máximo</span>
+              <input type="number" id="filtro-preco-max" placeholder="sem limite" min="0" inputmode="numeric">
+            </label>
           </div>
-          <button class="filtro-aplicar-btn" id="btn-aplicar-preco">Aplicar</button>
+          <button type="button" class="filtro-aplicar-btn" id="btn-aplicar-preco">Aplicar preço</button>
         </div>
-        <button class="filtro-limpar-btn" id="btn-limpar-filtros">Limpar filtros</button>
       </aside>
 
       <section class="catalogo-grid" id="catalogo-grid">

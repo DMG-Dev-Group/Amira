@@ -30,6 +30,12 @@ import {
   obterMinimoAtacadoCarrinho,
   contarUnidadesAtacado
 } from "../services/atacado-config.js";
+import { toast, carregando } from "../services/ui-feedback.js";
+
+const IC_LIXEIRA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M10 11v6M14 11v6"/></svg>';
+const IC_CAMINHAO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 17h4V5H2v12h3"/><path d="M20 17h2v-3.34a4 4 0 0 0-1.17-2.83L19 9h-5v8h1"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>';
+const IC_LOJINHA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l1.5-5h15L21 9M4 9v11h16V9M4 9h16M9 20v-6h6v6"/></svg>';
+const IC_CADEADO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
 
 const conteudo = document.getElementById("carrinho-conteudo");
 
@@ -107,18 +113,22 @@ function renderizarCarrinho() {
       <div class="carrinho-itens" id="lista-itens"></div>
 
       <aside class="carrinho-resumo">
-        <h2>Entrega</h2>
+        <h2>Como você quer receber</h2>
 
         <div class="modo-entrega-opcoes">
-          <button class="modo-entrega-btn ${modoEntrega === "entrega" ? "active" : ""}" data-modo="entrega" ${somenteRetirada.length > 0 ? "disabled" : ""}>
-            🚚 Entrega
+          <button type="button" class="modo-entrega-btn ${modoEntrega === "entrega" ? "active" : ""}" data-modo="entrega" ${somenteRetirada.length > 0 ? "disabled" : ""}>
+            <span class="modo-entrega-btn__ic">${IC_CAMINHAO}</span>
+            <span class="modo-entrega-btn__txt">Entrega</span>
+            <span class="modo-entrega-btn__nota">no seu endereço</span>
           </button>
-          <button class="modo-entrega-btn ${modoEntrega === "retirada" ? "active" : ""}" data-modo="retirada">
-            🏬 Retirar na loja
+          <button type="button" class="modo-entrega-btn ${modoEntrega === "retirada" ? "active" : ""}" data-modo="retirada">
+            <span class="modo-entrega-btn__ic">${IC_LOJINHA}</span>
+            <span class="modo-entrega-btn__txt">Retirar na loja</span>
+            <span class="modo-entrega-btn__nota">sem frete</span>
           </button>
         </div>
         ${somenteRetirada.length > 0 ? `
-          <p class="checkout-msg" style="display:block;">
+          <p class="carrinho-aviso">
             ${somenteRetirada.length === 1
               ? `O item "${escapeHtml(somenteRetirada[0].nome)}" só está disponível para retirada na loja.`
               : `${somenteRetirada.length} itens do carrinho só estão disponíveis para retirada na loja.`}
@@ -128,7 +138,7 @@ function renderizarCarrinho() {
 
         <div id="campos-entrega"></div>
 
-        <h2 style="margin-top:1.2rem;">Resumo do pedido</h2>
+        <h2 class="carrinho-resumo__titulo">Resumo</h2>
         <div class="resumo-linha">
           <span>Subtotal</span>
           <span>${formatarPreco(subtotal)}</span>
@@ -145,10 +155,13 @@ function renderizarCarrinho() {
           Valores calculados com os preços atuais do catálogo. O total é
           confirmado pela loja no pagamento via PIX/WhatsApp.
         </p>
-        <p class="checkout-msg" id="aviso-atacado" style="display:none;"></p>
+        <p class="carrinho-aviso" id="aviso-atacado" hidden></p>
 
-        <button class="btn-finalizar" id="btn-finalizar">Finalizar compra</button>
-        <p class="checkout-msg" id="checkout-msg" style="display:none;"></p>
+        <button class="btn-finalizar" id="btn-finalizar">
+          <span class="btn-finalizar__ic">${IC_CADEADO}</span>
+          <span>Finalizar compra</span>
+        </button>
+        <p class="carrinho-resumo__seguro">Pagamento por PIX ou cartão na próxima etapa</p>
       </aside>
     </div>
   `;
@@ -178,7 +191,7 @@ async function atualizarAvisoAtacado() {
 
   const unidadesAtacado = contarUnidadesAtacado(itensAtuais);
   if (unidadesAtacado === 0) {
-    aviso.style.display = "none";
+    aviso.hidden = true;
     return;
   }
 
@@ -188,12 +201,12 @@ async function atualizarAvisoAtacado() {
 
   if (unidadesAtacado < minimoAtacado) {
     aviso.textContent = `Atacado: seu carrinho tem ${unidadesAtacado} unidade(s) em modo atacado — o mínimo para fechar o pedido é ${minimoAtacado} unidades (somando todos os produtos).`;
-    aviso.classList.remove("sucesso");
-    aviso.style.display = "block";
+    aviso.classList.remove("carrinho-aviso--ok");
+    aviso.hidden = false;
   } else {
     aviso.textContent = `Atacado liberado: ${unidadesAtacado} unidades no carrinho (mínimo: ${minimoAtacado}).`;
-    aviso.classList.add("sucesso");
-    aviso.style.display = "block";
+    aviso.classList.add("carrinho-aviso--ok");
+    aviso.hidden = false;
   }
 }
 
@@ -226,7 +239,9 @@ function renderizarItens() {
       </div>
       <div class="carrinho-item-totais">
         <div class="preco-total">${formatarPreco(precoReal * item.quantidade)}</div>
-        <button class="carrinho-item-remover">Remover</button>
+        <button type="button" class="carrinho-item-remover" aria-label="Remover ${escapeHtml(item.nome)} do carrinho">
+          ${IC_LIXEIRA}<span>Remover</span>
+        </button>
       </div>
     </div>
   `;
@@ -246,6 +261,7 @@ function renderizarItens() {
     el.querySelector(".carrinho-item-remover").addEventListener("click", async () => {
       itensAtuais = await removerDoCarrinho(usuarioAtual.uid, produtoId, modo);
       renderizarCarrinho();
+      toast(`"${item.nome}" saiu do carrinho.`, "info", { titulo: "Item removido" });
     });
   });
 }
@@ -385,11 +401,11 @@ function atualizarResumoFrete() {
 // ── Validações de UX antes de criar o pedido ─────────────────────────────
 // (as garantias de permissão/shape são das firestore.rules; aqui é para o
 // cliente não criar um pedido que a loja teria que recusar depois)
-async function validarAntesDeFinalizar(msg) {
+async function validarAntesDeFinalizar() {
   // Produtos removidos do catálogo
   const removidos = itensAtuais.filter((i) => !produtosCache.get(i.produtoId));
   if (removidos.length > 0) {
-    msg.textContent = "Há itens indisponíveis no carrinho — remova-os para continuar.";
+    toast("Há itens indisponíveis no carrinho — remova-os para continuar.", "erro");
     return false;
   }
 
@@ -399,13 +415,13 @@ async function validarAntesDeFinalizar(msg) {
     return i.quantidade > estoquePorModo(produto, i.modo);
   });
   if (semEstoque.length > 0) {
-    msg.textContent = `Estoque insuficiente de "${semEstoque[0].nome}" — ajuste a quantidade.`;
+    toast(`Estoque insuficiente de "${semEstoque[0].nome}" — ajuste a quantidade.`, "erro");
     return false;
   }
 
   // Entrega com item só-retirada (R2 item 7)
   if (modoEntrega === "entrega" && itensSomenteRetirada().length > 0) {
-    msg.textContent = "Um dos itens do carrinho só está disponível para retirada na loja.";
+    toast("Um dos itens do carrinho só está disponível para retirada na loja.", "erro");
     return false;
   }
 
@@ -414,7 +430,7 @@ async function validarAntesDeFinalizar(msg) {
   if (unidadesAtacado > 0) {
     if (minimoAtacado === null) minimoAtacado = await obterMinimoAtacadoCarrinho();
     if (unidadesAtacado < minimoAtacado) {
-      msg.textContent = `O pedido de atacado exige no mínimo ${minimoAtacado} unidades no carrinho (você tem ${unidadesAtacado}). Adicione mais itens ou mude-os para o varejo.`;
+      toast(`O pedido de atacado exige no mínimo ${minimoAtacado} unidades no carrinho (você tem ${unidadesAtacado}). Adicione mais itens ou mude-os para o varejo.`, "erro", { titulo: "Falta pouco" });
       return false;
     }
   }
@@ -425,12 +441,8 @@ async function validarAntesDeFinalizar(msg) {
 // ── Finalizar compra ────────────────────────────────────────────────────
 function configurarBotaoFinalizar() {
   const btn = document.getElementById("btn-finalizar");
-  const msg = document.getElementById("checkout-msg");
 
   btn.addEventListener("click", async () => {
-    msg.style.display = "none";
-    msg.classList.remove("sucesso");
-
     let endereco = null;
     if (modoEntrega === "entrega") {
       const cep = document.getElementById("checkout-cep")?.value.trim();
@@ -438,21 +450,18 @@ function configurarBotaoFinalizar() {
       const bairro = document.getElementById("checkout-bairro")?.value.trim();
 
       if (!cep || cep.replace(/\D/g, "").length !== 8 || !enderecoTexto || !bairro) {
-        msg.textContent = "Preencha CEP (completo), endereço e bairro para continuar.";
-        msg.style.display = "block";
+        toast("Preencha CEP (completo), endereço e bairro para continuar.", "erro");
         return;
       }
       endereco = { cep, endereco: enderecoTexto, bairro };
       atualizarResumoFrete();
     }
 
-    if (!(await validarAntesDeFinalizar(msg))) {
-      msg.style.display = "block";
-      return;
-    }
+    if (!(await validarAntesDeFinalizar())) return;
 
     btn.disabled = true;
     btn.textContent = "Criando pedido...";
+    const fimCarregando = carregando("Criando seu pedido…");
 
     try {
       const pedidoRef = await criarPedido({
@@ -464,19 +473,20 @@ function configurarBotaoFinalizar() {
 
       await esvaziarCarrinho(usuarioAtual.uid);
 
-      msg.textContent = "Pedido criado! Redirecionando para o pagamento...";
-      msg.classList.add("sucesso");
-      msg.style.display = "block";
+      toast("Pedido criado! Estamos te levando para o pagamento.", "sucesso", { titulo: "Tudo pronto" });
 
       setTimeout(() => {
         window.location.href = `pedido-confirmado.html?id=${encodeURIComponent(pedidoRef.id)}`;
-      }, 1000);
+      }, 1100);
     } catch (erro) {
       console.error(erro);
-      msg.textContent = erro?.code === "permission-denied"
-        ? "Não foi possível criar o pedido — confirme seu e-mail e, para atacado, aguarde a aprovação da sua conta."
-        : "Não foi possível finalizar o pedido agora. Tente novamente.";
-      msg.style.display = "block";
+      fimCarregando();
+      toast(
+        erro?.code === "permission-denied"
+          ? "Não foi possível criar o pedido — confirme seu e-mail e, para atacado, aguarde a aprovação da sua conta."
+          : "Não foi possível finalizar o pedido agora. Tente novamente.",
+        "erro"
+      );
       btn.disabled = false;
       btn.textContent = "Finalizar compra";
     }

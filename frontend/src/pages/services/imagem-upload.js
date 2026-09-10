@@ -88,7 +88,9 @@ export async function comprimirImagem(arquivo, { maxLado = 1100, alvoBytes = ALV
  *   placeholder?: string,
  *   maxLado?: number,
  *   alvoBytes?: number,
- *   permiteRemover?: boolean
+ *   permiteRemover?: boolean,
+ *   classeEscolher?: string,
+ *   classeRemover?: string
  * }} [opcoes]
  */
 export function montarUploadFoto(container, {
@@ -99,7 +101,9 @@ export function montarUploadFoto(container, {
   placeholder = "images/amira-placeholder.svg",
   maxLado = 1100,
   alvoBytes = ALVO_BYTES_PADRAO,
-  permiteRemover = true
+  permiteRemover = true,
+  classeEscolher = "admin-btn admin-btn-outline admin-btn-sm",
+  classeRemover = "admin-btn admin-btn-danger admin-btn-sm"
 } = {}) {
   container.classList.add("foto-upload");
   container.dataset.valor = valor || "";
@@ -109,11 +113,11 @@ export function montarUploadFoto(container, {
       <img alt="" src="${valor ? urlImagemSegura(valor, placeholder) : placeholder}">
     </div>
     <div class="foto-upload-acoes">
-      <label class="admin-btn admin-btn-outline admin-btn-sm foto-upload-escolher">
+      <label class="${classeEscolher} foto-upload-escolher">
         <span class="foto-upload-rotulo">${valor ? textoCheio : textoVazio}</span>
         <input type="file" accept="image/*" hidden>
       </label>
-      ${permiteRemover ? `<button type="button" class="admin-btn admin-btn-danger admin-btn-sm foto-upload-remover" ${valor ? "" : "hidden"}>Remover</button>` : ""}
+      ${permiteRemover ? `<button type="button" class="${classeRemover} foto-upload-remover" ${valor ? "" : "hidden"}>Remover</button>` : ""}
     </div>
     <p class="foto-upload-msg" style="display:none;"></p>
   `;

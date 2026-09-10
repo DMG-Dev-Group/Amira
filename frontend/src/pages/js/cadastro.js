@@ -1,5 +1,6 @@
 import { cadastrarUsuario, traduzErroAuth, loginComGoogle, logoutUsuario } from "../services/auth.js";
 import { formatarCNPJ, validarCNPJ, consultarCNPJ } from "../services/cnpj.js";
+import { toast } from "../services/ui-feedback.js";
 
 const form = document.getElementById("form-cadastro");
 const inputNome = document.getElementById("cad-nome");
@@ -11,7 +12,6 @@ const inputConfirma = document.getElementById("cad-confirma");
 const inputAceiteTermos = document.getElementById("cad-aceite-termos");
 const inputAceiteMarketing = document.getElementById("cad-aceite-marketing");
 const btnCadastro = document.getElementById("btn-cadastro");
-const msg = document.getElementById("cadastro-msg");
 
 // Data de nascimento não pode ser futura nem anterior a 1900.
 if (inputNascimento) {
@@ -40,8 +40,10 @@ let tipoConta = "cliente";
 let infoEmpresaConsultada = null; // resultado da última consulta bem-sucedida
 
 function mostrarMensagem(texto, tipo = "erro") {
-  msg.textContent = texto;
-  msg.classList.toggle("sucesso", tipo === "sucesso");
+  if (!texto) return; // chamadas de "limpar" viram no-op — o toast some sozinho
+  toast(texto, tipo === "sucesso" ? "sucesso" : "erro", {
+    duracao: tipo === "sucesso" ? 7000 : undefined
+  });
 }
 
 // Formato básico de e-mail. A prova real de que o e-mail EXISTE é o link

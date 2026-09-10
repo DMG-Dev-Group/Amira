@@ -5,6 +5,8 @@
 // SyntaxError (a home só funcionava porque home-dinamica.js o importava).
 // O switch de tema agora vive em services/tema.js.
 
+import { toast } from "./ui-feedback.js";
+
 // ── Navbar: escurece ao rolar ─────────────────────────────────────────────
 const navbar = document.getElementById('navbar');
 if (navbar) {
@@ -71,7 +73,7 @@ ativarReveals();
 function handleNewsletter() {
   const email = document.getElementById('email-input').value;
   if (!email || !email.includes('@')) {
-    alert('Por favor, insira um e-mail válido.');
+    toast('Digite um e-mail válido para receber as novidades.', 'erro');
     return;
   }
   const msg = encodeURIComponent(

@@ -219,7 +219,14 @@ const CAMPOS_PERFIL_EDITAVEIS = ["nome", "telefone", "fotoURL", "dataNascimento"
 export async function atualizarPerfil(usuario, dados) {
   const atualizacoesAuth = {};
   if (dados.nome !== undefined) atualizacoesAuth.displayName = dados.nome;
-  if (dados.fotoURL !== undefined) atualizacoesAuth.photoURL = dados.fotoURL || null;
+  // O Firebase Auth rejeita photoURL muito longa. Quando a foto é uma
+  // imagem enviada do dispositivo (data URI), ela fica só no doc do
+  // Firestore — o app já lê `perfil.fotoURL` antes de `usuario.photoURL`.
+  if (dados.fotoURL !== undefined) {
+    const ehDataURI = /^data:/i.test(dados.fotoURL || "");
+    if (!ehDataURI) atualizacoesAuth.photoURL = dados.fotoURL || null;
+    else atualizacoesAuth.photoURL = null;
+  }
 
   if (Object.keys(atualizacoesAuth).length > 0) {
     await updateProfile(usuario, atualizacoesAuth);

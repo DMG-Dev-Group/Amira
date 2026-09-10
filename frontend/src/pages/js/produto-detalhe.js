@@ -5,6 +5,7 @@ import { adicionarAoCarrinho } from "../services/carrinho.js";
 import { registrarVisita } from "../services/metricas.js";
 import { consentiuAnalytics } from "../services/consentimento-cookies.js";
 import { escapeHtml, urlImagemSegura } from "../services/seguranca.js";
+import { toast } from "../services/ui-feedback.js";
 
 // ⚠️ Miguel: para mudar o tempo de troca automática das imagens do
 // produto, edite só o número abaixo (em milissegundos — 1000 = 1 segundo).
@@ -160,7 +161,6 @@ async function carregarProduto() {
           <div class="produto-acoes">
             <button class="btn-primary" id="btn-add-carrinho">Adicionar ao carrinho</button>
           </div>
-          <p class="produto-msg" id="produto-msg" style="display:none;"></p>
         ` : ""}
 
         <div class="produto-descricao">
@@ -289,7 +289,6 @@ function configurarSeletorQtd() {
 
 function configurarBotaoCarrinho() {
   const btn = document.getElementById("btn-add-carrinho");
-  const msg = document.getElementById("produto-msg");
 
   btn.addEventListener("click", async () => {
     if (!usuarioAtual) {
@@ -314,13 +313,10 @@ function configurarBotaoCarrinho() {
         quantidade,
         modo: "varejo"
       });
-      msg.textContent = "Produto adicionado ao carrinho!";
-      msg.style.display = "block";
+      toast(`${quantidade}× "${produtoAtual.nome}" no carrinho.`, "sucesso", { titulo: "Adicionado" });
     } catch (erro) {
       console.error(erro);
-      msg.textContent = "Não foi possível adicionar ao carrinho agora.";
-      msg.style.color = "var(--danger)";
-      msg.style.display = "block";
+      toast("Não foi possível adicionar ao carrinho agora. Tente novamente.", "erro");
     } finally {
       btn.disabled = false;
       btn.textContent = "Adicionar ao carrinho";
