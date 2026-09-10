@@ -1,4 +1,5 @@
 import { protegerPaginaAdmin } from "./admin-auth.js";
+import { confirmar, toast } from "../../services/ui-feedback.js";
 import { escapeHtml } from "../../services/seguranca.js";
 import { derivarTotaisDePedidos } from "../../services/pedidos.js";
 import { db } from "../../services/firebase-config.js";
@@ -114,7 +115,7 @@ async function atualizarStatus(pedidoId, novoStatus) {
     if (pedido) pedido.status = novoStatus;
   } catch (erro) {
     console.error(erro);
-    alert("Não foi possível atualizar o status agora. Tente novamente.");
+    toast("Não foi possível atualizar o status agora. Tente novamente.", "erro");
   }
 }
 

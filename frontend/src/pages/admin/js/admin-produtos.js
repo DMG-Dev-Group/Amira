@@ -1,4 +1,5 @@
 import { protegerPaginaAdmin } from "./admin-auth.js";
+import { confirmar, toast } from "../../services/ui-feedback.js";
 import {
   criarProduto,
   atualizarProduto,
@@ -302,7 +303,7 @@ function coletarImagens() {
 
 btnAddImagem.addEventListener("click", () => {
   if (slotsAtuais().length >= MAX_FOTOS) {
-    alert(`Máximo de ${MAX_FOTOS} fotos por produto.`);
+    toast(`Máximo de ${MAX_FOTOS} fotos por produto.`, "erro");
     return;
   }
   listaImagens.appendChild(criarSlotImagem("", false));
@@ -377,15 +378,20 @@ function fecharModal() {
 
 async function confirmarExclusao(id) {
   const produto = produtosCache.find((p) => p.id === id);
-  const confirmar = confirm(`Excluir o produto "${produto?.nome}"? Essa ação não pode ser desfeita.`);
-  if (!confirmar) return;
+  const ok = await confirmar({
+    titulo: `Excluir "${produto?.nome}"?`,
+    descricao: "Essa ação não pode ser desfeita.",
+    confirmar: "Excluir produto",
+    destrutivo: true
+  });
+  if (!ok) return;
 
   try {
     await excluirProduto(id);
     await carregarTabela();
   } catch (erro) {
     console.error(erro);
-    alert("Não foi possível excluir o produto agora. Tente novamente.");
+    toast("Não foi possível excluir o produto agora. Tente novamente.", "erro");
   }
 }
 

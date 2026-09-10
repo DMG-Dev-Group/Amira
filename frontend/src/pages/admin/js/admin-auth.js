@@ -3,6 +3,7 @@
 // acesse, e liga o botão de logout da sidebar.
 
 import { exigirAdmin, logoutUsuario } from "../../services/auth.js";
+import { confirmar } from "../../services/ui-feedback.js";
 
 /**
  * Protege a página atual e executa o callback quando confirmado que o
@@ -19,8 +20,7 @@ export function protegerPaginaAdmin(callback) {
     if (btnLogout) {
       btnLogout.addEventListener("click", async (evento) => {
         evento.preventDefault();
-        const confirmar = confirm("Deseja sair do painel administrativo?");
-        if (confirmar) {
+        if (await confirmar({ titulo: "Sair do painel?", confirmar: "Sair" })) {
           await logoutUsuario();
           window.location.href = "../index.html";
         }

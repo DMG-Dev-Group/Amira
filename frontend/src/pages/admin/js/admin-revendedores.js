@@ -1,4 +1,5 @@
 import { protegerPaginaAdmin } from "./admin-auth.js";
+import { confirmar, toast } from "../../services/ui-feedback.js";
 import { escapeHtml } from "../../services/seguranca.js";
 import { db } from "../../services/firebase-config.js";
 import {
@@ -104,12 +105,13 @@ function renderizarTabelas() {
 
 async function mudarStatusRevendedor(uid, novoStatus) {
   const revendedor = revendedoresCache.find((r) => r.id === uid);
-  const confirmar = confirm(
+  const nome = revendedor?.razaoSocial || revendedor?.nome || "revendedor";
+  const ok = await confirmar(
     novoStatus === "aprovado"
-      ? `Aprovar "${revendedor?.razaoSocial || revendedor?.nome}" como revendedor? Ele passará a ter acesso aos preços de atacado.`
-      : `Rejeitar a solicitação de "${revendedor?.razaoSocial || revendedor?.nome}"?`
+      ? { titulo: `Aprovar ${nome}?`, descricao: "Ele passará a ter acesso aos preços de atacado.", confirmar: "Aprovar" }
+      : { titulo: `Rejeitar ${nome}?`, descricao: "A solicitação de revenda será marcada como rejeitada.", confirmar: "Rejeitar", destrutivo: true }
   );
-  if (!confirmar) return;
+  if (!ok) return;
 
   try {
     const ref = doc(db, "usuarios", uid);
@@ -118,7 +120,7 @@ async function mudarStatusRevendedor(uid, novoStatus) {
     renderizarTabelas();
   } catch (erro) {
     console.error(erro);
-    alert("Não foi possível atualizar o status agora. Tente novamente.");
+    toast("Não foi possível atualizar o status agora. Tente novamente.", "erro");
   }
 }
 

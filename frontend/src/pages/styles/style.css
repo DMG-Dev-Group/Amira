@@ -2156,123 +2156,6 @@ body[data-theme="light"] .social-btn {
   }
 }
 
-/* ═══ Feedback: toasts + loading (services/ui-feedback.js) ═══════════════ */
-.amira-toasts {
-  position: fixed;
-  top: 4.5rem;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 9999;
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  width: min(92vw, 420px);
-  pointer-events: none;
-}
-
-.amira-toast {
-  pointer-events: auto;
-  display: flex;
-  align-items: flex-start;
-  gap: 0.7rem;
-  padding: 0.85rem 0.9rem 0.85rem 1rem;
-  border-radius: 12px;
-  background: var(--surface);
-  color: var(--text-main);
-  border: 1px solid var(--border);
-  border-left: 4px solid var(--gold);
-  box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.2);
-  font-family: 'Jost', sans-serif;
-  animation: amira-toast-in 0.32s cubic-bezier(0.2, 0.7, 0.2, 1) both;
-}
-.amira-toast--saindo { animation: amira-toast-out 0.28s ease forwards; }
-
-.amira-toast--sucesso { border-left-color: var(--success); }
-.amira-toast--erro { border-left-color: var(--danger); }
-.amira-toast--info { border-left-color: var(--gold); }
-
-.amira-toast__icone {
-  flex-shrink: 0;
-  width: 20px;
-  height: 20px;
-  margin-top: 1px;
-}
-.amira-toast__icone svg { width: 100%; height: 100%; display: block; }
-.amira-toast--sucesso .amira-toast__icone { color: var(--success); }
-.amira-toast--erro .amira-toast__icone { color: var(--danger); }
-.amira-toast--info .amira-toast__icone { color: var(--gold); }
-
-.amira-toast__msg {
-  flex: 1;
-  font-size: 0.88rem;
-  line-height: 1.45;
-  padding-top: 1px;
-}
-
-.amira-toast__fechar {
-  flex-shrink: 0;
-  width: 22px;
-  height: 22px;
-  padding: 3px;
-  border: none;
-  background: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  border-radius: 5px;
-  transition: color 0.15s, background 0.15s;
-}
-.amira-toast__fechar:hover { color: var(--text-main); background: var(--bg); }
-.amira-toast__fechar svg { width: 100%; height: 100%; }
-
-@keyframes amira-toast-in {
-  from { opacity: 0; transform: translateY(-14px) scale(0.97); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
-@keyframes amira-toast-out {
-  to { opacity: 0; transform: translateY(-10px) scale(0.97); }
-}
-
-.amira-loading {
-  position: fixed;
-  inset: 0;
-  z-index: 9998;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: color-mix(in srgb, var(--bg) 72%, transparent);
-  backdrop-filter: blur(3px);
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.2s ease, visibility 0.2s;
-}
-.amira-loading--on { opacity: 1; visibility: visible; }
-
-.amira-loading__box {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-  padding: 2rem 2.4rem;
-  border-radius: 16px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.5);
-}
-.amira-loading__ring {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  border: 3px solid var(--border);
-  border-top-color: var(--gold);
-  animation: amira-loading-spin 0.8s linear infinite;
-}
-.amira-loading__txt {
-  font-family: 'Jost', sans-serif;
-  font-size: 0.85rem;
-  letter-spacing: 0.04em;
-  color: var(--text-muted);
-}
-@keyframes amira-loading-spin { to { transform: rotate(360deg); } }
 
 /* ═══ Tela de pedido / confirmação (js/pedido-confirmado.js) ════════════ */
 .pc {
@@ -2414,7 +2297,7 @@ body[data-theme="light"] .social-btn {
   border-radius: 50%;
   border: 2.5px solid var(--border);
   border-top-color: var(--gold);
-  animation: amira-loading-spin 0.8s linear infinite;
+  animation: amira-spin 0.8s linear infinite;
 }
 
 .pc-pix {
@@ -2462,7 +2345,7 @@ body[data-theme="light"] .social-btn {
   border: 2px solid var(--border);
   border-top-color: var(--gold);
   border-radius: 50%;
-  animation: amira-loading-spin 0.8s linear infinite;
+  animation: amira-spin 0.8s linear infinite;
 }
 
 .pc-btn-bloco {
