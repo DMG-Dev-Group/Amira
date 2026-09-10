@@ -122,8 +122,11 @@ async function pagarComPix() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ pedidoId })
     });
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    const dados = await resp.json();
+    const dados = await resp.json().catch(() => ({}));
+    if (!resp.ok) {
+      console.error("[/api/pix]", resp.status, dados._diag || dados);
+      throw new Error(dados.erro || `HTTP ${resp.status}`);
+    }
     if (!dados.copiaECola) throw new Error("Resposta sem código PIX");
 
     btnPix.hidden = true;
@@ -183,8 +186,11 @@ async function pagarComCartao() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ pedidoId })
     });
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    const dados = await resp.json();
+    const dados = await resp.json().catch(() => ({}));
+    if (!resp.ok) {
+      console.error("[/api/pagamento]", resp.status, dados._diag || dados);
+      throw new Error(dados.erro || `HTTP ${resp.status}`);
+    }
     const url = dados.init_point || dados.sandbox_init_point;
     if (!url) throw new Error("Resposta sem URL de checkout");
     window.location.href = url;

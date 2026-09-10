@@ -57,6 +57,15 @@ module.exports = async (req, res) => {
       return res.status(422).json({ erro: "Não foi possível identificar seu e-mail. Use o pagamento com cartão." });
     }
 
+    // TESTE (sandbox): com credenciais de teste, o pagador NÃO pode ser uma
+    // conta real do Mercado Pago (nem a do vendedor) — o MP recusa com
+    // "Unauthorized use of live credentials". Defina MP_TEST_PAYER_EMAIL com
+    // o e-mail de um "Usuário de teste" do painel para forçar esse pagador.
+    // NÃO configurar essa variável em produção.
+    if (process.env.MP_TEST_PAYER_EMAIL) {
+      email = process.env.MP_TEST_PAYER_EMAIL;
+    }
+
     const { subtotal, frete, total } = await calcularTotalPedido(db, pedido);
     const baseUrl = process.env.PUBLIC_BASE_URL || `https://${req.headers.host}`;
 
@@ -106,9 +115,11 @@ module.exports = async (req, res) => {
     });
   } catch (erro) {
     const status = erro && erro.status ? erro.status : 500;
-    console.error("[/api/pix]", erro && erro.message, erro && erro.detalhe);
+    console.error("[/api/pix]", erro && erro.message, JSON.stringify(erro && erro.detalhe));
     return res.status(status).json({
-      erro: status === 500 ? "Não foi possível gerar o PIX agora." : erro.message
+      erro: status === 500 ? "Não foi possível gerar o PIX agora." : erro.message,
+      // Diagnóstico — remover/proteger antes de abrir a loja ao público.
+      _diag: { message: erro && erro.message, mp: (erro && erro.detalhe) || null }
     });
   }
 };
