@@ -61,4 +61,14 @@ function getDb() {
   return _db;
 }
 
-module.exports = { getDb };
+/** Diagnóstico sem lançar — usado por /api/status. Mesma lógica de credenciais(). */
+function diagnosticoServiceAccount() {
+  try {
+    const obj = credenciais();
+    return { ok: true, project_id: obj.project_id, client_email: obj.client_email };
+  } catch (erro) {
+    return { ok: false, detalhe: erro.message };
+  }
+}
+
+module.exports = { getDb, diagnosticoServiceAccount };
