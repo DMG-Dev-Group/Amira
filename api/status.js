@@ -24,10 +24,14 @@ module.exports = async (req, res) => {
     node: process.version,
     env: {
       MP_ACCESS_TOKEN: Boolean(process.env.MP_ACCESS_TOKEN),
-      MP_ACCESS_TOKEN_tipo: process.env.MP_ACCESS_TOKEN
-        ? (process.env.MP_ACCESS_TOKEN.startsWith("TEST-") ? "teste" : "produção/outro")
+      // MP mudou o prefixo: tokens de teste NOVOS também começam com
+      // APP_USR-. O que separa teste de produção é a ABA de onde você
+      // copiou (Credenciais de teste x de produção), não o prefixo.
+      MP_ACCESS_TOKEN_prefixo: process.env.MP_ACCESS_TOKEN
+        ? process.env.MP_ACCESS_TOKEN.split("-")[0]
         : null,
       MP_WEBHOOK_SECRET: Boolean(process.env.MP_WEBHOOK_SECRET),
+      MP_TEST_PAYER_EMAIL: process.env.MP_TEST_PAYER_EMAIL || null,
       FIREBASE_SERVICE_ACCOUNT: saOk,
       FIREBASE_SERVICE_ACCOUNT_detalhe: saInfo,
       PUBLIC_BASE_URL: process.env.PUBLIC_BASE_URL || null

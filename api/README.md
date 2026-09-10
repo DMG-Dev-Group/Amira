@@ -47,6 +47,17 @@ Confirmação (ambos):
 > tipo, o site cai no cartão / PIX manual — e aí é ajustar `api/pix.js`
 > para pedir e enviar o CPF.
 
+### Testar o PIX no sandbox
+
+- Use o **Access Token da aba "Credenciais de teste"** (hoje ele também
+  começa com `APP_USR-` — o prefixo não distingue mais teste de produção;
+  o que vale é a aba de onde você copiou).
+- O pagador **não pode ser uma conta real** do Mercado Pago (nem a do
+  vendedor) — senão dá `401 "Unauthorized use of live credentials"`.
+  Crie um **Usuário de teste** (Suas integrações → Usuários de teste) e
+  defina o e-mail dele em `MP_TEST_PAYER_EMAIL` na Vercel. `api/pix.js`
+  usa essa variável como pagador quando ela existe. **Remover em produção.**
+
 ## Passo a passo (setup)
 
 ### 1. Conta e aplicação no Mercado Pago
