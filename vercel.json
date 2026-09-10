@@ -1,7 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "outputDirectory": "frontend/src/pages",
-  "_comment_cleanUrls": "true = /produtos.html redireciona (308) para /produtos e a URL some com a extensão. Os links no HTML continuam com .html de propósito: assim o preview local (python -m http.server) segue funcionando; em produção a Vercel faz o redirect.",
   "cleanUrls": true,
   "trailingSlash": false,
   "functions": {
