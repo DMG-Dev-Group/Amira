@@ -38,11 +38,18 @@ const ROTULO_PAGAMENTO = {
 };
 
 function badgePagamento(pedido) {
-  const st = pedido.pagamento?.status || "pendente";
   const tom = tomDoStatus(pedido);
   const classe = { pago: "badge-aprovado", pendente: "badge-pendente", recusado: "badge-rejeitado", cancelado: "badge-rejeitado" }[tom] || "badge-pendente";
   const metodo = { pix: "PIX", mercadopago: "Cartão", pix_whatsapp: "manual" }[pedido.pagamento?.metodo] || "—";
-  return `<span class="badge ${classe}" title="${escapeHtml(metodo)}">${escapeHtml(ROTULO_PAGAMENTO[st] || st)}</span>`;
+
+  // Um pedido cancelado nunca chega a ter pagamento.status != 'pendente' —
+  // se lêssemos só o pagamento, ele apareceria como "Aguardando" para
+  // sempre. O status do PEDIDO manda no rótulo.
+  const rotulo = pedido.status === "cancelado"
+    ? "Cancelado"
+    : (ROTULO_PAGAMENTO[pedido.pagamento?.status || "pendente"] || pedido.pagamento?.status);
+
+  return `<span class="badge ${classe}" title="${escapeHtml(metodo)}">${escapeHtml(rotulo)}</span>`;
 }
 
 // Um pedido só pode ser cancelado enquanto o pagamento não foi aprovado —
@@ -91,7 +98,7 @@ function renderizarTabela() {
       </thead>
       <tbody>
         ${lista.map((p) => `
-          <tr>
+          <tr class="${p.status === "cancelado" ? "pedido-cancelado" : ""}">
             <td>
               <strong>${escapeHtml(codigoRetirada(p.id))}</strong>
               ${(totaisCache.get(p.id)?.avisos || []).length > 0 ? '<span class="badge badge-pendente" title="Há avisos — abra os detalhes">⚠</span>' : ""}

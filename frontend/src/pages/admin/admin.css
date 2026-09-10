@@ -1024,3 +1024,14 @@ body {
     align-items: stretch;
   }
 }
+
+/* Pedido cancelado: a linha inteira recua visualmente. Sem isso ele se
+   confundia com um pedido em aberto na lista. */
+.admin-tabela tr.pedido-cancelado {
+  opacity: 0.55;
+}
+
+.admin-tabela tr.pedido-cancelado td strong {
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}

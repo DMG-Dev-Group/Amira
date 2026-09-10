@@ -43,8 +43,12 @@ function formatarData(ts) {
   });
 }
 
-function rotuloPagamento(pagamento) {
+function rotuloPagamento(pedido) {
+  const pagamento = pedido?.pagamento;
   const metodo = { pix: "PIX", mercadopago: "Cartão de crédito", pix_whatsapp: "A combinar" }[pagamento?.metodo] || "—";
+  // Pedido cancelado nunca teve o pagamento concluído — dizer "aguardando"
+  // ali daria a entender que ainda dá para pagar.
+  if (pedido?.status === "cancelado") return `${metodo} · cancelado`;
   const st = { aprovado: "pago", pendente: "aguardando", recusado: "não aprovado" }[pagamento?.status] || "—";
   return `${metodo} · ${st}`;
 }
@@ -81,7 +85,7 @@ function render(pedido, totais) {
       <section class="cp-meta">
         <div><span>Pedido</span><strong>${escapeHtml(codigoRetirada(pedido.id))}</strong></div>
         <div><span>Data</span><strong>${formatarData(pedido.criadoEm)}</strong></div>
-        <div><span>Pagamento</span><strong>${escapeHtml(rotuloPagamento(pedido.pagamento))}</strong></div>
+        <div><span>Pagamento</span><strong>${escapeHtml(rotuloPagamento(pedido))}</strong></div>
         <div><span>Entrega</span><strong>${retirada ? "Retirada na loja" : "Entrega"}</strong></div>
       </section>
 
