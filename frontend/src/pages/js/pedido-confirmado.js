@@ -1,28 +1,33 @@
 // ── Confirmação de pedido + pagamento ────────────────────────────────────
 // O pedido nasce "aguardando_pagamento". Formas de pagar, na ordem:
 //   1. PIX na própria página — /api/pix devolve o QR Code + copia-e-cola;
-//      a página fica fazendo polling e vira "✅ pago" sozinha quando o
-//      webhook (/api/webhook-mp) confirma.
+//      a página faz polling e vira "pago" sozinha quando o webhook confirma.
 //   2. Cartão — /api/pagamento cria a preferência do Mercado Pago e
 //      redireciona para o checkout (parcelamento etc.).
-//   3. Fallback PIX manual + WhatsApp — se as funções não estão
-//      configuradas ou falham. Dados de configuracoes/pagamento
-//      (Admin → Configurações): { pixChave, pixNome, instrucoes }.
+//   3. Fallback PIX manual + WhatsApp — se as funções falharem. Dados de
+//      configuracoes/pagamento (Admin → Configurações).
 
 import { exigirLogin } from "../services/auth.js";
 import { buscarPedidoPorId, derivarTotaisDoPedido } from "../services/pedidos.js";
 import { escapeHtml, urlImagemSegura } from "../services/seguranca.js";
 import { textoParcelamento } from "../services/parcelamento.js";
+import { toast } from "../services/ui-feedback.js";
 import { db } from "../services/firebase-config.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
 const WHATSAPP_LOJA = "5598984853656";
 const POLL_MS = 6000;
-const POLL_MAX = 10 * 60 * 1000; // para de checar depois de 10 min
+const POLL_MAX = 10 * 60 * 1000;
 
 const params = new URLSearchParams(window.location.search);
 const pedidoId = params.get("id");
 const conteudo = document.getElementById("confirmacao-conteudo");
+
+// ── Ícones ────────────────────────────────────────────────────────────
+const IC_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+const IC_PIX = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6.7" y="6.7" width="10.6" height="10.6" rx="2.4" transform="rotate(45 12 12)"/></svg>';
+const IC_CARTAO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2.5"/><path d="M2 10h20"/><path d="M6 15h4"/></svg>';
+const IC_LOJA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9 4.5 4h15L21 9"/><path d="M4 9v11h16V9"/><path d="M9 20v-6h6v6"/></svg>';
 
 function formatarPreco(valor) {
   return (valor || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -40,66 +45,63 @@ async function buscarConfigPagamento() {
 // ── Fallback: PIX manual + WhatsApp ─────────────────────────────────────
 function blocoPixManual(pedido, config, total) {
   const linkWhatsApp = `https://wa.me/${WHATSAPP_LOJA}?text=${encodeURIComponent(
-    `Olá! Acabei de fazer o pedido ${pedido.id} no valor de ${formatarPreco(total)} e quero combinar o pagamento.`
+    `Olá! Fiz o pedido ${pedido.id} no valor de ${formatarPreco(total)} e quero combinar o pagamento.`
   )}`;
   const temPix = Boolean(config?.pixChave);
 
   return `
-    <div class="pagamento-bloco">
-      <h2>Pagar por PIX manual</h2>
+    <div class="pc-card">
+      <h3 class="pc-card__titulo">PIX manual</h3>
       ${temPix ? `
-        <p class="pagamento-linha">
-          <strong>PIX</strong> — chave: <code id="pix-chave">${escapeHtml(config.pixChave)}</code>
-          <button type="button" class="btn-outline btn-copiar-pix" id="btn-copiar-pix">Copiar chave</button>
-        </p>
-        ${config.pixNome ? `<p class="pagamento-linha">Favorecido: ${escapeHtml(config.pixNome)}</p>` : ""}
-        <p class="pagamento-linha">Valor: <strong>${formatarPreco(total)}</strong></p>
-        <p class="pagamento-linha">Depois de pagar, envie o comprovante pelo WhatsApp para agilizar a confirmação.</p>
+        <p class="pc-linha">Chave: <code>${escapeHtml(config.pixChave)}</code>
+          <button type="button" class="pc-btn-txt" id="btn-copiar-pix">copiar</button></p>
+        ${config.pixNome ? `<p class="pc-linha pc-muted">Favorecido: ${escapeHtml(config.pixNome)}</p>` : ""}
+        <p class="pc-linha">Valor: <strong>${formatarPreco(total)}</strong></p>
+        <p class="pc-linha pc-muted">Depois de pagar, envie o comprovante no WhatsApp para agilizar.</p>
       ` : `
-        <p class="pagamento-linha">
-          O pagamento é combinado diretamente com a loja — clique no botão
-          abaixo e enviaremos as instruções pelo WhatsApp.
-        </p>
+        <p class="pc-linha pc-muted">O pagamento é combinado com a loja — chame no WhatsApp que enviamos as instruções.</p>
       `}
-      ${config?.instrucoes ? `<p class="pagamento-linha">${escapeHtml(config.instrucoes)}</p>` : ""}
-      <a href="${linkWhatsApp}" target="_blank" rel="noopener" class="btn-primary" style="text-decoration:none; display:inline-block; margin-top:0.8rem;">
-        Combinar pagamento no WhatsApp
-      </a>
+      ${config?.instrucoes ? `<p class="pc-linha pc-muted">${escapeHtml(config.instrucoes)}</p>` : ""}
+      <a href="${linkWhatsApp}" target="_blank" rel="noopener" class="btn-primary pc-btn-bloco">Combinar no WhatsApp</a>
     </div>
   `;
 }
 
 function blocoPago() {
   return `
-    <div class="pagamento-bloco">
-      <h2 style="color: var(--success);">✅ Pagamento confirmado</h2>
-      <p class="pagamento-linha">Recebemos seu pagamento. Já estamos preparando tudo.</p>
+    <div class="pc-sucesso">
+      <span class="pc-sucesso__icone">${IC_CHECK}</span>
+      <div>
+        <h3>Pagamento confirmado</h3>
+        <p class="pc-muted">Recebemos seu pagamento — já estamos preparando tudo.</p>
+      </div>
     </div>
   `;
 }
 
-// ── Estado inicial da área de pagamento ────────────────────────────────
+// ── Escolha de pagamento ──────────────────────────────────────────────
 function blocoPagamento(pedido, total) {
-  const status = pedido.pagamento?.status;
-  if (status === "aprovado") return blocoPago();
+  if (pedido.pagamento?.status === "aprovado") return blocoPago();
 
-  const aviso = status === "recusado"
-    ? `<p class="pagamento-linha" style="color:var(--danger);">O pagamento anterior não foi aprovado. Tente de novo:</p>`
-    : "";
+  const recusado = pedido.pagamento?.status === "recusado";
 
   return `
-    <div class="pagamento-bloco">
-      <h2>Como pagar</h2>
-      ${aviso}
-      <p class="pagamento-linha">
-        Valor: <strong>${formatarPreco(total)}</strong> — no cartão, ${escapeHtml(textoParcelamento(total))}.
-      </p>
-      <div class="pagamento-acoes">
-        <button class="btn-primary" id="btn-pix">Pagar com PIX</button>
-        <button class="btn-outline" id="btn-cartao">Pagar com cartão</button>
+    <div class="pc-card">
+      <h3 class="pc-card__titulo">Como pagar</h3>
+      ${recusado ? `<p class="pc-linha pc-erro">O pagamento anterior não foi aprovado. Tente de novo:</p>` : ""}
+      <div class="pc-metodos">
+        <button class="pc-metodo" id="btn-pix">
+          <span class="pc-metodo__icone">${IC_PIX}</span>
+          <span class="pc-metodo__nome">PIX</span>
+          <span class="pc-metodo__nota">na hora</span>
+        </button>
+        <button class="pc-metodo" id="btn-cartao">
+          <span class="pc-metodo__icone">${IC_CARTAO}</span>
+          <span class="pc-metodo__nome">Cartão</span>
+          <span class="pc-metodo__nota">${escapeHtml(textoParcelamento(total))}</span>
+        </button>
       </div>
       <div id="pix-area"></div>
-      <p class="pagamento-linha" id="msg-pagamento" style="display:none;"></p>
     </div>
     <div id="area-pix-manual" hidden></div>
   `;
@@ -108,12 +110,11 @@ function blocoPagamento(pedido, total) {
 // ── PIX na página ──────────────────────────────────────────────────────
 async function pagarComPix() {
   const area = document.getElementById("pix-area");
-  const msg = document.getElementById("msg-pagamento");
   const btnPix = document.getElementById("btn-pix");
   const btnCartao = document.getElementById("btn-cartao");
-  msg.style.display = "none";
+  btnPix.classList.add("pc-metodo--carregando");
   btnPix.disabled = true;
-  btnPix.textContent = "Gerando PIX...";
+  btnCartao.disabled = true;
   area.innerHTML = "";
 
   try {
@@ -129,56 +130,53 @@ async function pagarComPix() {
     }
     if (!dados.copiaECola) throw new Error("Resposta sem código PIX");
 
-    btnPix.hidden = true;
-    if (btnCartao) btnCartao.hidden = true;
+    document.getElementById("btn-pix").hidden = true;
+    document.getElementById("btn-cartao").hidden = true;
 
     area.innerHTML = `
-      <div class="pix-qr">
+      <div class="pc-pix">
         ${dados.qrCodeBase64
-          ? `<img alt="QR Code PIX" src="${urlImagemSegura("data:image/png;base64," + dados.qrCodeBase64)}" width="220" height="220">`
+          ? `<img class="pc-pix__qr" alt="QR Code PIX" src="${urlImagemSegura("data:image/png;base64," + dados.qrCodeBase64)}">`
           : ""}
-        <p class="pagamento-linha">Escaneie o QR Code no app do seu banco, ou copie o código:</p>
-        <div class="pix-copiacola">
+        <p class="pc-linha">Escaneie o QR Code no app do banco, ou copie o código:</p>
+        <div class="pc-pix__copia">
           <input type="text" id="pix-codigo" readonly value="${escapeHtml(dados.copiaECola)}">
           <button type="button" class="btn-outline" id="btn-copiar-codigo">Copiar</button>
         </div>
-        <p class="pagamento-linha pix-aguardando" id="pix-status">
-          <span class="pix-spinner"></span> Aguardando o pagamento… a página atualiza sozinha.
+        <p class="pc-pix__espera" id="pix-status">
+          <span class="pc-spinner"></span> Aguardando o pagamento — a página atualiza sozinha.
         </p>
       </div>
     `;
 
     document.getElementById("btn-copiar-codigo").addEventListener("click", async () => {
-      const btn = document.getElementById("btn-copiar-codigo");
       try {
         await navigator.clipboard.writeText(dados.copiaECola);
-        btn.textContent = "Copiado!";
+        toast("Código PIX copiado", "sucesso");
       } catch {
         document.getElementById("pix-codigo").select();
-        btn.textContent = "Selecionado — Ctrl+C";
+        toast("Selecione e copie com Ctrl+C", "info");
       }
-      setTimeout(() => { btn.textContent = "Copiar"; }, 2000);
     });
 
     iniciarPolling();
   } catch (erro) {
     console.error("PIX indisponível:", erro);
-    msg.textContent = "Não foi possível gerar o PIX agora — tente o cartão, ou o PIX manual abaixo.";
-    msg.style.display = "block";
+    toast("Não foi possível gerar o PIX agora. Tente o cartão ou o PIX manual.", "erro");
     revelarPixManual();
+    btnPix.classList.remove("pc-metodo--carregando");
     btnPix.disabled = false;
-    btnPix.hidden = false;
-    btnPix.textContent = "Pagar com PIX";
+    btnCartao.disabled = false;
   }
 }
 
 // ── Cartão (redirect Checkout Pro) ────────────────────────────────────
 async function pagarComCartao() {
-  const msg = document.getElementById("msg-pagamento");
   const btn = document.getElementById("btn-cartao");
-  msg.style.display = "none";
+  const btnPix = document.getElementById("btn-pix");
+  btn.classList.add("pc-metodo--carregando");
   btn.disabled = true;
-  btn.textContent = "Abrindo o pagamento...";
+  btnPix.disabled = true;
 
   try {
     const resp = await fetch("/api/pagamento", {
@@ -196,11 +194,11 @@ async function pagarComCartao() {
     window.location.href = url;
   } catch (erro) {
     console.error("Cartão indisponível:", erro);
-    msg.textContent = "Pagamento com cartão indisponível agora — use o PIX, ou o PIX manual abaixo.";
-    msg.style.display = "block";
+    toast("Cartão indisponível agora. Tente o PIX ou o PIX manual.", "erro");
     revelarPixManual();
+    btn.classList.remove("pc-metodo--carregando");
     btn.disabled = false;
-    btn.textContent = "Pagar com cartão";
+    btnPix.disabled = false;
   }
 }
 
@@ -213,21 +211,15 @@ function revelarPixManual() {
   if (area && area.hidden) {
     area.innerHTML = blocoPixManual(pedidoAtual, configAtual, totalAtual);
     area.hidden = false;
-    ligarCopiarChaveManual();
+    document.getElementById("btn-copiar-pix")?.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(configAtual.pixChave);
+        toast("Chave PIX copiada", "sucesso");
+      } catch {
+        toast("Copie a chave manualmente", "info");
+      }
+    });
   }
-}
-
-function ligarCopiarChaveManual() {
-  const btnCopiar = document.getElementById("btn-copiar-pix");
-  btnCopiar?.addEventListener("click", async () => {
-    try {
-      await navigator.clipboard.writeText(configAtual.pixChave);
-      btnCopiar.textContent = "Copiado!";
-    } catch {
-      btnCopiar.textContent = "Copie manualmente";
-    }
-    setTimeout(() => { btnCopiar.textContent = "Copiar chave"; }, 1800);
-  });
 }
 
 // ── Polling do status ─────────────────────────────────────────────────
@@ -239,7 +231,7 @@ function iniciarPolling() {
     if (Date.now() - inicio > POLL_MAX) {
       clearInterval(pollTimer);
       const el = document.getElementById("pix-status");
-      if (el) el.textContent = "Ainda não identificamos o pagamento. Se já pagou, atualize a página em instantes.";
+      if (el) el.innerHTML = "Ainda não identificamos o pagamento. Se já pagou, atualize a página em instantes.";
       return;
     }
     try {
@@ -247,13 +239,17 @@ function iniciarPolling() {
       const st = snap.exists() ? snap.data().pagamento?.status : null;
       if (st === "aprovado") {
         clearInterval(pollTimer);
-        conteudo.querySelector(".pagamento-bloco")?.replaceWith(
-          Object.assign(document.createElement("div"), { innerHTML: blocoPago() }).firstElementChild
-        );
+        toast("Pagamento confirmado!", "sucesso");
+        const bloco = conteudo.querySelector(".pc-card");
+        if (bloco) {
+          const novo = document.createElement("div");
+          novo.innerHTML = blocoPago();
+          bloco.replaceWith(novo.firstElementChild);
+        }
       } else if (st === "recusado") {
         clearInterval(pollTimer);
         const el = document.getElementById("pix-status");
-        if (el) { el.textContent = "O pagamento não foi aprovado. Recarregue a página para tentar de novo."; el.style.color = "var(--danger)"; }
+        if (el) { el.textContent = "O pagamento não foi aprovado. Recarregue a página para tentar de novo."; el.classList.add("pc-erro"); }
       }
     } catch {
       /* rede instável — tenta no próximo ciclo */
@@ -286,31 +282,43 @@ exigirLogin(async ({ usuario }) => {
   configAtual = config;
   totalAtual = totais.total;
 
+  const entrega = pedidoAtual.modoEntrega === "retirada"
+    ? "Retire no Monumental Shopping, 2º piso, quando o pagamento for confirmado."
+    : "Assim que o pagamento for confirmado, combinamos a entrega com você.";
+
   conteudo.innerHTML = `
-    <div style="max-width: 520px; margin: 0 auto; padding: 2rem 0;">
-      <div style="font-size: 3rem; margin-bottom: 1rem;">🌸</div>
-      <h1 style="font-family:'Playfair Display', serif; font-size: 1.6rem; margin-bottom: 0.8rem;">
-        Pedido recebido!
-      </h1>
-      <p style="font-family:'Jost', sans-serif; color: var(--text-muted); margin-bottom: 1.5rem;">
-        Número do pedido: <strong>${escapeHtml(pedidoAtual.id)}</strong><br>
-        ${totais.frete ? `Frete (${escapeHtml(totais.frete.zona?.nome || "a confirmar")}): <strong>${formatarPreco(totais.frete.valor)}</strong><br>` : ""}
-        Total: <strong style="color: var(--gold);">${formatarPreco(totais.total)}</strong>
-      </p>
+    <div class="pc">
+      <div class="pc-hero">
+        <span class="pc-hero__selo">${IC_CHECK}</span>
+        <h1>Pedido recebido</h1>
+        <p class="pc-muted">Pedido <strong>#${escapeHtml(pedidoAtual.id)}</strong></p>
+      </div>
+
+      <div class="pc-resumo">
+        ${totais.frete ? `
+          <div class="pc-resumo__linha">
+            <span>Frete${totais.frete.zona?.nome ? ` · ${escapeHtml(totais.frete.zona.nome)}` : ""}</span>
+            <span>${formatarPreco(totais.frete.valor)}</span>
+          </div>` : ""}
+        <div class="pc-resumo__linha pc-resumo__total">
+          <span>Total a pagar</span>
+          <span>${formatarPreco(totais.total)}</span>
+        </div>
+      </div>
+
       ${blocoPagamento(pedidoAtual, totais.total)}
-      <p style="font-family:'Jost', sans-serif; font-size: 0.85rem; color: var(--text-muted); margin: 1.5rem 0 2rem;">
-        ${pedidoAtual.modoEntrega === "retirada"
-          ? "Retire seu pedido no Monumental Shopping, 2º piso, assim que o pagamento for confirmado."
-          : "Assim que o pagamento for confirmado, entraremos em contato para combinar a entrega."}
-      </p>
-      <a href="produtos.html" class="btn-primary" style="text-decoration:none;">Continuar comprando</a>
+
+      <p class="pc-entrega pc-muted">${entrega}</p>
+
+      <a href="produtos.html" class="pc-voltar">
+        <span class="pc-voltar__ic">${IC_LOJA}</span> Continuar comprando
+      </a>
     </div>
   `;
 
   document.getElementById("btn-pix")?.addEventListener("click", pagarComPix);
   document.getElementById("btn-cartao")?.addEventListener("click", pagarComCartao);
 
-  // Se o pedido já tinha um PIX pendente, retoma o acompanhamento.
   if (pedidoAtual.pagamento?.metodo === "pix" && pedidoAtual.pagamento?.status === "pendente") {
     iniciarPolling();
   }

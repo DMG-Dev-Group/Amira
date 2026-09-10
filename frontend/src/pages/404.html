@@ -1,92 +1,118 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Página não encontrada — Amira</title>
-    <link rel="icon" type="image/svg+xml" href="images/amira-favicon.svg">
-    <link rel="alternate icon" type="image/x-icon" href="images/amira-favicon.ico">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
-
-    <style media="screen">
-      /* Paleta Amira — esta página é servida pelo Firebase sem o style.css */
-      :root {
-        --bg: #150A0D;
-        --surface: #201115;
-        --brand: #6E101C;
-        --gold: #D2566C;
-        --on-brand: #FDF3F4;
-        --texto: #F6E8EA;
-        --texto-suave: rgba(246, 232, 234, 0.62);
-        --border: rgba(210, 86, 108, 0.25);
-      }
-      * { box-sizing: border-box; }
-      body {
-        margin: 0;
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 24px;
-        background: var(--bg);
-        color: var(--texto);
-        font-family: 'Jost', Helvetica, Arial, sans-serif;
-      }
-      #message {
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 14px;
-        max-width: 420px;
-        width: 100%;
-        padding: 40px 32px 32px;
-        text-align: center;
-      }
-      #message img { width: 88px; height: 88px; margin-bottom: 20px; }
-      #message h2 {
-        margin: 0;
-        font-size: 3rem;
-        font-weight: 500;
-        letter-spacing: 0.1em;
-        color: var(--gold);
-        font-family: 'Playfair Display', serif;
-      }
-      #message h1 {
-        margin: 6px 0 14px;
-        font-size: 1.15rem;
-        font-weight: 400;
-        letter-spacing: 0.04em;
-      }
-      #message p {
-        margin: 0 0 26px;
-        font-size: 0.9rem;
-        line-height: 1.7;
-        color: var(--texto-suave);
-      }
-      #message a {
-        display: block;
-        padding: 14px;
-        border-radius: 6px;
-        background: var(--brand);
-        color: var(--on-brand);
-        text-decoration: none;
-        text-transform: uppercase;
-        letter-spacing: 0.14em;
-        font-size: 0.78rem;
-        font-weight: 500;
-        transition: background 0.2s;
-      }
-      #message a:hover { background: var(--gold); }
-    </style>
-  </head>
-  <body>
-    <div id="message">
-      <img src="images/amira-favicon.svg" alt="Amira">
-      <h2>404</h2>
-      <h1>Página não encontrada</h1>
-      <p>O endereço que você tentou abrir não existe (ou saiu do ar). Confira o link e tente de novo.</p>
-      <a href="index.html">Voltar para a loja</a>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Página não encontrada — Amira</title>
+  <link rel="icon" type="image/svg+xml" href="images/amira-favicon.svg">
+  <link rel="alternate icon" type="image/x-icon" href="images/amira-favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* Página servida sem o style.css — paleta mocha embutida. */
+    :root {
+      --bg: #1C1512;
+      --surface: #241A17;
+      --brand: #8A5B4E;
+      --brand-strong: #75463B;
+      --gold: #ECC1A0;
+      --on-brand: #FEF5EF;
+      --texto: #FEF5EF;
+      --texto-suave: rgba(254, 245, 239, 0.62);
+      --border: rgba(236, 193, 160, 0.22);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 28px;
+      background:
+        radial-gradient(60% 55% at 80% 12%, rgba(236, 193, 160, 0.10), transparent 70%),
+        radial-gradient(45% 45% at 10% 95%, rgba(138, 91, 78, 0.18), transparent 70%),
+        var(--bg);
+      color: var(--texto);
+      font-family: 'Jost', Helvetica, Arial, sans-serif;
+      overflow: hidden;
+    }
+    .wrap {
+      width: 100%;
+      max-width: 460px;
+      text-align: center;
+    }
+    .logo {
+      height: 92px;
+      width: auto;
+      margin-bottom: 1.6rem;
+      opacity: 0.95;
+    }
+    .code {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(5rem, 20vw, 8rem);
+      font-weight: 500;
+      line-height: 1;
+      letter-spacing: 0.02em;
+      color: var(--gold);
+      font-style: italic;
+    }
+    h1 {
+      font-family: 'Playfair Display', serif;
+      font-weight: 500;
+      font-size: 1.35rem;
+      margin: 1rem 0 0.8rem;
+      letter-spacing: 0.01em;
+    }
+    p {
+      font-size: 0.92rem;
+      line-height: 1.75;
+      color: var(--texto-suave);
+      margin-bottom: 2rem;
+    }
+    .acoes {
+      display: flex;
+      gap: 0.8rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .acoes a {
+      flex: 1 1 170px;
+      padding: 0.95rem 1.2rem;
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: 0.78rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      transition: background 0.2s, border-color 0.2s, transform 0.15s;
+    }
+    .acoes a:active { transform: translateY(1px); }
+    .btn-cheio {
+      background: var(--brand);
+      color: var(--on-brand);
+    }
+    .btn-cheio:hover { background: var(--brand-strong); }
+    .btn-linha {
+      border: 1.4px solid var(--border);
+      color: var(--gold);
+    }
+    .btn-linha:hover { border-color: var(--gold); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <img class="logo" src="images/amira-claro.svg" alt="Amira">
+    <div class="code">404</div>
+    <h1>Essa página se perdeu no caminho</h1>
+    <p>
+      O endereço que você abriu não existe ou saiu do ar. Que tal continuar
+      de onde dá certo?
+    </p>
+    <div class="acoes">
+      <a class="btn-cheio" href="index.html">Ir para a loja</a>
+      <a class="btn-linha" href="produtos.html">Ver produtos</a>
     </div>
-  </body>
+  </div>
+</body>
 </html>
