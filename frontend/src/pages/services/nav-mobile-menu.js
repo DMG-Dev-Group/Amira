@@ -28,9 +28,19 @@ if (btn && panel && overlay) {
   overlay.addEventListener("click", fechar);
   if (closeBtn) closeBtn.addEventListener("click", fechar);
 
-  // Fecha o painel automaticamente ao navegar por um dos links (exceto o
-  // botão de tema, que não deve fechar o menu ao ser clicado).
+  // Categorias expande os atalhos no próprio painel; os demais links fecham
+  // o menu porque iniciam uma navegação.
   panel.querySelectorAll("a.mobile-menu-link").forEach((link) => {
+    if (link.classList.contains("mobile-menu-category-toggle")) {
+      link.addEventListener("click", (evento) => {
+        evento.preventDefault();
+        const grupo = link.closest(".mobile-menu-category-group");
+        const aberto = grupo.classList.toggle("open");
+        link.setAttribute("aria-expanded", String(aberto));
+      });
+      return;
+    }
+
     link.addEventListener("click", fechar);
   });
 
