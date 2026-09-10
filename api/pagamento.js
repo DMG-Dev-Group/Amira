@@ -85,9 +85,11 @@ module.exports = async (req, res) => {
     });
   } catch (erro) {
     const status = erro && erro.status ? erro.status : 500;
-    console.error("[/api/pagamento]", erro && erro.message, erro && erro.detalhe);
+    console.error("[/api/pagamento]", erro && erro.message, JSON.stringify(erro && erro.detalhe));
     return res.status(status).json({
-      erro: status === 500 ? "Não foi possível iniciar o pagamento agora." : erro.message
+      erro: status === 500 ? "Não foi possível iniciar o pagamento agora." : erro.message,
+      // Diagnóstico — remover/proteger antes de abrir a loja ao público.
+      _diag: { message: erro && erro.message, mp: (erro && erro.detalhe) || null }
     });
   }
 };
