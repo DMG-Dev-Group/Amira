@@ -13,8 +13,13 @@ const alvos = [
   },
 ].filter((alvo) => alvo.link && alvo.label);
 
-if (alvos.length > 0) {
+// "Meus pedidos" no menu mobile: só faz sentido para quem está logado.
+const linkPedidos = document.getElementById("mobile-nav-pedidos");
+
+if (alvos.length > 0 || linkPedidos) {
   observarAuth(({ usuario, perfil }) => {
+    if (linkPedidos) linkPedidos.style.display = usuario ? "flex" : "none";
+
     if (!usuario) {
       alvos.forEach(({ link, label }) => {
         link.setAttribute("href", "login.html");

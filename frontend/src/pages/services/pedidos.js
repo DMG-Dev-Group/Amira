@@ -212,3 +212,51 @@ export async function buscarPedidoPorId(id) {
   const snap = await getDoc(ref);
   return snap.exists() ? { id: snap.id, ...snap.data() } : null;
 }
+
+// ── Código de retirada ───────────────────────────────────────────────────
+// Derivado do próprio id do pedido: não precisa gravar nada a mais (nem
+// mexer nas rules) e cliente e balcão sempre chegam ao MESMO código.
+// O id do Firestore é alfanumérico e único, então os últimos 6 caracteres
+// já bastam para o balcão localizar o pedido no painel.
+const AMBIGUOS = { O: "0", I: "1", L: "1", U: "V" };
+
+/**
+ * Código curto que o cliente mostra no balcão. Ex.: "AMR-7K2QX9".
+ * @param {string} pedidoId
+ */
+export function codigoRetirada(pedidoId) {
+  const base = String(pedidoId || "")
+    .replace(/[^a-zA-Z0-9]/g, "")
+    .toUpperCase()
+    .slice(-6)
+    .padStart(6, "X");
+  const limpo = [...base].map((c) => AMBIGUOS[c] || c).join("");
+  return `AMR-${limpo}`;
+}
+
+export const ROTULO_STATUS = {
+  aguardando_pagamento: "Aguardando pagamento",
+  pago: "Pago",
+  preparando: "Preparando",
+  enviado: "Enviado",
+  entregue: "Entregue",
+  cancelado: "Cancelado"
+};
+
+/**
+ * Rótulo legível do status do pedido.
+ */
+export function rotuloStatus(status) {
+  return ROTULO_STATUS[status] || String(status || "—").replace(/_/g, " ");
+}
+
+/**
+ * "pago" | "pendente" | "recusado" | "cancelado" — usado para colorir os
+ * selos de status na loja e no painel.
+ */
+export function tomDoStatus(pedido) {
+  if (pedido?.status === "cancelado") return "cancelado";
+  if (pedido?.pagamento?.status === "recusado") return "recusado";
+  if (pedido?.pagamento?.status === "aprovado" || pedido?.status !== "aguardando_pagamento") return "pago";
+  return "pendente";
+}

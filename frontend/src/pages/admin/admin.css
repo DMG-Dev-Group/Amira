@@ -998,3 +998,32 @@ body {
   outline: 2px solid var(--gold);
   outline-offset: 2px;
 }
+
+/* ── Slots de foto do banner da home (Configurações) ───────────────────── */
+.hero-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.hero-slot {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.hero-slot .foto-upload {
+  flex: 1;
+  min-width: 0;
+}
+
+.hero-slot > .admin-btn {
+  flex-shrink: 0;
+}
+
+@media (max-width: 600px) {
+  .hero-slot {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

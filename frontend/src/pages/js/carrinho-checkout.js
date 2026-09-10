@@ -14,8 +14,7 @@ import {
 import {
   obterCarrinho,
   atualizarQuantidade,
-  removerDoCarrinho,
-  esvaziarCarrinho
+  removerDoCarrinho
 } from "../services/carrinho.js";
 import { calcularFrete, TAXA_RETIRADA_LOJA } from "../services/frete.js";
 import { criarPedido } from "../services/pedidos.js";
@@ -45,6 +44,35 @@ let produtosCache = new Map(); // produtoId -> produto (dados FRESCOS do catálo
 let modoEntrega = "entrega"; // "entrega" | "retirada"
 let freteAtual = { valor: 0, zona: null, encontrado: true };
 let minimoAtacado = null;
+
+// Como o carrinho não é mais esvaziado ao criar o pedido, a pessoa pode
+// voltar aqui com um pedido aberto e criar outro sem querer. Guardamos o
+// último pedido não pago para oferecer "continuar o pagamento".
+const CHAVE_PEDIDO_PENDENTE = "amira:pedidoPendente";
+const VALIDADE_PENDENTE_MS = 24 * 60 * 60 * 1000;
+
+function lerPedidoPendente() {
+  try {
+    const bruto = localStorage.getItem(CHAVE_PEDIDO_PENDENTE);
+    if (!bruto) return null;
+    const dados = JSON.parse(bruto);
+    if (!dados?.id || Date.now() - Number(dados.em || 0) > VALIDADE_PENDENTE_MS) {
+      localStorage.removeItem(CHAVE_PEDIDO_PENDENTE);
+      return null;
+    }
+    return dados;
+  } catch {
+    return null;
+  }
+}
+
+function marcarPedidoPendente(id) {
+  try {
+    localStorage.setItem(CHAVE_PEDIDO_PENDENTE, JSON.stringify({ id, em: Date.now() }));
+  } catch {
+    /* modo privado / storage bloqueado — seguimos sem o aviso */
+  }
+}
 
 function formatarPreco(valor) {
   return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -108,7 +136,18 @@ function renderizarCarrinho() {
     modoEntrega = "retirada";
   }
 
+  const pendente = lerPedidoPendente();
+
   conteudo.innerHTML = `
+    ${pendente ? `
+      <div class="carrinho-pendente">
+        <div>
+          <strong>Você tem um pedido aguardando pagamento.</strong>
+          <p>Se ainda quer pagar esse, continue por ali — assim não cria um pedido repetido.</p>
+        </div>
+        <a class="btn-primary" href="pedido-confirmado.html?id=${encodeURIComponent(pendente.id)}">Continuar pagamento</a>
+      </div>
+    ` : ""}
     <div class="carrinho-layout">
       <div class="carrinho-itens" id="lista-itens"></div>
 
@@ -471,7 +510,10 @@ function configurarBotaoFinalizar() {
         endereco
       });
 
-      await esvaziarCarrinho(usuarioAtual.uid);
+      // O carrinho NÃO é esvaziado aqui: se a pessoa desistir no meio do
+      // pagamento, os itens precisam continuar lá. Quem esvazia é a tela
+      // de pedido, quando o pagamento é efetivamente aprovado.
+      marcarPedidoPendente(pedidoRef.id);
 
       toast("Pedido criado! Estamos te levando para o pagamento.", "sucesso", { titulo: "Tudo pronto" });
 

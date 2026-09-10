@@ -373,6 +373,13 @@
   }
   .carrinho-item {
     grid-template-columns: 64px 1fr;
+    gap: 0.85rem;
+    /* sem centralizar: a imagem é baixa e o centro deixava um vão grande
+       entre os controles e a linha de preço */
+    align-items: start;
+  }
+  .carrinho-item-qtd {
+    margin-top: 0.6rem;
   }
   .carrinho-item-totais {
     grid-column: 1 / -1;
@@ -380,6 +387,48 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 0.5rem;
+    margin-top: 0;
+    padding-top: 0.8rem;
+    border-top: 1px solid var(--border);
   }
+  .carrinho-item-totais .preco-total {
+    margin-bottom: 0;
+  }
+}
+
+/* Aviso de pedido aberto — o carrinho não é mais esvaziado ao criar o
+   pedido, então este bloco evita que a pessoa crie um pedido repetido. */
+.carrinho-pendente {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding: 1.1rem 1.3rem;
+  border: 1px solid color-mix(in srgb, var(--gold) 45%, var(--border));
+  border-left: 3px solid var(--gold);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--gold) 8%, transparent);
+}
+
+.carrinho-pendente strong {
+  font-family: 'Jost', sans-serif;
+  font-size: 0.92rem;
+  color: var(--text-main);
+}
+
+.carrinho-pendente p {
+  font-family: 'Jost', sans-serif;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 0.2rem;
+}
+
+.carrinho-pendente .btn-primary {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  padding: 0.65rem 1.2rem;
+  border-radius: 9px;
 }

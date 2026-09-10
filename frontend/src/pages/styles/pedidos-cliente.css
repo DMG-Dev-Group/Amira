@@ -1,0 +1,443 @@
+/* ── Comprovante + histórico de pedidos (lado cliente) ─────────────────
+   Mesma linguagem das telas de pedido/pagamento: cartões arredondados,
+   borda 1px, título em Playfair. O comprovante tem um bloco @media print
+   para sair limpo no papel / PDF. */
+
+.cp-main,
+.mp-main {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 7.5rem 1.5rem 5rem;
+  text-align: left;
+}
+
+/* ── Comprovante ─────────────────────────────────────────────────────── */
+.cp {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 2rem;
+}
+
+.cp-topo {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 1.4rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.cp-eyebrow {
+  font-family: 'Jost', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.3rem;
+}
+
+.cp-titulo {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: var(--text-main);
+  line-height: 1.1;
+}
+
+.cp-muted {
+  font-family: 'Jost', sans-serif;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+/* Selo de status ------------------------------------------------------ */
+.cp-selo,
+.mp-selo {
+  flex-shrink: 0;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  padding: 0.3rem 0.8rem;
+  white-space: nowrap;
+}
+
+.cp-selo--pago,
+.mp-selo--pago {
+  color: var(--success);
+  background: color-mix(in srgb, var(--success) 12%, transparent);
+}
+.cp-selo--pendente,
+.mp-selo--pendente {
+  color: var(--warning);
+  background: color-mix(in srgb, var(--warning) 14%, transparent);
+}
+.cp-selo--recusado,
+.cp-selo--cancelado,
+.mp-selo--recusado,
+.mp-selo--cancelado {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+}
+
+/* Código de retirada -------------------------------------------------- */
+.cp-codigo-bloco {
+  margin-top: 1.4rem;
+  text-align: center;
+  border: 1px dashed color-mix(in srgb, var(--gold) 55%, var(--border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--gold) 8%, transparent);
+  padding: 1.3rem 1rem;
+}
+
+.cp-codigo-rotulo {
+  font-family: 'Jost', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.cp-codigo {
+  font-family: 'Jost', sans-serif;
+  font-size: 1.9rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  color: var(--gold);
+  margin: 0.35rem 0 0.4rem;
+}
+
+/* Metadados ----------------------------------------------------------- */
+.cp-meta {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.9rem 1.4rem;
+  margin-top: 1.5rem;
+}
+
+.cp-meta div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-family: 'Jost', sans-serif;
+}
+
+.cp-meta span {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.cp-meta strong {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-main);
+}
+
+/* Itens --------------------------------------------------------------- */
+.cp-itens {
+  margin-top: 1.8rem;
+  overflow-x: auto;
+}
+
+.cp-tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.86rem;
+}
+
+.cp-tabela th {
+  text-align: left;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 0 0 0.6rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.cp-tabela th:not(:first-child),
+.cp-tabela td:not(:first-child) {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.cp-tabela td {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-main);
+}
+
+.cp-tag {
+  display: inline-block;
+  margin-left: 0.4rem;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--gold);
+  background: color-mix(in srgb, var(--gold) 14%, transparent);
+  border-radius: 999px;
+  padding: 0.1rem 0.45rem;
+}
+
+/* Totais -------------------------------------------------------------- */
+.cp-totais {
+  margin-top: 1.2rem;
+  margin-left: auto;
+  max-width: 320px;
+}
+
+.cp-total-linha {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  padding: 0.35rem 0;
+}
+
+.cp-total-linha--final {
+  margin-top: 0.4rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--border);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.cp-total-linha--final span:last-child {
+  color: var(--gold);
+}
+
+/* Endereço + rodapé --------------------------------------------------- */
+.cp-endereco {
+  margin-top: 1.8rem;
+  padding-top: 1.3rem;
+  border-top: 1px solid var(--border);
+  font-family: 'Jost', sans-serif;
+  font-size: 0.88rem;
+  color: var(--text-main);
+  line-height: 1.6;
+}
+
+.cp-secao-titulo {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.4rem;
+}
+
+.cp-rodape {
+  margin-top: 1.8rem;
+  padding-top: 1.3rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.76rem;
+}
+
+.cp-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.7rem;
+  margin-top: 1.5rem;
+}
+
+.cp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.76rem;
+  letter-spacing: 0.06em;
+  padding: 0.7rem 1.3rem;
+  border-radius: 9px;
+}
+
+.cp-btn__ic {
+  width: 15px;
+  height: 15px;
+}
+.cp-btn__ic svg { width: 100%; height: 100%; display: block; }
+
+.cp-acoes .btn-outline {
+  background: transparent;
+  color: var(--text-main);
+  border: 1px solid var(--border);
+}
+.cp-acoes .btn-outline:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: var(--bg);
+  transform: none;
+}
+
+.cp-link {
+  font-family: 'Jost', sans-serif;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-decoration: underline;
+}
+.cp-link:hover { color: var(--gold); }
+
+/* ── Histórico de pedidos ────────────────────────────────────────────── */
+.mp-cabecalho {
+  margin-bottom: 1.6rem;
+}
+
+.mp-cabecalho h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.7rem;
+  font-weight: 500;
+  color: var(--text-main);
+}
+
+.mp-cabecalho p {
+  font-family: 'Jost', sans-serif;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-top: 0.2rem;
+}
+
+.mp-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.mp-card {
+  display: block;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.2rem 1.3rem;
+  text-decoration: none;
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.mp-card:hover {
+  border-color: color-mix(in srgb, var(--gold) 45%, var(--border));
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px -18px rgba(0, 0, 0, 0.35);
+}
+
+.mp-card__topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  margin-bottom: 0.7rem;
+}
+
+.mp-card__codigo {
+  font-family: 'Jost', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--text-main);
+}
+
+.mp-card__data {
+  font-family: 'Jost', sans-serif;
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
+.mp-card__miniaturas {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 0.8rem;
+}
+
+.mp-card__miniaturas img {
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.mp-card__mais {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  border: 1px dashed var(--border);
+  font-family: 'Jost', sans-serif;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.mp-card__rodape {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.8rem;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.mp-card__total {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--gold);
+}
+
+.mp-vazio {
+  text-align: center;
+  padding: 3.5rem 1.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+.mp-vazio p {
+  font-family: 'Jost', sans-serif;
+  color: var(--text-muted);
+  margin-bottom: 1.2rem;
+}
+
+@media (max-width: 600px) {
+  .cp-main, .mp-main { padding: 6.5rem 1.1rem 4rem; }
+  .cp { padding: 1.3rem; }
+  .cp-meta { grid-template-columns: 1fr; }
+  .cp-totais { max-width: none; }
+  .cp-codigo { font-size: 1.5rem; }
+}
+
+/* ── Impressão ───────────────────────────────────────────────────────── */
+@media print {
+  nav,
+  .mobile-menu-panel,
+  .mobile-menu-overlay,
+  .whatsapp-btn,
+  .cp-acoes,
+  .amira-toasts {
+    display: none !important;
+  }
+  body { background: #fff; }
+  .cp-main { padding: 0; max-width: none; }
+  .cp {
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    background: #fff;
+    color: #000;
+  }
+  .cp-codigo-bloco { break-inside: avoid; }
+}

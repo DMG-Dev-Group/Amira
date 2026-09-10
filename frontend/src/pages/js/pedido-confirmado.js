@@ -8,7 +8,8 @@
 //      configuracoes/pagamento (Admin → Configurações).
 
 import { exigirLogin } from "../services/auth.js";
-import { buscarPedidoPorId, derivarTotaisDoPedido } from "../services/pedidos.js";
+import { buscarPedidoPorId, derivarTotaisDoPedido, codigoRetirada } from "../services/pedidos.js";
+import { esvaziarCarrinho } from "../services/carrinho.js";
 import { escapeHtml, urlImagemSegura } from "../services/seguranca.js";
 import { textoParcelamento } from "../services/parcelamento.js";
 import { toast } from "../services/ui-feedback.js";
@@ -67,7 +68,8 @@ function blocoPixManual(pedido, config, total) {
   `;
 }
 
-function blocoPago() {
+function blocoPago(pedido) {
+  const retirada = pedido?.modoEntrega === "retirada";
   return `
     <div class="pc-sucesso">
       <span class="pc-sucesso__icone">${IC_CHECK}</span>
@@ -76,12 +78,22 @@ function blocoPago() {
         <p class="pc-muted">Recebemos seu pagamento — já estamos preparando tudo.</p>
       </div>
     </div>
+    ${retirada ? `
+      <div class="pc-card pc-retirada">
+        <h3 class="pc-card__titulo">Código de retirada</h3>
+        <p class="pc-muted">Mostre este código no balcão para retirar o pedido.</p>
+        <p class="pc-codigo">${escapeHtml(codigoRetirada(pedido.id))}</p>
+      </div>
+    ` : ""}
+    <a href="comprovante.html?id=${encodeURIComponent(pedido.id)}" class="btn-primary pc-btn-bloco">
+      Ver comprovante do pedido
+    </a>
   `;
 }
 
 // ── Escolha de pagamento ──────────────────────────────────────────────
 function blocoPagamento(pedido, total) {
-  if (pedido.pagamento?.status === "aprovado") return blocoPago();
+  if (pedido.pagamento?.status === "aprovado") return blocoPago(pedido);
 
   const recusado = pedido.pagamento?.status === "recusado";
 
@@ -222,6 +234,28 @@ function revelarPixManual() {
   }
 }
 
+// ── Carrinho ──────────────────────────────────────────────────────────
+// O checkout NÃO esvazia mais o carrinho ao criar o pedido — se a pessoa
+// abandonar o pagamento, os itens continuam lá. O carrinho só é limpo
+// quando o pagamento é efetivamente aprovado.
+let uidAtual = null;
+let carrinhoLimpo = false;
+
+async function limparCarrinhoAposPagamento() {
+  if (carrinhoLimpo || !uidAtual) return;
+  carrinhoLimpo = true;
+  try {
+    localStorage.removeItem("amira:pedidoPendente");
+  } catch {
+    /* storage bloqueado — sem problema */
+  }
+  try {
+    await esvaziarCarrinho(uidAtual);
+  } catch (erro) {
+    console.error("Não foi possível esvaziar o carrinho:", erro);
+  }
+}
+
 // ── Polling do status ─────────────────────────────────────────────────
 let pollTimer = null;
 function iniciarPolling() {
@@ -240,11 +274,12 @@ function iniciarPolling() {
       if (st === "aprovado") {
         clearInterval(pollTimer);
         toast("Pagamento confirmado!", "sucesso");
+        await limparCarrinhoAposPagamento();
         const bloco = conteudo.querySelector(".pc-card");
         if (bloco) {
           const novo = document.createElement("div");
-          novo.innerHTML = blocoPago();
-          bloco.replaceWith(novo.firstElementChild);
+          novo.innerHTML = blocoPago(pedidoAtual);
+          bloco.replaceWith(...novo.childNodes);
         }
       } else if (st === "recusado") {
         clearInterval(pollTimer);
@@ -259,6 +294,8 @@ function iniciarPolling() {
 
 // ── Boot ──────────────────────────────────────────────────────────────
 exigirLogin(async ({ usuario }) => {
+  uidAtual = usuario.uid;
+
   if (!pedidoId) {
     conteudo.innerHTML = `<p class="carrinho-vazio">Pedido não encontrado.</p>`;
     return;
@@ -319,7 +356,11 @@ exigirLogin(async ({ usuario }) => {
   document.getElementById("btn-pix")?.addEventListener("click", pagarComPix);
   document.getElementById("btn-cartao")?.addEventListener("click", pagarComCartao);
 
-  if (pedidoAtual.pagamento?.metodo === "pix" && pedidoAtual.pagamento?.status === "pendente") {
+  // Voltou de um pagamento já aprovado (ex.: redirect do cartão): o
+  // carrinho pode ser esvaziado agora.
+  if (pedidoAtual.pagamento?.status === "aprovado") {
+    limparCarrinhoAposPagamento();
+  } else if (pedidoAtual.pagamento?.metodo === "pix" && pedidoAtual.pagamento?.status === "pendente") {
     iniciarPolling();
   }
 });
