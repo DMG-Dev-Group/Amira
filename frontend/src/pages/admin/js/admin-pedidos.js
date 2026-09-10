@@ -12,15 +12,6 @@ import {
   orderBy
 } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
-const STATUS_OPCOES = [
-  "aguardando_pagamento",
-  "pago",
-  "preparando",
-  "enviado",
-  "entregue",
-  "cancelado"
-];
-
 let pedidosCache = [];
 // Pedidos não guardam valores (arquitetura Spark/custo zero): os totais
 // são derivados dos preços ATUAIS da coleção "produtos". Este mapa guarda
@@ -52,6 +43,12 @@ function badgePagamento(pedido) {
   const classe = { pago: "badge-aprovado", pendente: "badge-pendente", recusado: "badge-rejeitado", cancelado: "badge-rejeitado" }[tom] || "badge-pendente";
   const metodo = { pix: "PIX", mercadopago: "Cartão", pix_whatsapp: "manual" }[pedido.pagamento?.metodo] || "—";
   return `<span class="badge ${classe}" title="${escapeHtml(metodo)}">${escapeHtml(ROTULO_PAGAMENTO[st] || st)}</span>`;
+}
+
+// Um pedido só pode ser cancelado enquanto o pagamento não foi aprovado —
+// depois disso vira caso de estorno, não de cancelamento.
+function podeCancelar(pedido) {
+  return pedido.status !== "cancelado" && pedido.pagamento?.status !== "aprovado";
 }
 
 function formatarData(timestamp) {
@@ -119,6 +116,8 @@ function renderizarTabela() {
   });
 }
 
+// Só usado para CANCELAR: a loja não acompanha etapas de fulfillment, e o
+// "pago" quem escreve é o webhook do Mercado Pago.
 async function atualizarStatus(pedidoId, novoStatus) {
   try {
     const ref = doc(db, "pedidos", pedidoId);
@@ -160,13 +159,6 @@ function abrirDetalhe(pedidoId) {
       ${p.pagamento?.provedorPagamentoId ? `<span style="font-size:0.72rem; color:var(--text-muted);"> · MP ${escapeHtml(String(p.pagamento.provedorPagamentoId))}</span>` : ""}
     </p>
 
-    <div class="pedido-etapa">
-      <label for="detalhe-status">Etapa do pedido</label>
-      <select id="detalhe-status" class="select-status" data-id="${escapeHtml(p.id)}">
-        ${STATUS_OPCOES.map((op) => `<option value="${op}" ${op === p.status ? "selected" : ""}>${op.replace(/_/g, " ")}</option>`).join("")}
-      </select>
-      <small>O pagamento acima e confirmado sozinho pelo Mercado Pago. Use isto so para acompanhar o preparo/envio.</small>
-    </div>
 
     ${totais.avisos.length > 0 ? `
       <div class="admin-msg" style="display:block; margin-bottom:1rem;">
@@ -192,15 +184,31 @@ function abrirDetalhe(pedidoId) {
       é este total que deve bater com o PIX recebido.
     </p>
 
-    <a class="admin-btn admin-btn-outline admin-btn-sm" style="margin-top:1rem; display:inline-block; text-decoration:none;"
-       href="../comprovante.html?id=${encodeURIComponent(p.id)}" target="_blank" rel="noopener">
-      Abrir comprovante
-    </a>
+    <div style="display:flex; gap:0.6rem; flex-wrap:wrap; margin-top:1rem;">
+      <a class="admin-btn admin-btn-outline admin-btn-sm" style="text-decoration:none;"
+         href="../comprovante.html?id=${encodeURIComponent(p.id)}" target="_blank" rel="noopener">
+        Abrir comprovante
+      </a>
+      ${podeCancelar(p) ? `
+        <button type="button" class="admin-btn admin-btn-danger admin-btn-sm" id="btn-cancelar-pedido" data-id="${escapeHtml(p.id)}">
+          Cancelar pedido
+        </button>
+      ` : ""}
+    </div>
   `;
 
-  const selectEtapa = modalConteudo.querySelector("#detalhe-status");
-  selectEtapa?.addEventListener("change", () => {
-    atualizarStatus(selectEtapa.dataset.id, selectEtapa.value);
+  const btnCancelar = modalConteudo.querySelector("#btn-cancelar-pedido");
+  btnCancelar?.addEventListener("click", async () => {
+    const ok = await confirmar({
+      titulo: "Cancelar este pedido?",
+      descricao: `O pedido ${codigoRetirada(p.id)} passa a constar como cancelado. Só é possível porque o pagamento ainda não foi aprovado.`,
+      confirmar: "Cancelar pedido",
+      cancelar: "Voltar",
+      destrutivo: true
+    });
+    if (!ok) return;
+    await atualizarStatus(p.id, "cancelado");
+    modal.style.display = "none";
   });
 
   modal.style.display = "flex";

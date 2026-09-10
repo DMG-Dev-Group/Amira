@@ -28,6 +28,7 @@ import {
   addDoc,
   getDoc,
   getDocs,
+  updateDoc,
   query,
   where,
   orderBy,
@@ -38,12 +39,12 @@ import { calcularFrete } from "./frete.js";
 
 const COLECAO = "pedidos";
 
+// A loja não acompanha etapas de fulfillment (preparando/enviado/entregue)
+// — o pagamento é confirmado sozinho pelo Mercado Pago e a retirada é no
+// balcão. Sobram três estados de verdade.
 export const STATUS_PEDIDO = {
   AGUARDANDO_PAGAMENTO: "aguardando_pagamento",
   PAGO: "pago",
-  PREPARANDO: "preparando",
-  ENVIADO: "enviado",
-  ENTREGUE: "entregue",
   CANCELADO: "cancelado"
 };
 
@@ -213,6 +214,29 @@ export async function buscarPedidoPorId(id) {
   return snap.exists() ? { id: snap.id, ...snap.data() } : null;
 }
 
+/**
+ * Cancela um pedido que ainda não foi pago.
+ *
+ * As firestore.rules deixam o DONO mudar só a chave "status", só para
+ * 'cancelado', só saindo de 'aguardando_pagamento' e só enquanto o
+ * provedor não aprovou — depois de pago é caso de estorno, com o admin.
+ * Por isso não validamos nada aqui além do óbvio: quem manda é a regra.
+ *
+ * @param {string} pedidoId
+ */
+export async function cancelarPedido(pedidoId) {
+  const ref = doc(db, COLECAO, pedidoId);
+  await updateDoc(ref, { status: STATUS_PEDIDO.CANCELADO });
+}
+
+/**
+ * O pedido ainda pode ser cancelado pelo cliente?
+ */
+export function podeCancelar(pedido) {
+  return pedido?.status === STATUS_PEDIDO.AGUARDANDO_PAGAMENTO &&
+    pedido?.pagamento?.status !== "aprovado";
+}
+
 // ── Código de retirada ───────────────────────────────────────────────────
 // Derivado do próprio id do pedido: não precisa gravar nada a mais (nem
 // mexer nas rules) e cliente e balcão sempre chegam ao MESMO código.
@@ -237,9 +261,6 @@ export function codigoRetirada(pedidoId) {
 export const ROTULO_STATUS = {
   aguardando_pagamento: "Aguardando pagamento",
   pago: "Pago",
-  preparando: "Preparando",
-  enviado: "Enviado",
-  entregue: "Entregue",
   cancelado: "Cancelado"
 };
 
