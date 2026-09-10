@@ -21,7 +21,9 @@ import {
   EmailAuthProvider,
   sendEmailVerification,
   GoogleAuthProvider,
-  signInWithPopup
+  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult
 } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
 import {
   doc,
@@ -51,7 +53,12 @@ export function traduzErroAuth(codigo) {
     "auth/popup-closed-by-user": "Login cancelado.",
     "auth/cancelled-popup-request": "Login cancelado.",
     "auth/account-exists-with-different-credential": "Esse e-mail já está cadastrado com senha. Faça login com e-mail e senha.",
-    "auth/firebase-app-check-token-is-invalid.": "Não foi possível validar seu acesso. Recarregue a página e tente de novo."
+    "auth/firebase-app-check-token-is-invalid.": "Não foi possível validar seu acesso. Recarregue a página e tente de novo.",
+    // Os três abaixo são erros de CONFIGURAÇÃO, não do usuário. Antes caíam
+    // no "erro inesperado" e ninguém descobria o que estava errado.
+    "auth/unauthorized-domain": "Este site ainda não está liberado para login com Google. Avise a loja (falta autorizar o domínio no Firebase).",
+    "auth/operation-not-allowed": "O login com Google não está habilitado nesta loja. Avise a gente.",
+    "auth/popup-blocked": "Seu navegador bloqueou a janela do Google. Libere os pop-ups e tente de novo."
   };
   return mapa[codigo] || "Ocorreu um erro inesperado. Tente novamente.";
 }
@@ -199,10 +206,49 @@ export async function reenviarVerificacaoEmail(usuario) {
  */
 export async function loginComGoogle() {
   const provedor = new GoogleAuthProvider();
-  const credencial = await signInWithPopup(auth, provedor);
-  const usuario = credencial.user;
-  await garantirPerfil(usuario);
-  return usuario;
+  // força a escolha de conta: sem isso, quem tem várias contas Google
+  // entra sempre na última usada, sem chance de trocar.
+  provedor.setCustomParameters({ prompt: "select_account" });
+
+  try {
+    const credencial = await signInWithPopup(auth, provedor);
+    const usuario = credencial.user;
+    await garantirPerfil(usuario);
+    return usuario;
+  } catch (erro) {
+    // Pop-up é frágil: navegador com bloqueador, WebView do Instagram/
+    // Facebook, iOS em modo privado. Nesses casos o redirect funciona —
+    // a página sai e volta já autenticada (ver concluirLoginGoogle).
+    const caiNoRedirect = [
+      "auth/popup-blocked",
+      "auth/popup-closed-by-user",
+      "auth/cancelled-popup-request",
+      "auth/operation-not-supported-in-this-environment"
+    ].includes(erro?.code);
+
+    if (!caiNoRedirect) throw erro;
+
+    await signInWithRedirect(auth, provedor);
+    // signInWithRedirect não retorna: a página é substituída.
+    return null;
+  }
+}
+
+/**
+ * Fecha o fluxo de redirect do Google. Chame no carregamento das páginas
+ * de login/cadastro: se a pessoa está voltando do Google, cria o perfil e
+ * devolve o usuário; caso contrário devolve null e nada acontece.
+ */
+export async function concluirLoginGoogle() {
+  try {
+    const resultado = await getRedirectResult(auth);
+    if (!resultado?.user) return null;
+    await garantirPerfil(resultado.user);
+    return resultado.user;
+  } catch (erro) {
+    console.error("Falha ao concluir o login com Google:", erro);
+    throw erro;
+  }
 }
 
 // Campos do perfil que o próprio usuário pode editar (C5). Qualquer outra

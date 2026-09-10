@@ -1024,3 +1024,26 @@ body {
     align-items: stretch;
   }
 }
+
+/* ── Seção de iPhones (aparelhos x acessórios) ─────────────────────────── */
+.secao-iphone__cabecalho {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.1rem;
+}
+
+.secao-iphone__cabecalho h2 {
+  margin-bottom: 0.15rem;
+}
+
+.secao-iphone__cabecalho p {
+  font-size: 0.8rem;
+  color: var(--text-muted, #999);
+}
+
+.secao-iphone__cabecalho .admin-btn {
+  flex-shrink: 0;
+}

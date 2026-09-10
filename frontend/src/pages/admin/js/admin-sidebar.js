@@ -9,6 +9,7 @@ const itensMenu = [
   { id: "index", href: "index.html", label: "Dashboard" },
   { id: "produtos", href: "produtos.html", label: "Produtos" },
   { id: "camadas", href: "camadas.html", label: "Camadas de filtro" },
+  { id: "iphones", href: "iphones.html", label: "iPhones" },
   { id: "pedidos", href: "pedidos.html", label: "Pedidos" },
   { id: "revendedores", href: "revendedores.html", label: "Revendedores" },
   { id: "configuracoes", href: "configuracoes.html", label: "Configurações" }

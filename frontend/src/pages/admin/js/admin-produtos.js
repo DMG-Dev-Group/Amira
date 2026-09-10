@@ -525,10 +525,32 @@ form.addEventListener("submit", async (evento) => {
   }
 });
 
+// A tela de iPhones manda para cá com a opção certa já escolhida:
+//   produtos.html?novo=1&opcao=<slug>   → abre o form novo, opção marcada
+//   produtos.html?editar=<id>           → abre o form de edição
+function aplicarAtalhosDaURL() {
+  const q = new URLSearchParams(window.location.search);
+
+  const editar = q.get("editar");
+  if (editar) {
+    abrirModalEdicao(editar);
+    return;
+  }
+
+  if (q.get("novo") !== "1") return;
+  abrirModalNovo();
+
+  const opcao = q.get("opcao");
+  if (!opcao) return;
+  const cb = camadasContainer.querySelector(`input[type="checkbox"][value="${CSS.escape(opcao)}"]`);
+  if (cb) cb.checked = true;
+}
+
 protegerPaginaAdmin(async () => {
   try {
     await carregarCamadasNoForm();
     await carregarTabela();
+    aplicarAtalhosDaURL();
   } catch (erro) {
     console.error("Erro ao carregar produtos:", erro);
     tabela.innerHTML = `<p class="admin-vazio">Não foi possível carregar os produtos agora.</p>`;

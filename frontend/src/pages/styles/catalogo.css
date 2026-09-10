@@ -690,6 +690,43 @@
   }
 }
 
+/* Busca no mobile: com o carrinho de volta na navbar, ela precisa ceder
+   espaço. Fica aqui (e não no style.css) porque esta folha carrega por
+   último — é a que realmente vence na cascata. */
+@media (max-width: 900px) {
+  .nav-busca-form {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 46vw;
+    margin: 0;
+    padding: 0.28rem 0.6rem;
+    overflow: hidden;
+  }
+
+  /* min-width:0 é obrigatório: o <input> tem largura intrínseca (~170px) e,
+     sem isso, empurrava a lupa para fora do overflow:hidden — o ícone
+     aparecia cortado na beirada da pílula. */
+  .nav-busca-form input {
+    flex: 1 1 auto;
+    min-width: 0;
+    /* 16px evita o zoom automático do iOS ao focar o campo */
+    font-size: 16px;
+  }
+
+  .nav-busca-form input::placeholder {
+    font-size: 0.8rem;
+  }
+
+  .nav-busca-form button {
+    flex: 0 0 auto;
+  }
+
+  .nav-busca-form button svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+
 @media (max-width: 900px) {
   .catalogo-layout {
     grid-template-columns: 1fr;

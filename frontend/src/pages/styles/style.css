@@ -1885,14 +1885,18 @@ body[data-theme="light"] .social-btn {
 }
 
 @media (max-width: 900px) {
-  /* R2 5.1: a busca agora fica NA NAVBAR também no mobile (saiu do menu
-     lateral). Somem só categorias, conta, carrinho e tema — que vivem no
-     painel do hambúrguer. */
+  /* A busca fica NA NAVBAR também no mobile. O CARRINHO também: enterrado
+     no hambúrguer, ninguém achava — é o atalho mais usado da loja.
+     Categorias, conta e tema seguem no painel lateral. */
   .nav-categorias-wrapper,
   #nav-account,
-  #nav-carrinho-slot,
   #theme-button {
     display: none !important;
+  }
+
+  #nav-carrinho-slot {
+    display: flex;
+    flex-shrink: 0;
   }
 
   .mobile-menu-btn {
@@ -1911,18 +1915,18 @@ body[data-theme="light"] .social-btn {
     object-fit: contain;
   }
 
-  .nav-busca-form {
-    flex: 1;
-    min-width: 0;
-    max-width: none;
-    margin: 0;
-    padding: 0.32rem 0.75rem;
-    overflow: hidden;
+  /* O dimensionamento da busca no mobile fica em catalogo.css, junto da
+     regra base de .nav-busca-form — aquela folha carrega DEPOIS desta e
+     venceria qualquer max-width definido aqui. */
+
+  /* Carrinho: alvo de toque decente e contador legível */
+  .nav-carrinho-btn {
+    padding: 0.4rem;
   }
 
-  .nav-busca-form input {
-    /* 16px evita o zoom automático do iOS ao focar o campo */
-    font-size: 16px;
+  .nav-carrinho-btn svg {
+    width: 22px;
+    height: 22px;
   }
 
   .nav-actions {

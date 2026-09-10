@@ -1,4 +1,4 @@
-import { cadastrarUsuario, traduzErroAuth, loginComGoogle, logoutUsuario } from "../services/auth.js";
+import { cadastrarUsuario, traduzErroAuth, loginComGoogle, concluirLoginGoogle, logoutUsuario } from "../services/auth.js";
 import { formatarCNPJ, validarCNPJ, consultarCNPJ } from "../services/cnpj.js";
 import { toast } from "../services/ui-feedback.js";
 
@@ -222,6 +222,14 @@ form.addEventListener("submit", async (evento) => {
 });
 
 // ── Cadastro/login com Google ────────────────────────────────────────────
+// Fecha o fluxo de redirect (usado quando o pop-up é bloqueado) e expõe o
+// erro em vez de deixá-lo sumir.
+concluirLoginGoogle()
+  .then((usuario) => {
+    if (usuario) window.location.href = "./index.html";
+  })
+  .catch((erro) => mostrarMensagem(traduzErroAuth(erro?.code)));
+
 const btnGoogle = document.getElementById("btn-cadastro-google");
 btnGoogle.addEventListener("click", async () => {
   mostrarMensagem("");
