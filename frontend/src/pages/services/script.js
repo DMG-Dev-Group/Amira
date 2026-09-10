@@ -91,7 +91,11 @@ function handleNewsletter() {
 window.handleNewsletter = handleNewsletter;
 
 // ── Smooth scroll para âncoras internas ──────────────────────────────────
-document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+// ⚠️ O toggle "Categorias" do menu mobile também é um <a href="#...">, mas
+// ele NÃO deve rolar a página — só abre a sanfona no painel. O
+// preventDefault() dele (services/nav-mobile-menu.js) não impede ESTE
+// listener de rodar, então ele fica de fora do seletor.
+document.querySelectorAll('a[href^="#"]:not(.mobile-menu-category-toggle)').forEach(anchor => {
   anchor.addEventListener('click', e => {
     const href = anchor.getAttribute('href');
     if (!href || href === '#') return; // "#" puro não é seletor válido
