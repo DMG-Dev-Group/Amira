@@ -9,6 +9,7 @@ import {
 } from "../services/auth.js";
 import { formatarCNPJ, validarCNPJ, consultarCNPJ } from "../services/cnpj.js";
 import { escapeHtml } from "../services/seguranca.js";
+import { confirmar, toast } from "../services/ui-feedback.js";
 import { db } from "../services/firebase-config.js";
 import {
   doc,
@@ -73,9 +74,11 @@ const btnSalvarEndereco = document.getElementById("btn-salvar-endereco");
 const msgEndereco = document.getElementById("msg-endereco");
 
 // ── Helpers de mensagem ─────────────────────────────────────────────────
-function mostrarMsg(el, texto, tipo = "erro") {
-  el.textContent = texto;
-  el.classList.toggle("sucesso", tipo === "sucesso");
+// Feedback agora é toast pop-up. `el` é ignorado (mantido na assinatura
+// para não mexer em todas as chamadas). Chamar com texto vazio não faz nada.
+function mostrarMsg(_el, texto, tipo = "erro") {
+  if (!texto) return;
+  toast(texto, tipo === "sucesso" ? "sucesso" : "erro");
 }
 
 // ── Abas ────────────────────────────────────────────────────────────────
@@ -262,7 +265,7 @@ function renderizarStatusRevendedor() {
       renderizarStatusRevendedor();
     } catch (erro) {
       console.error(erro);
-      alert("Não foi possível reativar agora. Tente novamente.");
+      toast("Não foi possível reativar agora. Tente novamente.", "erro");
     }
   });
 }
@@ -316,15 +319,19 @@ formRevendedor?.addEventListener("submit", async (evento) => {
 });
 
 btnVoltarCliente?.addEventListener("click", async () => {
-  const confirmar = confirm("Usar sua conta como cliente comum? Você pode voltar ao modo revendedor quando quiser.");
-  if (!confirmar) return;
+  const ok = await confirmar({
+    titulo: "Voltar para conta cliente?",
+    descricao: "Você pode reativar o modo revendedor quando quiser — sua aprovação fica guardada.",
+    confirmar: "Voltar para cliente"
+  });
+  if (!ok) return;
   try {
     await voltarParaContaCliente(usuarioAtual);
     perfilAtual = { ...perfilAtual, tipoConta: "cliente" };
     renderizarStatusRevendedor();
   } catch (erro) {
     console.error(erro);
-    alert("Não foi possível alterar agora. Tente novamente.");
+    toast("Não foi possível alterar agora. Tente novamente.", "erro");
   }
 });
 
@@ -462,12 +469,14 @@ btnBaixarDados?.addEventListener("click", () => {
   );
 });
 
-btnExcluirConta?.addEventListener("click", () => {
-  const confirmar = confirm(
-    "Isso abre uma conversa com a loja para solicitar a exclusão definitiva da sua conta e dos seus dados. " +
-    "A exclusão é feita pela loja e não pode ser desfeita. Deseja continuar?"
-  );
-  if (!confirmar) return;
+btnExcluirConta?.addEventListener("click", async () => {
+  const ok = await confirmar({
+    titulo: "Excluir sua conta?",
+    descricao: "Isso abre uma conversa com a loja para solicitar a exclusão definitiva da sua conta e dos seus dados (LGPD). A exclusão é feita pela loja e não pode ser desfeita.",
+    confirmar: "Solicitar exclusão",
+    destrutivo: true
+  });
+  if (!ok) return;
   const nome = campoNome.value.trim() || perfilAtual?.nome || "";
   abrirWhatsAppLoja(
     `Olá! Sou ${nome} (${usuarioAtual.email}). ` +
@@ -477,8 +486,8 @@ btnExcluirConta?.addEventListener("click", () => {
 
 // ── Logout ────────────────────────────────────────────────────────────────
 btnLogout.addEventListener("click", async () => {
-  const confirmar = confirm("Deseja sair da sua conta?");
-  if (!confirmar) return;
+  const ok = await confirmar({ titulo: "Sair da conta?", confirmar: "Sair" });
+  if (!ok) return;
   await logoutUsuario();
   window.location.href = "./index.html";
 });

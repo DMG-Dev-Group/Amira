@@ -11,6 +11,7 @@ import {
   sendPasswordResetEmail
 } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
 import { auth } from "../services/firebase-config.js";
+import { toast } from "../services/ui-feedback.js";
 const form = document.getElementById("form-login");
 const inputEmail = document.getElementById("login-email");
 const inputSenha = document.getElementById("login-senha");
@@ -22,9 +23,12 @@ const linkEsqueci = document.getElementById("link-esqueci");
 
 let redirecionarAposLogin = true;
 
+// Avisos transitórios agora são toasts pop-up (services/ui-feedback.js).
+// O #login-msg no HTML fica só para o alerta persistente de verificação
+// de e-mail, que tem botão de reenvio dentro.
 function mostrarMensagem(texto, tipo = "erro") {
-  msg.innerHTML = texto;
-  msg.classList.toggle("sucesso", tipo === "sucesso");
+  if (!texto) return;
+  toast(texto, tipo === "sucesso" ? "sucesso" : "erro");
 }
 
 function redirecionarConformePerfil(perfil) {
@@ -83,10 +87,9 @@ form.addEventListener("submit", async (evento) => {
     // Google nunca passam por aqui (emailVerified já vem true do Google).
     if (!emailEstaVerificado(usuario)) {
       redirecionarAposLogin = false;
-      mostrarMensagem(
+      msg.innerHTML =
         `Confirme seu e-mail antes de continuar. Verifique sua caixa de entrada (e o spam).<br>
-         <button type="button" id="btn-reenviar-verificacao">Reenviar e-mail de confirmação</button>`
-      );
+         <button type="button" id="btn-reenviar-verificacao">Reenviar e-mail de confirmação</button>`;
       msg.classList.add("verificacao-alerta");
 
       document.getElementById("btn-reenviar-verificacao").addEventListener("click", async () => {

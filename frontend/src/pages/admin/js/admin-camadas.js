@@ -1,4 +1,5 @@
 import { protegerPaginaAdmin } from "./admin-auth.js";
+import { confirmar, toast } from "../../services/ui-feedback.js";
 import {
   listarCamadas,
   criarCamada,
@@ -147,7 +148,7 @@ async function moverCamada(id, dir) {
     await carregarLista();
   } catch (erro) {
     console.error(erro);
-    alert("Não foi possível reordenar agora. Tente novamente.");
+    toast("Não foi possível reordenar agora. Tente novamente.", "erro");
   } finally {
     lista.style.opacity = "";
   }
@@ -176,16 +177,22 @@ async function confirmarExclusaoCamada(id) {
   const c = camadasCache.find((x) => x.id === id);
   const ehPrincipal = camadasCache[0]?.id === id;
   const aviso = ehPrincipal
-    ? `Excluir a camada principal "${c?.nome}"? A loja fica sem menu de categorias até você definir outra camada como principal.`
-    : `Excluir a camada "${c?.nome}"? Os produtos não são apagados, mas deixam de ser filtráveis por ela.`;
-  if (!confirm(aviso)) return;
+    ? `A loja fica sem menu de categorias até você definir outra camada como principal.`
+    : `Os produtos não são apagados, mas deixam de ser filtráveis por ela.`;
+  const ok = await confirmar({
+    titulo: `Excluir a camada "${c?.nome}"?`,
+    descricao: aviso,
+    confirmar: "Excluir camada",
+    destrutivo: true
+  });
+  if (!ok) return;
 
   try {
     await excluirCamada(id);
     await carregarLista();
   } catch (erro) {
     console.error(erro);
-    alert("Não foi possível excluir agora. Tente novamente.");
+    toast("Não foi possível excluir agora. Tente novamente.", "erro");
   }
 }
 
@@ -250,7 +257,13 @@ async function removerOpcao(camadaId, indice) {
   const camada = camadasCache.find((c) => c.id === camadaId);
   if (!camada) return;
   const op = camada.opcoes[indice];
-  if (!confirm(`Remover a opção "${op?.nome}"? Produtos marcados com ela deixam de aparecer nesse filtro.`)) return;
+  const ok = await confirmar({
+    titulo: `Remover "${op?.nome}"?`,
+    descricao: "Produtos marcados com essa opção deixam de aparecer nesse filtro.",
+    confirmar: "Remover",
+    destrutivo: true
+  });
+  if (!ok) return;
 
   const novas = camada.opcoes.filter((_, i) => i !== indice);
   try {
@@ -258,7 +271,7 @@ async function removerOpcao(camadaId, indice) {
     await carregarLista();
   } catch (erro) {
     console.error(erro);
-    alert("Não foi possível remover agora. Tente novamente.");
+    toast("Não foi possível remover agora. Tente novamente.", "erro");
   }
 }
 
