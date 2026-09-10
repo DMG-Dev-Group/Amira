@@ -1,79 +1,94 @@
 // ── POST /api/webhook-mp ───────────────────────────────────────────────
 // Notificação do Mercado Pago sobre mudança de status de pagamento.
 //
-//  1. Valida a assinatura (x-signature) com MP_WEBHOOK_SECRET.
-//  2. Consulta o status REAL do pagamento na API do MP (nunca confia no
-//     corpo da notificação).
-//  3. Atualiza pedidos/{id}.pagamento.status via Admin SDK.
+//  1. Descobre o id do pagamento (query ?data.id= ou corpo data.id).
+//  2. Consulta o status REAL na API do MP com o nosso access token —
+//     ESSA é a verificação de verdade: só marcamos "aprovado" se o
+//     próprio MP disser "approved". Um webhook forjado não engana isso.
+//  3. Confere a assinatura x-signature só para LOG (não bloqueia — o
+//     passo 2 já garante a autenticidade).
+//  4. Atualiza pedidos/{id}.pagamento.status via Admin SDK.
 //
 // Responde 200 rápido — o MP re-tenta se não receber 2xx.
-//
-// ESQUELETO: testar com o simulador de webhook do painel do Mercado Pago
-// e com pagamentos de sandbox antes de ligar em produção.
 
 const crypto = require("crypto");
 const { getDb } = require("./_lib/firebase-admin");
 const { buscarPagamento } = require("./_lib/mercadopago");
 const { FieldValue } = require("firebase-admin/firestore");
 
-// Status do Mercado Pago -> nosso status.
 function traduzStatus(mp) {
   if (mp === "approved") return "aprovado";
   if (["rejected", "cancelled", "refunded", "charged_back"].includes(mp)) return "recusado";
   return "pendente"; // pending, in_process, authorized...
 }
 
-// Assinatura do webhook do Mercado Pago.
-// manifest = `id:<data.id>;request-id:<x-request-id>;ts:<ts>;`
-// header x-signature = `ts=<ts>,v1=<hmac-sha256-hex>`
-function assinaturaValida(req) {
+// Assinatura do MP. manifest = "id:<data.id>;request-id:<x-request-id>;ts:<ts>;"
+// mas cada segmento SÓ entra se o valor existir (spec do MP). Retorna
+// "ok" | "sem-assinatura" | "sem-segredo" | "nao-confere".
+function checarAssinatura(req, dataId) {
   const secret = process.env.MP_WEBHOOK_SECRET;
-  if (!secret) {
-    console.warn("[/api/webhook-mp] MP_WEBHOOK_SECRET não configurada");
-    return false;
-  }
+  if (!secret) return "sem-segredo";
 
   const assinatura = req.headers["x-signature"] || "";
   const requestId = req.headers["x-request-id"] || "";
+  if (!assinatura) return "sem-assinatura";
 
-  const partes = Object.fromEntries(
-    assinatura.split(",").map((p) => p.split("=").map((s) => s.trim()))
-  );
+  const partes = {};
+  for (const p of assinatura.split(",")) {
+    const i = p.indexOf("=");
+    if (i > 0) partes[p.slice(0, i).trim()] = p.slice(i + 1).trim();
+  }
   const ts = partes.ts;
   const v1 = partes.v1;
-  if (!ts || !v1) return false;
+  if (!ts || !v1) return "sem-assinatura";
 
-  const dataId =
-    (req.query && (req.query["data.id"] || req.query.id)) ||
-    (req.body && req.body.data && req.body.data.id) ||
-    "";
+  // data.id alfanumérico deve ir em minúsculas (spec do MP).
+  const id = /[a-zA-Z]/.test(String(dataId)) ? String(dataId).toLowerCase() : String(dataId);
 
-  const manifest = `id:${dataId};request-id:${requestId};ts:${ts};`;
+  let manifest = "";
+  if (id) manifest += `id:${id};`;
+  if (requestId) manifest += `request-id:${requestId};`;
+  manifest += `ts:${ts};`;
+
   const esperado = crypto.createHmac("sha256", secret).update(manifest).digest("hex");
-
   try {
-    return crypto.timingSafeEqual(Buffer.from(v1, "hex"), Buffer.from(esperado, "hex"));
+    const ok = crypto.timingSafeEqual(Buffer.from(v1, "hex"), Buffer.from(esperado, "hex"));
+    return ok ? "ok" : "nao-confere";
   } catch {
-    return false;
+    return "nao-confere";
   }
 }
 
 module.exports = async (req, res) => {
-  if (req.method !== "POST") return res.status(405).end();
+  if (req.method !== "POST" && req.method !== "GET") return res.status(405).end();
 
   try {
-    if (!assinaturaValida(req)) {
-      console.warn("[/api/webhook-mp] assinatura inválida — ignorando");
-      return res.status(401).end();
+    const tipo = (req.body && (req.body.type || req.body.topic)) ||
+      (req.query && (req.query.type || req.query.topic));
+    let pagamentoId =
+      (req.query && (req.query["data.id"] || req.query.id)) ||
+      (req.body && req.body.data && req.body.data.id) ||
+      null;
+
+    // Reconciliação manual: GET /api/webhook-mp?pedidoId=XYZ — resolve o
+    // id do pagamento a partir do pedido e sincroniza o status. Útil para
+    // um pedido que ficou "pendente" porque a notificação se perdeu.
+    if (!pagamentoId && req.query && req.query.pedidoId) {
+      const snap = await getDb().collection("pedidos").doc(String(req.query.pedidoId)).get();
+      pagamentoId = snap.exists ? (snap.data().pagamento || {}).provedorId : null;
+      if (!pagamentoId) return res.status(404).json({ erro: "Pedido sem pagamento associado" });
     }
 
-    const tipo = (req.body && req.body.type) || (req.query && req.query.type);
-    const pagamentoId =
-      (req.body && req.body.data && req.body.data.id) ||
-      (req.query && req.query["data.id"]);
+    // Confere a assinatura só para registrar no log.
+    const assinatura = checarAssinatura(req, pagamentoId || "");
+    if (assinatura !== "ok") {
+      console.warn(`[/api/webhook-mp] assinatura: ${assinatura} (seguindo mesmo assim — a consulta à API do MP é a verificação real)`);
+    }
 
-    // Só nos interessa notificação de pagamento.
-    if (tipo !== "payment" || !pagamentoId) return res.status(200).end();
+    // Só notificação de pagamento nos interessa.
+    if ((tipo && tipo !== "payment" && tipo !== "payment.updated" && tipo !== "payment.created") || !pagamentoId) {
+      return res.status(200).end();
+    }
 
     const pagamento = await buscarPagamento(pagamentoId);
     const pedidoId = pagamento.external_reference;
@@ -82,11 +97,12 @@ module.exports = async (req, res) => {
       return res.status(200).end();
     }
 
+    const novoStatus = traduzStatus(pagamento.status);
     await getDb().collection("pedidos").doc(String(pedidoId)).set(
       {
         pagamento: {
           provedorPagamentoId: String(pagamentoId),
-          status: traduzStatus(pagamento.status),
+          status: novoStatus,
           statusMP: pagamento.status,
           atualizadoEm: FieldValue.serverTimestamp()
         }
@@ -94,11 +110,13 @@ module.exports = async (req, res) => {
       { merge: true }
     );
 
-    return res.status(200).end();
+    console.log(`[/api/webhook-mp] pedido ${pedidoId} -> ${novoStatus} (MP: ${pagamento.status})`);
+    return res.status(200).json({ pedidoId, status: novoStatus, statusMP: pagamento.status });
   } catch (erro) {
-    console.error("[/api/webhook-mp]", erro && erro.message, erro && erro.detalhe);
+    console.error("[/api/webhook-mp]", erro && erro.message, JSON.stringify(erro && erro.detalhe));
     // 200 mesmo em erro interno: evita o MP floodar de retry. O log
-    // registra o problema para investigação.
+    // registra o problema; a página de confirmação faz polling e o MP
+    // re-tenta a notificação.
     return res.status(200).end();
   }
 };
