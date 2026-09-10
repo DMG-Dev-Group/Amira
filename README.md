@@ -86,6 +86,14 @@ firebase emulators:start
 - **Regras:** `firebase deploy --only firestore:rules`
 - **Índices:** `firebase deploy --only firestore:indexes`
 
+> **URLs sem `.html`** — o `vercel.json` usa `"cleanUrls": true`: em produção
+> a Vercel serve `/produtos` e redireciona (308) `/produtos.html` → `/produtos`,
+> então a extensão some da barra de endereço. Os `href` no HTML continuam
+> **com** `.html` de propósito — assim o preview local
+> (`python -m http.server`, que não resolve caminho sem extensão) segue
+> funcionando. Não adicione chaves fora do schema no `vercel.json`: o deploy
+> falha com *"should NOT have additional property"*.
+
 ## Documentação
 
 | Documento | Conteúdo |
