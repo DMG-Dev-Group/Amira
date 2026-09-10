@@ -129,7 +129,9 @@
       </div>
     </div>
 
-    <div class="perfil-tabs">
+    <div class="perfil-tabs" role="tablist">
+      <!-- Fundo que desliza entre as abas; o JS ajusta left/width. -->
+      <span class="perfil-tabs__pill" aria-hidden="true"></span>
       <button class="perfil-tab-btn active" data-tab="dados">Dados pessoais</button>
       <button class="perfil-tab-btn" data-tab="seguranca">Segurança</button>
       <button class="perfil-tab-btn" data-tab="enderecos">Endereços</button>

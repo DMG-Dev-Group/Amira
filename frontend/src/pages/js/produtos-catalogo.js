@@ -24,10 +24,19 @@ import {
   ordenarProdutos,
   infoPreco,
   estoquePorModo,
-  disponivelNoModo
+  disponivelNoModo,
+  filtrosDoProduto
 } from "../services/produtos.js";
 import { listarCamadas, camadaPrincipal } from "../services/camadas.js";
 import { escapeHtml, urlImagemSegura } from "../services/seguranca.js";
+import { observarAuth } from "../services/auth.js";
+import { adicionarAoCarrinho } from "../services/carrinho.js";
+import { toast } from "../services/ui-feedback.js";
+
+const IC_CARRINHO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.2 11.2a1.8 1.8 0 0 0 1.8 1.4h8.4a1.8 1.8 0 0 0 1.8-1.4L21 7H6"/></svg>';
+
+let usuarioLogado = null;
+observarAuth(({ usuario }) => { usuarioLogado = usuario; });
 
 const grid = document.getElementById("catalogo-grid");
 const tituloTexto = document.getElementById("catalogo-titulo-texto");
@@ -185,30 +194,100 @@ function formatarPreco(valor) {
   return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
+// Etiqueta de contexto no topo do card (ex.: "Árabes") — sai da opção do
+// produto na camada principal. Sem isso o card ficava só foto + nome +
+// preço, e é justamente esse vazio que fazia ele parecer "morto".
+function etiquetaCamada(p) {
+  if (!camadaPrincipalSlug) return "";
+  const slugs = filtrosDoProduto(p, camadaPrincipalSlug)[camadaPrincipalSlug] || [];
+  if (slugs.length === 0) return "";
+  return nomeOpcao(camadaPrincipalSlug, slugs[0]);
+}
+
 function cardProduto(p) {
   const temVarejo = disponivelNoModo(p, "varejo");
   const preco = infoPreco(p, "varejo");
   const estoque = estoquePorModo(p, "varejo");
+  const semEstoque = temVarejo && estoque <= 0;
+  const etiqueta = etiquetaCamada(p);
+  const podeAdicionar = temVarejo && !semEstoque;
 
+  // O card é um <article> com link esticado (::after cobre o cartão) para
+  // poder ter um BOTÃO de compra rápida dentro — <button> dentro de <a>
+  // seria HTML inválido.
   return `
-    <a class="catalogo-card" href="produto.html?id=${encodeURIComponent(p.id)}">
+    <article class="catalogo-card ${semEstoque ? "catalogo-card--esgotado" : ""}">
       <div class="catalogo-card-img">
         <img src="${urlImagemSegura(p.imagemURL)}" alt="${escapeHtml(p.nome)}" loading="lazy">
         ${preco.temDesconto ? `<span class="desconto-selo">-${preco.percentual}%</span>` : ""}
+        ${semEstoque ? `<span class="catalogo-card-esgotado-selo">Esgotado</span>` : ""}
       </div>
       <div class="catalogo-card-info">
-        <h3 class="catalogo-card-nome">${escapeHtml(p.nome)}</h3>
-        ${temVarejo ? `
-          <span class="catalogo-card-preco">
-            ${formatarPreco(preco.precoFinal)}
-            ${preco.temDesconto ? `<span class="preco-antigo">${formatarPreco(preco.precoOriginal)}</span>` : ""}
-          </span>
-        ` : `<span class="catalogo-card-preco">Exclusivo atacado</span>`}
-        ${p.precoAtacado ? `<span class="catalogo-card-preco-atacado">Atacado: ${formatarPreco(Number(p.precoAtacado))}/un</span>` : ""}
-        ${temVarejo && estoque <= 0 ? `<span class="catalogo-card-estoque">Fora de estoque</span>` : ""}
+        ${etiqueta ? `<span class="catalogo-card-etiqueta">${escapeHtml(etiqueta)}</span>` : ""}
+        <h3 class="catalogo-card-nome">
+          <a class="catalogo-card__link" href="produto.html?id=${encodeURIComponent(p.id)}">${escapeHtml(p.nome)}</a>
+        </h3>
+        <div class="catalogo-card-rodape">
+          <div class="catalogo-card-precos">
+            ${temVarejo ? `
+              <span class="catalogo-card-preco">
+                ${formatarPreco(preco.precoFinal)}
+                ${preco.temDesconto ? `<span class="preco-antigo">${formatarPreco(preco.precoOriginal)}</span>` : ""}
+              </span>
+            ` : `<span class="catalogo-card-preco catalogo-card-preco--so-atacado">Exclusivo atacado</span>`}
+            ${p.precoAtacado ? `<span class="catalogo-card-preco-atacado">Atacado ${formatarPreco(Number(p.precoAtacado))}/un</span>` : ""}
+          </div>
+          ${podeAdicionar ? `
+            <button type="button" class="catalogo-card__add" data-id="${escapeHtml(p.id)}"
+                    aria-label="Adicionar ${escapeHtml(p.nome)} ao carrinho" title="Adicionar ao carrinho">
+              ${IC_CARRINHO}
+            </button>
+          ` : ""}
+        </div>
       </div>
-    </a>
+    </article>
   `;
+}
+
+// ── Compra rápida a partir do card ────────────────────────────────────
+async function adicionarDoCard(btn) {
+  if (!usuarioLogado) {
+    window.location.href = "login.html";
+    return;
+  }
+  const produto = produtosCarregados.find((p) => p.id === btn.dataset.id);
+  if (!produto) return;
+
+  btn.disabled = true;
+  btn.classList.add("catalogo-card__add--ocupado");
+  try {
+    await adicionarAoCarrinho(usuarioLogado.uid, {
+      produtoId: produto.id,
+      nome: produto.nome,
+      imagemURL: produto.imagemURL || "",
+      precoUnitario: infoPreco(produto, "varejo").precoFinal,
+      pesoUnitario: produto.peso || 0,
+      quantidade: 1,
+      modo: "varejo"
+    });
+    btn.classList.add("catalogo-card__add--ok");
+    toast(`"${produto.nome}" no carrinho.`, "sucesso", { titulo: "Adicionado" });
+    setTimeout(() => btn.classList.remove("catalogo-card__add--ok"), 1400);
+  } catch (erro) {
+    console.error(erro);
+    toast("Não foi possível adicionar ao carrinho agora.", "erro");
+  } finally {
+    btn.disabled = false;
+    btn.classList.remove("catalogo-card__add--ocupado");
+  }
+}
+
+function ligarBotoesAdd(container) {
+  container.querySelectorAll(".catalogo-card__add").forEach((btn) => {
+    if (btn.dataset.ligado) return;
+    btn.dataset.ligado = "1";
+    btn.addEventListener("click", () => adicionarDoCard(btn));
+  });
 }
 
 function renderizarLista(produtos, { acrescentar = false } = {}) {
@@ -223,6 +302,7 @@ function renderizarLista(produtos, { acrescentar = false } = {}) {
   } else {
     grid.innerHTML = html;
   }
+  ligarBotoesAdd(grid);
 }
 
 function atualizarContagem(qtdVisivel) {

@@ -89,7 +89,6 @@ function renderizarTabela() {
           <th>Entrega</th>
           <th>Total</th>
           <th>Pagamento</th>
-          <th>Status</th>
           <th>Ações</th>
         </tr>
       </thead>
@@ -105,11 +104,6 @@ function renderizarTabela() {
             <td>${p.modoEntrega === "retirada" ? "Retirada" : "Entrega"}</td>
             <td>${formatarPreco(totaisCache.get(p.id)?.total ?? 0)}</td>
             <td>${badgePagamento(p)}</td>
-            <td>
-              <select class="select-status" data-id="${escapeHtml(p.id)}" style="background:transparent; border:1px solid var(--border); color:inherit; border-radius:4px; padding:0.3rem;">
-                ${STATUS_OPCOES.map((s) => `<option value="${s}" ${s === p.status ? "selected" : ""}>${s.replace(/_/g, " ")}</option>`).join("")}
-              </select>
-            </td>
             <td style="white-space:nowrap;">
               <button class="admin-btn admin-btn-outline admin-btn-sm btn-ver-detalhe" data-id="${escapeHtml(p.id)}">Detalhes</button>
               <a class="admin-btn admin-btn-outline admin-btn-sm" href="../comprovante.html?id=${encodeURIComponent(p.id)}" target="_blank" rel="noopener" style="text-decoration:none;">Comprovante</a>
@@ -120,9 +114,6 @@ function renderizarTabela() {
     </table>
   `;
 
-  document.querySelectorAll(".select-status").forEach((select) => {
-    select.addEventListener("change", () => atualizarStatus(select.dataset.id, select.value));
-  });
   document.querySelectorAll(".btn-ver-detalhe").forEach((btn) => {
     btn.addEventListener("click", () => abrirDetalhe(btn.dataset.id));
   });
@@ -134,6 +125,9 @@ async function atualizarStatus(pedidoId, novoStatus) {
     await updateDoc(ref, { status: novoStatus });
     const pedido = pedidosCache.find((p) => p.id === pedidoId);
     if (pedido) pedido.status = novoStatus;
+    // o filtro do topo usa p.status — mantem a lista coerente
+    renderizarTabela();
+    toast(`Etapa atualizada para "${novoStatus.replace(/_/g, " ")}".`, "sucesso");
   } catch (erro) {
     console.error(erro);
     toast("Não foi possível atualizar o status agora. Tente novamente.", "erro");
@@ -166,6 +160,14 @@ function abrirDetalhe(pedidoId) {
       ${p.pagamento?.provedorPagamentoId ? `<span style="font-size:0.72rem; color:var(--text-muted);"> · MP ${escapeHtml(String(p.pagamento.provedorPagamentoId))}</span>` : ""}
     </p>
 
+    <div class="pedido-etapa">
+      <label for="detalhe-status">Etapa do pedido</label>
+      <select id="detalhe-status" class="select-status" data-id="${escapeHtml(p.id)}">
+        ${STATUS_OPCOES.map((op) => `<option value="${op}" ${op === p.status ? "selected" : ""}>${op.replace(/_/g, " ")}</option>`).join("")}
+      </select>
+      <small>O pagamento acima e confirmado sozinho pelo Mercado Pago. Use isto so para acompanhar o preparo/envio.</small>
+    </div>
+
     ${totais.avisos.length > 0 ? `
       <div class="admin-msg" style="display:block; margin-bottom:1rem;">
         ${totais.avisos.map((a) => `<p>• ${escapeHtml(a)}</p>`).join("")}
@@ -195,6 +197,11 @@ function abrirDetalhe(pedidoId) {
       Abrir comprovante
     </a>
   `;
+
+  const selectEtapa = modalConteudo.querySelector("#detalhe-status");
+  selectEtapa?.addEventListener("change", () => {
+    atualizarStatus(selectEtapa.dataset.id, selectEtapa.value);
+  });
 
   modal.style.display = "flex";
 }
