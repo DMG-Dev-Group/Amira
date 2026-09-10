@@ -83,15 +83,50 @@ function mostrarMsg(_el, texto, tipo = "erro") {
   toast(texto, tipo === "sucesso" ? "sucesso" : "erro");
 }
 
-// ── Abas ────────────────────────────────────────────────────────────────
+// ── Abas (segmented control com pill deslizante) ────────────────────────
+// O pill é um <span> absoluto dentro de .perfil-tabs; aqui só copiamos
+// offsetLeft/offsetWidth da aba ativa para left/width. O CSS cuida da
+// animação (cubic-bezier(.65,0,.35,1), 0.4s) e do crossfade do rótulo.
+const pill = document.querySelector(".perfil-tabs__pill");
+
+function moverPill(tab, { animar = true } = {}) {
+  if (!pill || !tab) return;
+
+  // Na primeira pintura o pill precisa APARECER na aba certa, não deslizar
+  // desde a borda esquerda — por isso desligamos a transição uma vez.
+  if (!animar) pill.style.transition = "none";
+
+  pill.style.left = `${tab.offsetLeft}px`;
+  pill.style.width = `${tab.offsetWidth}px`;
+
+  if (!animar) {
+    void pill.offsetWidth; // força reflow antes de devolver a transição
+    pill.style.transition = "";
+  }
+}
+
+function abaAtiva() {
+  return document.querySelector(".perfil-tab-btn.active") || tabs[0];
+}
+
 tabs.forEach((tab) => {
   tab.addEventListener("click", () => {
     tabs.forEach((t) => t.classList.remove("active"));
     paineis.forEach((p) => p.classList.remove("active"));
     tab.classList.add("active");
     document.getElementById(`painel-${tab.dataset.tab}`).classList.add("active");
+
+    moverPill(tab);
+    // no mobile as abas rolam na horizontal: traz a escolhida para a vista
+    tab.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
   });
 });
+
+// Posição inicial. As larguras mudam quando a Jost termina de carregar,
+// então reposicionamos também depois das fontes e em cada resize.
+moverPill(abaAtiva(), { animar: false });
+document.fonts?.ready.then(() => moverPill(abaAtiva(), { animar: false }));
+window.addEventListener("resize", () => moverPill(abaAtiva(), { animar: false }));
 
 // ── Avatar (iniciais ou imagem) ──────────────────────────────────────────
 function gerarIniciais(nome) {
