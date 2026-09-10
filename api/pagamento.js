@@ -1,23 +1,19 @@
 // ── POST /api/pagamento ────────────────────────────────────────────────
 // Corpo: { pedidoId }
 //
-// Fluxo:
-//  1. Lê pedidos/{pedidoId} e a coleção produtos.
-//  2. RECALCULA o total no servidor (nunca confia no cliente) — mesma
-//     garantia que as firestore.rules davam para o PIX-por-WhatsApp.
-//  3. Calcula as parcelas sem juros (regra do carrinho, ver _lib/parcelamento).
-//  4. Cria a preferência do Mercado Pago (Checkout Pro — PIX + cartão).
-//  5. Grava pedidos/{id}.pagamento = { metodo, provedorId, status, total }.
-//  6. Devolve a URL do checkout. O STATUS é atualizado depois pelo
-//     webhook (/api/webhook-mp).
+// Pagamento com CARTÃO via Checkout Pro (redirect). Para PIX na própria
+// página, ver /api/pix.
 //
-// ESQUELETO: os pontos marcados com TODO precisam ser fechados antes de ir
-// para produção (cálculo de desconto/atacado/frete e a config de juros).
+//  1. Lê pedidos/{pedidoId} e RECALCULA o total no servidor
+//     (_lib/total-pedido) — nunca confia no cliente.
+//  2. Calcula as parcelas sem juros (regra do carrinho).
+//  3. Cria a preferência do Mercado Pago e devolve a URL do checkout.
+//  4. O STATUS é atualizado pelo webhook (/api/webhook-mp).
 
 const { getDb } = require("./_lib/firebase-admin");
 const { criarPreferencia } = require("./_lib/mercadopago");
 const { parcelasSemJuros } = require("./_lib/parcelamento");
-const { precoFinal, calcularFrete } = require("./_lib/precos");
+const { calcularTotalPedido } = require("./_lib/total-pedido");
 const { FieldValue } = require("firebase-admin/firestore");
 
 module.exports = async (req, res) => {
@@ -39,51 +35,7 @@ module.exports = async (req, res) => {
       return res.status(409).json({ erro: "Este pedido já foi pago" });
     }
 
-    // ── Total RECALCULADO no servidor ──────────────────────────────────
-    const itens = Array.isArray(pedido.itens) ? pedido.itens : [];
-    if (itens.length === 0) return res.status(422).json({ erro: "Pedido sem itens" });
-
-    const linhas = [];
-    let subtotal = 0;
-    let pesoGramas = 0;
-
-    for (const item of itens) {
-      const prodSnap = await db.collection("produtos").doc(String(item.produtoId)).get();
-      if (!prodSnap.exists) {
-        return res.status(422).json({ erro: `Produto ${item.produtoId} não existe mais` });
-      }
-      const prod = prodSnap.data();
-      const modo = item.modo === "atacado" ? "atacado" : "varejo";
-      const qtd = Math.max(1, Number(item.quantidade) || 1);
-      const precoUnit = precoFinal(prod, modo); // desconto do admin + varejo/atacado
-
-      subtotal += Math.round(precoUnit * qtd * 100) / 100;
-      pesoGramas += (Number(prod.peso) || 0) * qtd;
-      linhas.push({
-        title: String(prod.nome || "Produto").slice(0, 250),
-        quantity: qtd,
-        unit_price: precoUnit,
-        currency_id: "BRL"
-      });
-    }
-
-    // Frete — só quando a entrega for em casa (retirada = grátis).
-    let frete = null;
-    if (pedido.modoEntrega === "entrega") {
-      frete = calcularFrete(pedido.endereco && pedido.endereco.bairro, pesoGramas);
-      if (frete.valor > 0) {
-        linhas.push({
-          title: `Frete${frete.zonaNome ? ` — ${frete.zonaNome}` : ""}`,
-          quantity: 1,
-          unit_price: frete.valor,
-          currency_id: "BRL"
-        });
-      }
-    }
-
-    const total = Math.round((subtotal + (frete ? frete.valor : 0)) * 100) / 100;
-    if (total <= 0) return res.status(422).json({ erro: "Total do pedido inválido" });
-
+    const { subtotal, frete, total, linhas } = await calcularTotalPedido(db, pedido);
     const maxSemJuros = parcelasSemJuros(total);
     const baseUrl = process.env.PUBLIC_BASE_URL || `https://${req.headers.host}`;
 
@@ -94,16 +46,14 @@ module.exports = async (req, res) => {
       back_urls: {
         success: `${baseUrl}/pedido-confirmado.html?id=${encodeURIComponent(pedidoId)}`,
         pending: `${baseUrl}/pedido-confirmado.html?id=${encodeURIComponent(pedidoId)}`,
-        failure: `${baseUrl}/carrinho.html`
+        failure: `${baseUrl}/pedido-confirmado.html?id=${encodeURIComponent(pedidoId)}`
       },
       auto_return: "approved",
       payment_methods: {
         installments: 12,
         default_installments: 1
-        // TODO: "sem juros até maxSemJuros" — no Checkout Pro isso é
-        // configurado no painel do Mercado Pago (Suas integrações ->
-        // Checkout -> Parcelamento sem juros). Se precisar controlar por
-        // pedido, migrar para Checkout Transparente.
+        // "Sem juros até maxSemJuros": no Checkout Pro isso é configurado no
+        // painel do Mercado Pago (Suas integrações -> Checkout -> Parcelamento).
       },
       metadata: { pedidoId: String(pedidoId), maxSemJuros }
     };
@@ -117,7 +67,7 @@ module.exports = async (req, res) => {
           provedorId: pref.id,
           status: "pendente",
           subtotal,
-          frete: frete ? frete.valor : 0,
+          frete,
           total,
           maxSemJuros,
           atualizadoEm: FieldValue.serverTimestamp()
@@ -128,13 +78,16 @@ module.exports = async (req, res) => {
 
     return res.status(200).json({
       preferenceId: pref.id,
-      init_point: pref.init_point,               // produção
-      sandbox_init_point: pref.sandbox_init_point, // sandbox
+      init_point: pref.init_point,
+      sandbox_init_point: pref.sandbox_init_point,
       total,
       maxSemJuros
     });
   } catch (erro) {
+    const status = erro && erro.status ? erro.status : 500;
     console.error("[/api/pagamento]", erro && erro.message, erro && erro.detalhe);
-    return res.status(500).json({ erro: "Não foi possível iniciar o pagamento agora." });
+    return res.status(status).json({
+      erro: status === 500 ? "Não foi possível iniciar o pagamento agora." : erro.message
+    });
   }
 };

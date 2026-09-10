@@ -33,9 +33,16 @@ async function mpFetch(caminho, { method = "GET", body, idempotencyKey } = {}) {
 }
 
 module.exports = {
-  // Checkout Pro: cria a preferência e devolve { id, init_point, sandbox_init_point }
+  // Checkout Pro (redirect): cria a preferência e devolve
+  // { id, init_point, sandbox_init_point }. Usado para CARTÃO.
   criarPreferencia: (preferencia) =>
     mpFetch("/checkout/preferences", { method: "POST", body: preferencia }),
+
+  // Pagamentos API (transparente): cria um pagamento PIX e devolve o
+  // QR Code + copia-e-cola em point_of_interaction.transaction_data.
+  // O cliente paga sem sair do site.
+  criarPagamentoPix: (body, idempotencyKey) =>
+    mpFetch("/v1/payments", { method: "POST", body, idempotencyKey }),
 
   // Consulta o status real de um pagamento (usado pelo webhook)
   buscarPagamento: (pagamentoId) => mpFetch(`/v1/payments/${pagamentoId}`)

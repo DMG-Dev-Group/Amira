@@ -5,6 +5,7 @@
   "trailingSlash": false,
   "functions": {
     "api/pagamento.js": { "maxDuration": 20 },
+    "api/pix.js": { "maxDuration": 20 },
     "api/webhook-mp.js": { "maxDuration": 15 }
   }
 }
