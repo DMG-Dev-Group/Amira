@@ -22,14 +22,12 @@ const contagem = document.getElementById("contagem-camadas");
 const modalCamada = document.getElementById("modal-camada");
 const formCamada = document.getElementById("form-camada");
 const modalCamadaTitulo = document.getElementById("modal-camada-titulo");
-const modalCamadaMsg = document.getElementById("modal-camada-msg");
 const inputCamadaNome = document.getElementById("camada-nome");
 const btnSalvarCamada = document.getElementById("btn-salvar-camada");
 
 const modalOpcao = document.getElementById("modal-opcao");
 const formOpcao = document.getElementById("form-opcao");
 const modalOpcaoTitulo = document.getElementById("modal-opcao-titulo");
-const modalOpcaoMsg = document.getElementById("modal-opcao-msg");
 const inputOpcaoNome = document.getElementById("opcao-nome");
 const campoOpcaoImagem = document.getElementById("campo-opcao-imagem");
 const opcaoImagem = montarUploadFoto(document.getElementById("opcao-imagem-upload"), {
@@ -158,7 +156,6 @@ async function moverCamada(id, dir) {
 function abrirModalCamada(id) {
   camadaEditandoId = id || null;
   formCamada.reset();
-  modalCamadaMsg.style.display = "none";
   if (camadaEditandoId) {
     const c = camadasCache.find((x) => x.id === camadaEditandoId);
     modalCamadaTitulo.textContent = "Renomear camada";
@@ -198,12 +195,10 @@ async function confirmarExclusaoCamada(id) {
 
 formCamada.addEventListener("submit", async (evento) => {
   evento.preventDefault();
-  modalCamadaMsg.style.display = "none";
 
   const nome = inputCamadaNome.value.trim();
   if (!nome) {
-    modalCamadaMsg.textContent = "Informe o nome da camada.";
-    modalCamadaMsg.style.display = "block";
+    toast("Informe o nome da camada.", "erro");
     return;
   }
 
@@ -219,8 +214,7 @@ formCamada.addEventListener("submit", async (evento) => {
     await carregarLista();
   } catch (erro) {
     console.error(erro);
-    modalCamadaMsg.textContent = erro.message || "Não foi possível salvar agora.";
-    modalCamadaMsg.style.display = "block";
+    toast(erro.message || "Não foi possível salvar agora.", "erro");
   } finally {
     btnSalvarCamada.disabled = false;
     btnSalvarCamada.textContent = "Salvar";
@@ -231,7 +225,6 @@ formCamada.addEventListener("submit", async (evento) => {
 function abrirModalOpcao(camadaId, indice) {
   opcaoCtx = { camadaId, indice };
   formOpcao.reset();
-  modalOpcaoMsg.style.display = "none";
 
   const ehPrincipal = camadasCache[0]?.id === camadaId;
   campoOpcaoImagem.style.display = ehPrincipal ? "block" : "none";
@@ -277,7 +270,6 @@ async function removerOpcao(camadaId, indice) {
 
 formOpcao.addEventListener("submit", async (evento) => {
   evento.preventDefault();
-  modalOpcaoMsg.style.display = "none";
 
   const camada = camadasCache.find((c) => c.id === opcaoCtx.camadaId);
   if (!camada) return;
@@ -285,8 +277,7 @@ formOpcao.addEventListener("submit", async (evento) => {
   const nome = inputOpcaoNome.value.trim();
   const imagemURL = opcaoImagem.valor();
   if (!nome) {
-    modalOpcaoMsg.textContent = "Informe o nome da opção.";
-    modalOpcaoMsg.style.display = "block";
+    toast("Informe o nome da opção.", "erro");
     return;
   }
 
@@ -299,13 +290,11 @@ formOpcao.addEventListener("submit", async (evento) => {
   } else {
     const slug = gerarSlug(nome);
     if (!slug) {
-      modalOpcaoMsg.textContent = "Nome inválido para gerar o identificador.";
-      modalOpcaoMsg.style.display = "block";
+      toast("Nome inválido para gerar o identificador.", "erro");
       return;
     }
     if (novas.some((o) => o.slug === slug)) {
-      modalOpcaoMsg.textContent = "Já existe uma opção com esse nome nesta camada.";
-      modalOpcaoMsg.style.display = "block";
+      toast("Já existe uma opção com esse nome nesta camada.", "erro");
       return;
     }
     novas.push({ nome, slug, imagemURL });
@@ -314,8 +303,7 @@ formOpcao.addEventListener("submit", async (evento) => {
   // As capas ficam embutidas no documento da camada; o Firestore corta em
   // ~1 MB. Confere o total antes de tentar salvar.
   if (new Blob([JSON.stringify(novas)]).size > 900 * 1024) {
-    modalOpcaoMsg.textContent = "As imagens de capa desta camada somam perto de 1 MB. Use imagens menores ou dê capa a menos opções.";
-    modalOpcaoMsg.style.display = "block";
+    toast("As imagens de capa desta camada somam perto de 1 MB. Use imagens menores ou dê capa a menos opções.", "erro");
     return;
   }
 
@@ -327,8 +315,7 @@ formOpcao.addEventListener("submit", async (evento) => {
     await carregarLista();
   } catch (erro) {
     console.error(erro);
-    modalOpcaoMsg.textContent = "Não foi possível salvar agora. Tente novamente.";
-    modalOpcaoMsg.style.display = "block";
+    toast("Não foi possível salvar agora. Tente novamente.", "erro");
   } finally {
     btnSalvarOpcao.disabled = false;
     btnSalvarOpcao.textContent = "Salvar";

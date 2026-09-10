@@ -1,4 +1,5 @@
 import { protegerPaginaAdmin } from "./admin-auth.js";
+import { toast } from "../../services/ui-feedback.js";
 import { montarUploadFoto } from "../../services/imagem-upload.js";
 import { db } from "../../services/firebase-config.js";
 import {
@@ -12,14 +13,12 @@ import {
 const inAtivo = document.getElementById("cfg-atacado-ativo");
 const inMinimo = document.getElementById("cfg-atacado-minimo");
 const btnSalvarAtacado = document.getElementById("btn-salvar-atacado");
-const msgAtacado = document.getElementById("msg-atacado");
 
 // ── PIX ─────────────────────────────────────────────────────────────────
 const inPixChave = document.getElementById("cfg-pix-chave");
 const inPixNome = document.getElementById("cfg-pix-nome");
 const inPixInstrucoes = document.getElementById("cfg-pix-instrucoes");
 const btnSalvarPix = document.getElementById("btn-salvar-pix");
-const msgPix = document.getElementById("msg-pix");
 
 // ── Banner / carrossel da home ──────────────────────────────────────────
 const inHeroTitulo = document.getElementById("cfg-hero-titulo");
@@ -28,7 +27,6 @@ const inHeroIntervalo = document.getElementById("cfg-hero-intervalo");
 const heroSlots = document.getElementById("hero-slots");
 const btnAddHeroFoto = document.getElementById("btn-add-hero-foto");
 const btnSalvarHero = document.getElementById("btn-salvar-hero");
-const msgHero = document.getElementById("msg-hero");
 
 const MAX_FOTOS_HERO = 6;
 // Fotos de fundo são largas; cada uma vira data URI dentro do MESMO
@@ -36,10 +34,11 @@ const MAX_FOTOS_HERO = 6;
 const HERO_MAX_LADO = 1600;
 const HERO_ALVO_BYTES = 120 * 1024;
 
-function aviso(el, texto, tipo = "erro") {
-  el.textContent = texto;
-  el.classList.toggle("sucesso", tipo === "sucesso");
-  el.style.display = texto ? "block" : "none";
+// Os avisos eram um textinho verde/vermelho embaixo de cada botão — fácil
+// de não ver, ainda mais numa página com três blocos de configuração.
+// Agora é toast (services/ui-feedback.js), igual ao resto do painel.
+function aviso(texto, tipo = "erro") {
+  toast(texto, tipo === "sucesso" ? "sucesso" : "erro");
 }
 
 // Cada slot é um montarUploadFoto independente; o valor sai de .valor().
@@ -47,7 +46,7 @@ const slotsHero = [];
 
 function adicionarSlotHero(valor = "") {
   if (slotsHero.length >= MAX_FOTOS_HERO) {
-    aviso(msgHero, `Máximo de ${MAX_FOTOS_HERO} fotos no carrossel.`);
+    aviso(`Máximo de ${MAX_FOTOS_HERO} fotos no carrossel.`);
     return;
   }
 
@@ -116,10 +115,9 @@ async function carregar() {
 }
 
 btnSalvarAtacado.addEventListener("click", async () => {
-  aviso(msgAtacado, "");
   const minimo = Number(inMinimo.value) || 0;
   if (minimo < 1) {
-    aviso(msgAtacado, "O mínimo por carrinho precisa ser pelo menos 1.");
+    aviso("O mínimo por carrinho precisa ser pelo menos 1.");
     return;
   }
   btnSalvarAtacado.disabled = true;
@@ -130,10 +128,10 @@ btnSalvarAtacado.addEventListener("click", async () => {
       { ativo: inAtivo.checked, qtdMinimaCarrinho: minimo, atualizadoEm: serverTimestamp() },
       { merge: true }
     );
-    aviso(msgAtacado, "Configuração de atacado salva.", "sucesso");
+    aviso("Configuração de atacado salva.", "sucesso");
   } catch (erro) {
     console.error(erro);
-    aviso(msgAtacado, "Não foi possível salvar agora. Tente novamente.");
+    aviso("Não foi possível salvar agora. Tente novamente.");
   } finally {
     btnSalvarAtacado.disabled = false;
     btnSalvarAtacado.textContent = "Salvar atacado";
@@ -141,7 +139,6 @@ btnSalvarAtacado.addEventListener("click", async () => {
 });
 
 btnSalvarPix.addEventListener("click", async () => {
-  aviso(msgPix, "");
   btnSalvarPix.disabled = true;
   btnSalvarPix.textContent = "Salvando...";
   try {
@@ -155,10 +152,10 @@ btnSalvarPix.addEventListener("click", async () => {
       },
       { merge: true }
     );
-    aviso(msgPix, "Dados de PIX salvos.", "sucesso");
+    aviso("Dados de PIX salvos.", "sucesso");
   } catch (erro) {
     console.error(erro);
-    aviso(msgPix, "Não foi possível salvar agora. Tente novamente.");
+    aviso("Não foi possível salvar agora. Tente novamente.");
   } finally {
     btnSalvarPix.disabled = false;
     btnSalvarPix.textContent = "Salvar PIX";
@@ -166,17 +163,15 @@ btnSalvarPix.addEventListener("click", async () => {
 });
 
 btnAddHeroFoto.addEventListener("click", () => {
-  aviso(msgHero, "");
   adicionarSlotHero("");
 });
 
 btnSalvarHero.addEventListener("click", async () => {
-  aviso(msgHero, "");
 
   const imagens = fotosHero();
   const segundos = Number(inHeroIntervalo.value);
   if (!Number.isFinite(segundos) || segundos < 2 || segundos > 30) {
-    aviso(msgHero, "O intervalo precisa ficar entre 2 e 30 segundos.");
+    aviso("O intervalo precisa ficar entre 2 e 30 segundos.");
     return;
   }
 
@@ -184,7 +179,7 @@ btnSalvarHero.addEventListener("click", async () => {
   // corta em 1 MB. Barramos antes de tentar gravar.
   const pesoAprox = imagens.reduce((s, u) => s + u.length, 0);
   if (pesoAprox > 900 * 1024) {
-    aviso(msgHero, "As fotos somadas ficaram grandes demais. Use menos fotos ou imagens menores.");
+    aviso("As fotos somadas ficaram grandes demais. Use menos fotos ou imagens menores.");
     return;
   }
 
@@ -202,10 +197,10 @@ btnSalvarHero.addEventListener("click", async () => {
       },
       { merge: true }
     );
-    aviso(msgHero, "Banner da home salvo. Recarregue a página inicial para ver.", "sucesso");
+    aviso("Banner da home salvo. Recarregue a página inicial para ver.", "sucesso");
   } catch (erro) {
     console.error(erro);
-    aviso(msgHero, "Não foi possível salvar agora. Se as fotos forem muito grandes, troque por versões menores.");
+    aviso("Não foi possível salvar agora. Se as fotos forem muito grandes, troque por versões menores.");
   } finally {
     btnSalvarHero.disabled = false;
     btnSalvarHero.textContent = "Salvar banner";
@@ -215,6 +210,6 @@ btnSalvarHero.addEventListener("click", async () => {
 protegerPaginaAdmin(() => {
   carregar().catch((erro) => {
     console.error("Erro ao carregar configurações:", erro);
-    aviso(msgAtacado, "Não foi possível carregar as configurações.");
+    aviso("Não foi possível carregar as configurações.");
   });
 });

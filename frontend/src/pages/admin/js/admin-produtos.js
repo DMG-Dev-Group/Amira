@@ -28,7 +28,6 @@ const contagem = document.getElementById("contagem-produtos");
 const modal = document.getElementById("modal-produto");
 const form = document.getElementById("form-produto");
 const modalTitulo = document.getElementById("modal-titulo");
-const modalMsg = document.getElementById("modal-msg");
 const btnSalvar = document.getElementById("btn-salvar-produto");
 const selectOrdenar = document.getElementById("select-ordenar-admin");
 const inputBusca = document.getElementById("busca-produtos-admin");
@@ -322,7 +321,6 @@ function limparForm() {
   document.getElementById("p-estoque").value = 0;
   document.getElementById("p-frete-disponivel").value = "true";
   bannerUpload.definir("");
-  modalMsg.style.display = "none";
   resetarListaImagens();
 }
 
@@ -415,7 +413,6 @@ selectDescontoAtivo.addEventListener("change", () => {
 
 form.addEventListener("submit", async (evento) => {
   evento.preventDefault();
-  modalMsg.style.display = "none";
 
   const bannerHero = selectBannerHero.value === "true";
   const descontoAtivo = selectDescontoAtivo.value === "true";
@@ -464,32 +461,24 @@ form.addEventListener("submit", async (evento) => {
   };
 
   if (!dados.nome) {
-    modalMsg.textContent = "O nome é obrigatório.";
-    modalMsg.classList.remove("sucesso");
-    modalMsg.style.display = "block";
+    toast("O nome é obrigatório.", "erro");
     return;
   }
 
   if (!camadaPrincipalSlug || !(filtros[camadaPrincipalSlug]?.length)) {
-    modalMsg.textContent = "Marque ao menos uma opção na camada principal (a primeira). Crie camadas em \"Camadas de filtro\" se a lista estiver vazia.";
-    modalMsg.classList.remove("sucesso");
-    modalMsg.style.display = "block";
+    toast("Marque ao menos uma opção na camada principal (a primeira). Crie camadas em \"Camadas de filtro\" se a lista estiver vazia.", "erro");
     return;
   }
 
   if (descontoAtivo && (descontoPercentual < 1 || descontoPercentual > 90)) {
-    modalMsg.textContent = "O desconto deve ser um percentual entre 1 e 90.";
-    modalMsg.classList.remove("sucesso");
-    modalMsg.style.display = "block";
+    toast("O desconto deve ser um percentual entre 1 e 90.", "erro");
     return;
   }
 
   // Varejo é opcional (R2 6.1), mas o produto precisa existir em PELO
   // MENOS uma modalidade — senão não aparece em lugar nenhum da loja.
   if ((dados.precoVarejo || 0) <= 0 && (dados.precoAtacado || 0) <= 0) {
-    modalMsg.textContent = "Configure pelo menos uma modalidade: preço de varejo e/ou preço de atacado.";
-    modalMsg.classList.remove("sucesso");
-    modalMsg.style.display = "block";
+    toast("Configure pelo menos uma modalidade: preço de varejo e/ou preço de atacado.", "erro");
     return;
   }
 
@@ -497,9 +486,7 @@ form.addEventListener("submit", async (evento) => {
   // documento. Confere o tamanho total antes de tentar salvar.
   const pesoDoc = new Blob([JSON.stringify(dados)]).size;
   if (pesoDoc > 950 * 1024) {
-    modalMsg.textContent = `As fotos deste produto somam ${(pesoDoc / 1024 / 1024).toFixed(2)} MB e o limite é 1 MB. Remova alguma foto ou use imagens menores.`;
-    modalMsg.classList.remove("sucesso");
-    modalMsg.style.display = "block";
+    toast(`As fotos deste produto somam ${(pesoDoc / 1024 / 1024).toFixed(2)} MB e o limite é 1 MB. Remova alguma foto ou use imagens menores.`, "erro");
     return;
   }
 
@@ -516,9 +503,7 @@ form.addEventListener("submit", async (evento) => {
     await carregarTabela();
   } catch (erro) {
     console.error(erro);
-    modalMsg.textContent = "Não foi possível salvar o produto agora. Tente novamente.";
-    modalMsg.classList.remove("sucesso");
-    modalMsg.style.display = "block";
+    toast("Não foi possível salvar o produto agora. Tente novamente.", "erro");
   } finally {
     btnSalvar.disabled = false;
     btnSalvar.textContent = "Salvar produto";
