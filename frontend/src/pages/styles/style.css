@@ -2408,3 +2408,78 @@ body[data-theme="light"] .social-btn {
 @media (max-width: 480px) {
   .pc { padding: 1.8rem 0 2.5rem; }
 }
+
+/* ── Upload de imagem única na LOJA (services/imagem-upload.js) ─────────
+   O painel admin tem seu próprio bloco em admin.css; este cobre as
+   páginas da loja (perfil, etc.), onde as classes .admin-btn não existem. */
+.foto-upload {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.8rem;
+  background: var(--bg);
+}
+.foto-upload-preview {
+  width: 68px;
+  height: 68px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+.foto-upload-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.foto-upload-acoes {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  flex: 1;
+}
+.foto-upload-escolher {
+  position: relative;
+  cursor: pointer;
+}
+.foto-upload-escolher.processando {
+  pointer-events: none;
+  opacity: 0.6;
+}
+.foto-upload-msg {
+  width: 100%;
+  margin: 0.2rem 0 0;
+  font-size: 0.76rem;
+  color: var(--danger);
+}
+.foto-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  padding: 0.55rem 0.9rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-main);
+  cursor: pointer;
+  transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
+}
+.foto-upload-btn:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+.foto-upload-btn--danger:hover {
+  border-color: color-mix(in srgb, var(--danger) 40%, transparent);
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 8%, transparent);
+}

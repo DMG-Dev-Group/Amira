@@ -305,6 +305,11 @@ function haFiltrosAtivos() {
   return Boolean(termoBusca.trim()) || precoMin !== null || precoMax !== null || temFiltroCamada();
 }
 
+// "Limpar tudo" só faz sentido quando há algo para limpar.
+function atualizarBotaoLimpar() {
+  if (btnLimparFiltros) btnLimparFiltros.hidden = !haFiltrosAtivos();
+}
+
 async function reiniciarCatalogo() {
   produtosCarregados = [];
   ultimoDoc = null;
@@ -314,6 +319,7 @@ async function reiniciarCatalogo() {
   escreverSelecaoNaURL();
   montarChips();
   atualizarTitulo();
+  atualizarBotaoLimpar();
 
   if (modoFiltroCompleto) {
     await carregarListaCompletaEFiltrar();

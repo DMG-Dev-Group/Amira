@@ -10,6 +10,7 @@ import {
 import { formatarCNPJ, validarCNPJ, consultarCNPJ } from "../services/cnpj.js";
 import { escapeHtml } from "../services/seguranca.js";
 import { confirmar, toast } from "../services/ui-feedback.js";
+import { montarUploadFoto } from "../services/imagem-upload.js";
 import { db } from "../services/firebase-config.js";
 import {
   doc,
@@ -37,7 +38,8 @@ const campoEmail = document.getElementById("campo-email");
 const campoTelefone = document.getElementById("campo-telefone");
 const campoNascimento = document.getElementById("campo-nascimento");
 const campoMarketing = document.getElementById("campo-marketing");
-const campoFoto = document.getElementById("campo-foto");
+const campoFotoContainer = document.getElementById("campo-foto");
+let fotoUpload = null; // handle do montarUploadFoto (criado uma vez)
 const btnSalvarDados = document.getElementById("btn-salvar-dados");
 const msgDados = document.getElementById("msg-dados");
 const btnBaixarDados = document.getElementById("btn-baixar-dados");
@@ -358,7 +360,22 @@ exigirLogin(async ({ usuario, perfil }) => {
   campoTelefone.value = formatarTelefoneBR(perfil?.telefone || "");
   campoNascimento.value = perfil?.dataNascimento || "";
   campoMarketing.checked = perfil?.aceiteMarketing === true;
-  campoFoto.value = fotoURL;
+
+  if (!fotoUpload && campoFotoContainer) {
+    fotoUpload = montarUploadFoto(campoFotoContainer, {
+      valor: fotoURL,
+      textoVazio: "Enviar foto",
+      textoCheio: "Trocar foto",
+      placeholder: "images/amira-placeholder.svg",
+      maxLado: 512,
+      alvoBytes: 140 * 1024,
+      classeEscolher: "foto-upload-btn",
+      classeRemover: "foto-upload-btn foto-upload-btn--danger",
+      onChange: (v) => atualizarAvatar(campoNome.value.trim(), v)
+    });
+  } else if (fotoUpload) {
+    fotoUpload.definir(fotoURL);
+  }
 
   // Carrega endereço salvo, se existir
   try {
@@ -385,7 +402,7 @@ formDados.addEventListener("submit", async (evento) => {
   const telefone = campoTelefone.value.replace(/\D/g, ""); // guardamos só dígitos
   const dataNascimento = campoNascimento.value;
   const aceiteMarketing = campoMarketing.checked;
-  const fotoURL = campoFoto.value.trim();
+  const fotoURL = fotoUpload ? fotoUpload.valor() : "";
 
   if (!nome) {
     mostrarMsg(msgDados, "O nome não pode ficar em branco.");

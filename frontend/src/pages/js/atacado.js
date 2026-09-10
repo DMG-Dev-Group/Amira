@@ -14,6 +14,7 @@ import { listarProdutosAtacado, estoquePorModo, infoPreco } from "../services/pr
 import { adicionarAoCarrinho } from "../services/carrinho.js";
 import { escapeHtml, urlImagemSegura } from "../services/seguranca.js";
 import { obterMinimoAtacadoCarrinho, atacadoEstaAtivo } from "../services/atacado-config.js";
+import { toast } from "../services/ui-feedback.js";
 
 const conteudo = document.getElementById("atacado-conteudo");
 
@@ -150,7 +151,11 @@ function mostrarBloqueio(btn) {
   const original = btn.textContent;
   btn.textContent = "Compra ainda não liberada";
   btn.disabled = true;
-  alert(motivoBloqueio || "A compra em atacado ainda não está liberada para a sua conta.");
+  toast(
+    motivoBloqueio || "A compra em atacado ainda não está liberada para a sua conta.",
+    "erro",
+    { titulo: "Compra bloqueada" }
+  );
   setTimeout(() => {
     btn.textContent = original;
     btn.disabled = false;
@@ -199,14 +204,16 @@ function configurarBotoesAtacado(produtos) {
           modo: "atacado"
         });
         btn.textContent = "Adicionado!";
+        toast(`${quantidade}× "${produto.nome}" no carrinho.`, "sucesso", { titulo: "Adicionado" });
         setTimeout(() => {
           btn.textContent = "Adicionar ao carrinho";
           btn.disabled = false;
         }, 1500);
       } catch (erro) {
         console.error(erro);
-        btn.textContent = "Erro — tente novamente";
+        btn.textContent = "Adicionar ao carrinho";
         btn.disabled = false;
+        toast("Não foi possível adicionar ao carrinho agora. Tente novamente.", "erro");
       }
     });
   });
