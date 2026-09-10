@@ -149,17 +149,17 @@ linkEsqueci.addEventListener("click", async (evento) => {
   }
 });
 
-// Funcionalidade de Mostrar / Ocultar Senha
+// Mostrar / ocultar senha — ícone de olho (aberto quando a senha está visível)
 const toggleSenha = document.getElementById("toggle-senha");
 
-toggleSenha.addEventListener("click", () => {
-  if (inputSenha.type === "password") {
-    inputSenha.type = "text";
-    toggleSenha.classList.remove("bx-lock");
-    toggleSenha.classList.add("bxs-lock-open-alt");
-  } else {
-    inputSenha.type = "password";
-    toggleSenha.classList.remove("bxs-lock-open-alt");
-    toggleSenha.classList.add("bx-lock");
-  }
+function alternarSenha() {
+  const visivel = inputSenha.type === "password";
+  inputSenha.type = visivel ? "text" : "password";
+  toggleSenha.classList.toggle("bx-show", visivel);
+  toggleSenha.classList.toggle("bx-hide", !visivel);
+  toggleSenha.setAttribute("aria-label", visivel ? "Ocultar senha" : "Mostrar senha");
+}
+toggleSenha.addEventListener("click", alternarSenha);
+toggleSenha.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" || e.key === " ") { e.preventDefault(); alternarSenha(); }
 });

@@ -1,16 +1,19 @@
-/* ── PERFIL / CONFIGURAÇÕES ──────────────────────────────────────────── */
+/* ── PERFIL / CONFIGURAÇÕES ──────────────────────────────────────────────
+   Mesma linguagem visual das telas de pedido e pagamento: cartões com
+   canto arredondado, borda 1px, respiro generoso e um título por bloco. */
 
 .perfil-main {
-  max-width: 760px;
+  max-width: 720px;
   margin: 0 auto;
   padding: 7.5rem 1.5rem 5rem;
 }
 
+/* ── Cabeçalho ─────────────────────────────────────────────────────────── */
 .perfil-header {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
-  margin-bottom: 2.5rem;
+  gap: 1.3rem;
+  margin-bottom: 2rem;
 }
 
 .perfil-avatar-wrap {
@@ -18,34 +21,35 @@
   flex-shrink: 0;
 }
 
-.perfil-avatar {
-  width: 88px;
-  height: 88px;
+.perfil-avatar,
+.perfil-avatar-iniciais {
+  width: 84px;
+  height: 84px;
   border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid var(--gold);
+  border: 1px solid var(--border);
   background: var(--surface);
+  box-shadow: 0 6px 18px -8px rgba(0, 0, 0, 0.35);
+}
+
+.perfil-avatar {
+  object-fit: cover;
 }
 
 .perfil-avatar-iniciais {
-  width: 88px;
-  height: 88px;
-  border-radius: 50%;
-  border: 2px solid var(--gold);
-  background: var(--surface);
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: 'Playfair Display', serif;
-  font-size: 2rem;
+  font-size: 1.9rem;
   color: var(--gold);
 }
 
 .perfil-titulo h1 {
   font-family: 'Playfair Display', serif;
-  font-size: 1.7rem;
+  font-size: 1.6rem;
+  font-weight: 500;
   color: var(--text-main);
-  margin-bottom: 0.3rem;
+  margin-bottom: 0.2rem;
 }
 
 .perfil-titulo p {
@@ -54,43 +58,54 @@
   color: var(--text-muted);
 }
 
+/* ── Abas ─────────────────────────────────────────────────────────────── */
 .perfil-tabs {
   display: flex;
-  gap: 0.5rem;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 2rem;
+  gap: 0.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.3rem;
+  margin-bottom: 1.6rem;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
+.perfil-tabs::-webkit-scrollbar { display: none; }
 
 .perfil-tab-btn {
+  flex: 1 0 auto;
+  white-space: nowrap;
   font-family: 'Jost', sans-serif;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-weight: 500;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: 0.03em;
   color: var(--text-muted);
   background: none;
   border: none;
-  padding: 0.85rem 1.1rem;
+  padding: 0.6rem 0.9rem;
+  border-radius: 8px;
   cursor: pointer;
-  border-bottom: 2px solid transparent;
-  transition: color 0.2s, border-color 0.2s;
+  transition: color 0.18s ease, background 0.18s ease;
 }
 
 .perfil-tab-btn:hover {
-  color: var(--gold);
+  color: var(--text-main);
 }
 
 .perfil-tab-btn.active {
-  color: var(--gold);
-  border-color: var(--gold);
+  color: var(--on-brand);
+  background: var(--brand);
 }
 
+/* ── Painéis + cartões ────────────────────────────────────────────────── */
 .perfil-painel {
   display: none;
 }
 
 .perfil-painel.active {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
   animation: perfilFadeIn 0.25s ease;
 }
 
@@ -99,40 +114,79 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+.perfil-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.6rem;
+}
+
+.perfil-card__titulo {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.12rem;
+  font-weight: 500;
+  color: var(--text-main);
+  margin-bottom: 1.2rem;
+}
+
+.perfil-card__ajuda {
+  font-family: 'Jost', sans-serif;
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+  margin: -0.5rem 0 1.2rem;
+}
+
+/* Bloco de status do revendedor (montado pelo JS) vira cartão quando tem
+   conteúdo. */
+#revendedor-status:not(:empty) {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.6rem;
+}
+#revendedor-status .perfil-campo { margin-bottom: 0; }
+#revendedor-status p + p { margin-top: 0.3rem; }
+
+/* ── Campos ───────────────────────────────────────────────────────────── */
 .perfil-campo {
-  margin-bottom: 1.4rem;
+  margin-bottom: 1.1rem;
+}
+.perfil-campo:last-child {
+  margin-bottom: 0;
 }
 
 .perfil-campo label {
   display: block;
   font-family: 'Jost', sans-serif;
-  font-size: 0.78rem;
-  font-weight: 500;
-  letter-spacing: 0.06em;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--text-muted);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.45rem;
 }
 
 .perfil-campo input {
   width: 100%;
-  padding: 0.85rem 1rem;
+  padding: 0.8rem 0.95rem;
   font-family: 'Jost', sans-serif;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   color: var(--text-main);
-  background: var(--surface);
+  background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: 8px;
   outline: none;
-  transition: border-color 0.2s;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
 }
 
 .perfil-campo input:focus {
   border-color: var(--gold);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--gold) 18%, transparent);
 }
 
 .perfil-campo input:disabled {
-  opacity: 0.6;
+  opacity: 0.55;
   cursor: not-allowed;
 }
 
@@ -143,73 +197,62 @@
   color: var(--text-muted);
 }
 
+/* ── Ações do cartão ──────────────────────────────────────────────────── */
 .perfil-acoes {
   display: flex;
   align-items: center;
   gap: 1rem;
-  margin-top: 1.5rem;
+  margin-top: 1.4rem;
+  padding-top: 1.3rem;
+  border-top: 1px solid var(--border);
+}
+
+/* Botões dentro dos cartões do perfil: cantos arredondados e proporções
+   mais contidas, igual às telas de pedido e pagamento. */
+.perfil-painel .btn-primary,
+.perfil-painel .btn-outline {
+  font-size: 0.76rem;
+  letter-spacing: 0.06em;
+  padding: 0.7rem 1.4rem;
+  border-radius: 9px;
+}
+
+.perfil-painel .btn-primary {
+  background: var(--brand);
+  color: var(--on-brand);
+}
+.perfil-painel .btn-primary:hover {
+  background: var(--brand-strong);
+}
+
+.perfil-painel .btn-outline {
+  background: transparent;
+  color: var(--text-main);
+  border: 1px solid var(--border);
+}
+.perfil-painel .btn-outline:hover {
+  background: var(--bg);
+  border-color: var(--gold);
+  color: var(--gold);
+  transform: none;
 }
 
 .perfil-msg {
   font-family: 'Jost', sans-serif;
-  font-size: 0.85rem;
+  font-size: 0.83rem;
   color: var(--danger);
 }
-
 .perfil-msg.sucesso {
   color: var(--success);
 }
 
-.perfil-zona-perigo {
-  margin-top: 3rem;
-  padding-top: 2rem;
-  border-top: 1px solid var(--border);
-}
-
-.perfil-zona-perigo h3 {
-  font-family: 'Jost', sans-serif;
-  font-size: 0.95rem;
-  color: var(--text-main);
-  margin-bottom: 0.5rem;
-}
-
-.perfil-zona-perigo p {
-  font-size: 0.82rem;
-  color: var(--text-muted);
-  margin-bottom: 1rem;
-}
-
-.btn-sair-conta {
-  font-family: 'Jost', sans-serif;
-  font-size: 0.78rem;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--danger);
-  background: transparent;
-  border: 1px solid var(--danger);
-  padding: 0.7rem 1.5rem;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background 0.2s, color 0.2s;
-}
-
-.btn-sair-conta:hover {
-  background: var(--danger);
-  color: #fff;
-}
-
-@media (max-width: 600px) {
-  .perfil-main { padding: 6.5rem 1.2rem 4rem; }
-  .perfil-tabs { overflow-x: auto; }
-}
-
-/* ── Consentimento de marketing + direitos LGPD ───────────────────────── */
+/* ── Consentimento de marketing ───────────────────────────────────────── */
 .perfil-check {
   display: flex;
   align-items: flex-start;
   gap: 0.6rem;
-  font-size: 0.88rem;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.86rem;
   line-height: 1.5;
   color: var(--text-main);
   cursor: pointer;
@@ -226,23 +269,13 @@
   cursor: pointer;
 }
 
-.perfil-privacidade {
-  margin-top: 2.2rem;
-  padding-top: 1.6rem;
-  border-top: 1px solid var(--border);
-}
-
-.perfil-privacidade h3 {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.05rem;
-  margin-bottom: 0.5rem;
-}
-
+/* ── LGPD ─────────────────────────────────────────────────────────────── */
 .perfil-privacidade p {
+  font-family: 'Jost', sans-serif;
   font-size: 0.86rem;
   color: var(--text-muted);
   line-height: 1.6;
-  margin-bottom: 1rem;
+  margin-bottom: 1.1rem;
 }
 
 .perfil-privacidade p a { color: var(--gold); }
@@ -253,12 +286,56 @@
   gap: 0.7rem;
 }
 
-.btn-outline--danger {
-  border-color: var(--danger);
+.perfil-painel .btn-outline--danger {
+  border-color: color-mix(in srgb, var(--danger) 45%, transparent);
   color: var(--danger);
 }
-
-.btn-outline--danger:hover {
+.perfil-painel .btn-outline--danger:hover {
   background: var(--danger);
-  color: var(--on-brand);
+  color: #fff;
+  border-color: var(--danger);
+}
+
+/* ── Zona sensível (sair / voltar para cliente) ───────────────────────── */
+.perfil-zona-perigo {
+  border-color: color-mix(in srgb, var(--danger) 30%, var(--border));
+  background: color-mix(in srgb, var(--danger) 4%, var(--surface));
+}
+
+.perfil-zona-perigo p {
+  font-family: 'Jost', sans-serif;
+  font-size: 0.83rem;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+
+.btn-sair-conta {
+  font-family: 'Jost', sans-serif;
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--danger);
+  background: transparent;
+  border: 1px solid var(--danger);
+  padding: 0.65rem 1.4rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+.btn-sair-conta:hover {
+  background: var(--danger);
+  color: #fff;
+}
+
+@media (max-width: 600px) {
+  .perfil-main { padding: 6.5rem 1.1rem 4rem; }
+  .perfil-header { gap: 1rem; margin-bottom: 1.6rem; }
+  .perfil-avatar,
+  .perfil-avatar-iniciais { width: 68px; height: 68px; }
+  .perfil-avatar-iniciais { font-size: 1.5rem; }
+  .perfil-titulo h1 { font-size: 1.35rem; }
+  .perfil-card { padding: 1.25rem; }
+  .perfil-acoes { flex-wrap: wrap; gap: 0.7rem; }
 }

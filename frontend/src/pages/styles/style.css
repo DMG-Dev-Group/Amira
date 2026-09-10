@@ -1834,18 +1834,24 @@ body[data-theme="light"] .social-btn {
   color: var(--gold);
 }
 
-/* Opções da camada principal injetadas por navegacao-camadas.js — não têm
-   ícone, então o texto precisa recuar para alinhar com os itens que têm
-   (0.8rem de padding + 18px de ícone + 0.8rem de gap). */
+/* Opções da camada principal injetadas por navegacao-camadas.js — viram um
+   subgrupo com trilho à esquerda, encostado no item "Categorias" (sem o
+   gap de 8px do flex container e sem o respiro grande que dava aparência
+   de buraco no meio do menu). */
+#mobile-menu-camada-links {
+  display: flex;
+  flex-direction: column;
+  margin: -6px 0 2px calc(0.8rem + 9px);
+  padding-left: 0.85rem;
+  border-left: 1.5px solid var(--border);
+}
 .mobile-menu-sublink {
-  padding-top: 0.6rem;
-  padding-bottom: 0.6rem;
-  padding-left: calc(0.8rem + 18px + 0.8rem);
-  font-size: 0.86rem;
-  color: var(--text-muted);
+  padding: 0.5rem 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-main);
 }
 .mobile-menu-sublink:hover {
-  color: var(--text-main);
+  color: var(--gold);
 }
 .mobile-menu-badge {
   margin-left: auto;

@@ -373,6 +373,13 @@
   }
   .carrinho-item {
     grid-template-columns: 64px 1fr;
+    gap: 0.85rem;
+    /* sem centralizar: a imagem é baixa e o centro deixava um vão grande
+       entre os controles e a linha de preço */
+    align-items: start;
+  }
+  .carrinho-item-qtd {
+    margin-top: 0.6rem;
   }
   .carrinho-item-totais {
     grid-column: 1 / -1;
@@ -380,6 +387,11 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 0.5rem;
+    margin-top: 0;
+    padding-top: 0.8rem;
+    border-top: 1px solid var(--border);
+  }
+  .carrinho-item-totais .preco-total {
+    margin-bottom: 0;
   }
 }

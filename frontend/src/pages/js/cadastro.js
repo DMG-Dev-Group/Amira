@@ -241,17 +241,19 @@ btnGoogle.addEventListener("click", async () => {
   }
 });
 
-// Funcionalidade de Mostrar / Ocultar Senha
-const toggleSenha = document.getElementById("toggle-senha");
-
-toggleSenha.addEventListener("click", () => {
-  if (inputSenha.type === "password") {
-    inputSenha.type = "text";
-    toggleSenha.classList.remove("bx-lock");
-    toggleSenha.classList.add("bxs-lock-open-alt");
-  } else {
-    inputSenha.type = "password";
-    toggleSenha.classList.remove("bxs-lock-open-alt");
-    toggleSenha.classList.add("bx-lock");
-  }
+// Mostrar / ocultar senha — ícone de olho por campo (senha e confirmação)
+document.querySelectorAll(".toggle-senha").forEach((olho) => {
+  const alvo = document.getElementById(olho.dataset.alvo);
+  if (!alvo) return;
+  const alternar = () => {
+    const visivel = alvo.type === "password";
+    alvo.type = visivel ? "text" : "password";
+    olho.classList.toggle("bx-show", visivel);
+    olho.classList.toggle("bx-hide", !visivel);
+    olho.setAttribute("aria-label", visivel ? "Ocultar senha" : "Mostrar senha");
+  };
+  olho.addEventListener("click", alternar);
+  olho.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); alternar(); }
+  });
 });
