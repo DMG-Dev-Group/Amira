@@ -223,7 +223,22 @@ service cloud.firestore {
         request.resource.data.pagamento.metodo in ['pix_whatsapp', 'mercadopago'] &&
         request.resource.data.pagamento.status == 'pendente' &&
         request.resource.data.criadoEm == request.time;
-      allow update, delete: if ehAdmin();
+
+      // O admin escreve o que precisar. O DONO só pode fazer uma coisa:
+      // CANCELAR um pedido que ele mesmo abriu e nunca pagou. A regra é
+      // deliberadamente estreita — só a chave "status" pode mudar, só para
+      // 'cancelado', só saindo de 'aguardando_pagamento' e só enquanto o
+      // provedor não aprovou. Depois de pago vira caso de estorno, não de
+      // cancelamento, e aí é o admin quem resolve.
+      allow update: if ehAdmin() ||
+        (estaLogado() &&
+          resource.data.uidComprador == request.auth.uid &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']) &&
+          request.resource.data.status == 'cancelado' &&
+          resource.data.status == 'aguardando_pagamento' &&
+          resource.data.pagamento.status != 'aprovado');
+
+      allow delete: if ehAdmin();
     }
 
     // ── metricas/{docId} ─────────────────────────────────────────────────

@@ -2514,3 +2514,54 @@ body[data-theme="light"] .social-btn {
   color: var(--danger);
   background: color-mix(in srgb, var(--danger) 8%, transparent);
 }
+
+/* Cancelar um pedido ainda não pago (js/pedido-confirmado.js). Discreto de
+   propósito: é uma saída, não uma ação que a gente queira incentivar. */
+.pc-cancelar {
+  display: block;
+  margin: 0.9rem auto 0;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  cursor: pointer;
+  text-decoration: underline;
+  transition: color 0.18s ease, background 0.18s ease;
+}
+
+.pc-cancelar:hover {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 8%, transparent);
+}
+
+/* Código de barras (Code 39, gerado em services/codigo-barras.js).
+   Fica em style.css porque aparece tanto na confirmação do pedido quanto
+   no comprovante. Preto sobre branco nos dois temas: leitor de código
+   precisa de contraste real, não de cor de marca. */
+.cp-barras {
+  margin: 0.7rem auto 0.5rem;
+  max-width: 100%;
+  padding: 0.5rem 0.7rem;
+  border-radius: 8px;
+  background: #fff;
+  color: #000;
+  overflow-x: auto;
+}
+
+/* height:auto de propósito: fixar a altura fazia o "meet" reescalar o
+   desenho inteiro e afinar as barras. Assim a proporção do viewBox é
+   respeitada e só encolhe junto quando a tela é estreita. */
+.cp-barras svg {
+  display: block;
+  margin: 0 auto;
+  width: 100%;
+  max-width: 320px;
+  height: auto;
+}
+
+@media print {
+  .cp-barras { background: none; padding: 0; }
+}

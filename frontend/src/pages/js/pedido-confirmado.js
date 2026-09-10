@@ -8,11 +8,18 @@
 //      configuracoes/pagamento (Admin → Configurações).
 
 import { exigirLogin } from "../services/auth.js";
-import { buscarPedidoPorId, derivarTotaisDoPedido, codigoRetirada } from "../services/pedidos.js";
+import {
+  buscarPedidoPorId,
+  derivarTotaisDoPedido,
+  codigoRetirada,
+  cancelarPedido,
+  podeCancelar
+} from "../services/pedidos.js";
 import { esvaziarCarrinho } from "../services/carrinho.js";
 import { escapeHtml, urlImagemSegura } from "../services/seguranca.js";
+import { svgCodigoBarras } from "../services/codigo-barras.js";
 import { textoParcelamento } from "../services/parcelamento.js";
-import { toast } from "../services/ui-feedback.js";
+import { toast, confirmar, carregando } from "../services/ui-feedback.js";
 import { db } from "../services/firebase-config.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
@@ -83,6 +90,7 @@ function blocoPago(pedido) {
         <h3 class="pc-card__titulo">Código de retirada</h3>
         <p class="pc-muted">Mostre este código no balcão para retirar o pedido.</p>
         <p class="pc-codigo">${escapeHtml(codigoRetirada(pedido.id))}</p>
+        <div class="cp-barras">${svgCodigoBarras(codigoRetirada(pedido.id))}</div>
       </div>
     ` : ""}
     <a href="comprovante.html?id=${encodeURIComponent(pedido.id)}" class="btn-primary pc-btn-bloco">
@@ -256,6 +264,35 @@ async function limparCarrinhoAposPagamento() {
   }
 }
 
+// ── Cancelar um pedido não pago ───────────────────────────────────────
+// As firestore.rules só deixam sair de 'aguardando_pagamento' para
+// 'cancelado' enquanto o provedor não aprovou — o botão nem aparece fora
+// disso, mas a regra é quem garante.
+async function cancelarEstePedido() {
+  const ok = await confirmar({
+    titulo: "Cancelar este pedido?",
+    descricao: "Os itens continuam no seu carrinho — você pode fechar de novo quando quiser.",
+    confirmar: "Sim, cancelar",
+    cancelar: "Voltar",
+    destrutivo: true
+  });
+  if (!ok) return;
+
+  const fim = carregando("Cancelando…");
+  try {
+    await cancelarPedido(pedidoId);
+    clearInterval(pollTimer);
+    try { localStorage.removeItem("amira:pedidoPendente"); } catch { /* storage bloqueado */ }
+    fim();
+    toast("Pedido cancelado.", "info", { titulo: "Tudo certo" });
+    setTimeout(() => { window.location.href = "carrinho.html"; }, 900);
+  } catch (erro) {
+    console.error(erro);
+    fim();
+    toast("Não foi possível cancelar agora. Se o pagamento já entrou, fale com a loja.", "erro");
+  }
+}
+
 // ── Polling do status ─────────────────────────────────────────────────
 let pollTimer = null;
 function iniciarPolling() {
@@ -350,11 +387,16 @@ exigirLogin(async ({ usuario }) => {
       <a href="produtos.html" class="pc-voltar">
         <span class="pc-voltar__ic">${IC_LOJA}</span> Continuar comprando
       </a>
+
+      ${podeCancelar(pedidoAtual) ? `
+        <button type="button" class="pc-cancelar" id="btn-cancelar-pedido">Cancelar este pedido</button>
+      ` : ""}
     </div>
   `;
 
   document.getElementById("btn-pix")?.addEventListener("click", pagarComPix);
   document.getElementById("btn-cartao")?.addEventListener("click", pagarComCartao);
+  document.getElementById("btn-cancelar-pedido")?.addEventListener("click", cancelarEstePedido);
 
   // Voltou de um pagamento já aprovado (ex.: redirect do cartão): o
   // carrinho pode ser esvaziado agora.

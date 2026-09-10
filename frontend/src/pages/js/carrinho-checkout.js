@@ -41,7 +41,12 @@ const conteudo = document.getElementById("carrinho-conteudo");
 let usuarioAtual = null;
 let itensAtuais = [];
 let produtosCache = new Map(); // produtoId -> produto (dados FRESCOS do catálogo)
-let modoEntrega = "entrega"; // "entrega" | "retirada"
+// A entrega ainda não está liberada: por enquanto todo pedido é retirada
+// na loja. Trocar para true reativa o seletor, os campos de endereço e o
+// cálculo de frete — nada foi apagado.
+const ENTREGA_HABILITADA = false;
+
+let modoEntrega = ENTREGA_HABILITADA ? "entrega" : "retirada"; // "entrega" | "retirada"
 let freteAtual = { valor: 0, zona: null, encontrado: true };
 let minimoAtacado = null;
 
@@ -152,21 +157,31 @@ function renderizarCarrinho() {
       <div class="carrinho-itens" id="lista-itens"></div>
 
       <aside class="carrinho-resumo">
-        <h2>Como você quer receber</h2>
+        <h2>${ENTREGA_HABILITADA ? "Como você quer receber" : "Retirada"}</h2>
 
-        <div class="modo-entrega-opcoes">
-          <button type="button" class="modo-entrega-btn ${modoEntrega === "entrega" ? "active" : ""}" data-modo="entrega" ${somenteRetirada.length > 0 ? "disabled" : ""}>
-            <span class="modo-entrega-btn__ic">${IC_CAMINHAO}</span>
-            <span class="modo-entrega-btn__txt">Entrega</span>
-            <span class="modo-entrega-btn__nota">no seu endereço</span>
-          </button>
-          <button type="button" class="modo-entrega-btn ${modoEntrega === "retirada" ? "active" : ""}" data-modo="retirada">
-            <span class="modo-entrega-btn__ic">${IC_LOJINHA}</span>
-            <span class="modo-entrega-btn__txt">Retirar na loja</span>
-            <span class="modo-entrega-btn__nota">sem frete</span>
-          </button>
-        </div>
-        ${somenteRetirada.length > 0 ? `
+        ${ENTREGA_HABILITADA ? `
+          <div class="modo-entrega-opcoes">
+            <button type="button" class="modo-entrega-btn ${modoEntrega === "entrega" ? "active" : ""}" data-modo="entrega" ${somenteRetirada.length > 0 ? "disabled" : ""}>
+              <span class="modo-entrega-btn__ic">${IC_CAMINHAO}</span>
+              <span class="modo-entrega-btn__txt">Entrega</span>
+              <span class="modo-entrega-btn__nota">no seu endereço</span>
+            </button>
+            <button type="button" class="modo-entrega-btn ${modoEntrega === "retirada" ? "active" : ""}" data-modo="retirada">
+              <span class="modo-entrega-btn__ic">${IC_LOJINHA}</span>
+              <span class="modo-entrega-btn__txt">Retirar na loja</span>
+              <span class="modo-entrega-btn__nota">sem frete</span>
+            </button>
+          </div>
+        ` : `
+          <div class="modo-entrega-unico">
+            <span class="modo-entrega-unico__ic">${IC_LOJINHA}</span>
+            <div>
+              <strong>Retirada na loja</strong>
+              <p>Monumental Shopping, 2º piso — sem custo de frete.</p>
+            </div>
+          </div>
+        `}
+        ${ENTREGA_HABILITADA && somenteRetirada.length > 0 ? `
           <p class="carrinho-aviso">
             ${somenteRetirada.length === 1
               ? `O item "${escapeHtml(somenteRetirada[0].nome)}" só está disponível para retirada na loja.`
@@ -315,11 +330,13 @@ function renderizarCamposEntrega() {
   const container = document.getElementById("campos-entrega");
 
   if (modoEntrega === "retirada") {
-    container.innerHTML = `
-      <p class="frete-zona-info">
-        Retire seu pedido no Monumental Shopping, 2º piso — sem custo de frete.
-      </p>
-    `;
+    // Com a entrega desligada o cartão .modo-entrega-unico já diz onde
+    // retirar — repetir aqui só polui.
+    container.innerHTML = ENTREGA_HABILITADA
+      ? `<p class="frete-zona-info">
+           Retire seu pedido no Monumental Shopping, 2º piso — sem custo de frete.
+         </p>`
+      : "";
     return;
   }
 

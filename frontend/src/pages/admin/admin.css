@@ -370,9 +370,6 @@ body {
 .badge-rejeitado { background: rgba(242,102,92,0.15); color: var(--danger); }
 .badge-pago { background: rgba(42,122,58,0.15); color: var(--success); }
 .badge-aguardando_pagamento { background: rgba(228,169,63,0.15); color: var(--warning); }
-.badge-preparando { background: rgba(80,120,200,0.15); color: var(--info); }
-.badge-enviado { background: rgba(120,80,200,0.15); color: var(--roxo); }
-.badge-entregue { background: rgba(42,122,58,0.15); color: var(--success); }
 .badge-cancelado { background: rgba(242,102,92,0.15); color: var(--danger); }
 
 /* ── Botões ────────────────────────────────────────────────────────────── */
@@ -1026,50 +1023,4 @@ body {
     flex-direction: column;
     align-items: stretch;
   }
-}
-
-/* ── Etapa do pedido (dentro do modal de detalhes) ─────────────────────
-   A coluna "Status" saiu da tabela: o pagamento agora e confirmado
-   sozinho pelo Mercado Pago, entao a etapa (preparando/enviado/entregue)
-   virou um controle do detalhe, nao uma coluna repetida. */
-.pedido-etapa {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  margin-bottom: 1.2rem;
-  padding: 0.9rem 1rem;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--bg);
-}
-
-.pedido-etapa label {
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-
-.pedido-etapa select {
-  width: 100%;
-  padding: 0.5rem 0.7rem;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--surface);
-  color: var(--text-main);
-  font-family: inherit;
-  font-size: 0.88rem;
-  cursor: pointer;
-}
-
-.pedido-etapa select:focus {
-  outline: none;
-  border-color: var(--gold);
-}
-
-.pedido-etapa small {
-  font-size: 0.72rem;
-  line-height: 1.45;
-  color: var(--text-muted);
 }
