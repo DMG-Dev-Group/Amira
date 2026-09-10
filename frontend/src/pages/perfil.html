@@ -130,7 +130,8 @@
 
     <!-- Aba: Dados pessoais -->
     <section class="perfil-painel active" id="painel-dados">
-      <form id="form-dados">
+      <form id="form-dados" class="perfil-card">
+        <h2 class="perfil-card__titulo">Seus dados</h2>
         <div class="perfil-campo">
           <label for="campo-nome">Nome completo</label>
           <input type="text" id="campo-nome" placeholder="Seu nome completo" required>
@@ -165,8 +166,8 @@
         </div>
       </form>
 
-      <div class="perfil-privacidade">
-        <h3>Privacidade e seus dados (LGPD)</h3>
+      <div class="perfil-card perfil-privacidade">
+        <h2 class="perfil-card__titulo">Privacidade e seus dados (LGPD)</h2>
         <p>
           Você pode pedir uma cópia dos seus dados ou a exclusão da conta a qualquer momento.
           Nós respondemos pelo WhatsApp da loja. Detalhes na
@@ -181,7 +182,8 @@
 
     <!-- Aba: Segurança -->
     <section class="perfil-painel" id="painel-seguranca">
-      <form id="form-senha">
+      <form id="form-senha" class="perfil-card">
+        <h2 class="perfil-card__titulo">Trocar senha</h2>
         <div class="perfil-campo">
           <label for="campo-senha-atual">Senha atual</label>
           <input type="password" id="campo-senha-atual" required autocomplete="current-password">
@@ -201,8 +203,8 @@
         </div>
       </form>
 
-      <div class="perfil-zona-perigo">
-        <h3>Sair da conta</h3>
+      <div class="perfil-card perfil-zona-perigo">
+        <h2 class="perfil-card__titulo">Sair da conta</h2>
         <p>Você será desconectado deste dispositivo.</p>
         <button class="btn-sair-conta" id="btn-logout">Sair da conta</button>
       </div>
@@ -210,7 +212,8 @@
 
     <!-- Aba: Endereços -->
     <section class="perfil-painel" id="painel-enderecos">
-      <form id="form-endereco">
+      <form id="form-endereco" class="perfil-card">
+        <h2 class="perfil-card__titulo">Endereço de entrega</h2>
         <div class="perfil-campo">
           <label for="campo-cep">CEP</label>
           <input type="text" id="campo-cep" placeholder="65000-000" maxlength="9">
@@ -238,8 +241,9 @@
     <section class="perfil-painel" id="painel-revendedor">
       <div id="revendedor-status"></div>
 
-      <form id="form-revendedor" style="display:none;">
-        <p class="perfil-campo" style="color:var(--text-muted); font-size:0.85rem;">
+      <form id="form-revendedor" class="perfil-card" style="display:none;">
+        <h2 class="perfil-card__titulo">Conta de revendedor</h2>
+        <p class="perfil-card__ajuda">
           Informe o CNPJ da sua loja para desbloquear os preços de atacado.
           Sua conta continua a mesma — apenas passa por uma análise da equipe.
         </p>
@@ -258,8 +262,8 @@
         </div>
       </form>
 
-      <div class="perfil-zona-perigo" id="bloco-voltar-cliente" style="display:none;">
-        <h3>Voltar para conta de cliente</h3>
+      <div class="perfil-card perfil-zona-perigo" id="bloco-voltar-cliente" style="display:none;">
+        <h2 class="perfil-card__titulo">Voltar para conta de cliente</h2>
         <p>Sua aprovação fica guardada — se quiser voltar ao atacado depois, não precisa de nova análise.</p>
         <button class="btn-sair-conta" id="btn-voltar-cliente">Usar como conta de cliente</button>
       </div>

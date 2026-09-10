@@ -7,12 +7,19 @@
 
 import { toast } from "./ui-feedback.js";
 
-// ── Navbar: escurece ao rolar ─────────────────────────────────────────────
+// ── Navbar: fundo sólido ─────────────────────────────────────────────────
+// Só a home (nav[data-hero]) flutua transparente sobre o carrossel do topo
+// e ganha fundo ao rolar. Nas demais páginas não há hero escuro atrás da
+// navbar — ela precisa ficar SEMPRE sólida, senão os ícones (claros no
+// tema claro) somem sobre o fundo creme da página.
 const navbar = document.getElementById('navbar');
 if (navbar) {
-  window.addEventListener('scroll', () => {
-    navbar.classList.toggle('scrolled', window.scrollY > 40);
-  });
+  const temHero = navbar.hasAttribute('data-hero');
+  const ajustarNavbar = () => {
+    navbar.classList.toggle('scrolled', !temHero || window.scrollY > 40);
+  };
+  ajustarNavbar();
+  window.addEventListener('scroll', ajustarNavbar, { passive: true });
 }
 
 // ── Categorias dropdown ───────────────────────────────────────────────────
