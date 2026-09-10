@@ -121,6 +121,67 @@
   padding: 1.6rem;
 }
 
+/* Atalho para o histórico de pedidos (cartão clicável) */
+.perfil-atalho {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.1rem 1.3rem;
+  text-decoration: none;
+  transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.perfil-atalho:hover {
+  border-color: color-mix(in srgb, var(--gold) 45%, var(--border));
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px -18px rgba(0, 0, 0, 0.35);
+}
+
+.perfil-atalho__ic {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--gold) 14%, transparent);
+  color: var(--gold);
+}
+.perfil-atalho__ic svg { width: 20px; height: 20px; }
+
+.perfil-atalho__txt {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.perfil-atalho__txt strong {
+  font-family: 'Jost', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.perfil-atalho__txt small {
+  font-family: 'Jost', sans-serif;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.perfil-atalho__seta {
+  flex-shrink: 0;
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  transition: transform 0.18s ease, color 0.18s ease;
+}
+.perfil-atalho:hover .perfil-atalho__seta {
+  color: var(--gold);
+  transform: translateX(3px);
+}
+
 .perfil-card__titulo {
   font-family: 'Playfair Display', serif;
   font-size: 1.12rem;

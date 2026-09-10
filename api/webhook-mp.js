@@ -98,20 +98,43 @@ module.exports = async (req, res) => {
     }
 
     const novoStatus = traduzStatus(pagamento.status);
-    await getDb().collection("pedidos").doc(String(pedidoId)).set(
-      {
-        pagamento: {
-          provedorPagamentoId: String(pagamentoId),
-          status: novoStatus,
-          statusMP: pagamento.status,
-          atualizadoEm: FieldValue.serverTimestamp()
-        }
-      },
-      { merge: true }
-    );
+    const ref = getDb().collection("pedidos").doc(String(pedidoId));
 
-    console.log(`[/api/webhook-mp] pedido ${pedidoId} -> ${novoStatus} (MP: ${pagamento.status})`);
-    return res.status(200).json({ pedidoId, status: novoStatus, statusMP: pagamento.status });
+    const atualizacao = {
+      pagamento: {
+        provedorPagamentoId: String(pagamentoId),
+        status: novoStatus,
+        statusMP: pagamento.status,
+        atualizadoEm: FieldValue.serverTimestamp()
+      }
+    };
+
+    // Confirmação AUTOMÁTICA do pedido: antes o admin precisava conferir o
+    // comprovante e mudar o status na mão. Com o Mercado Pago confirmando,
+    // o pedido já entra como "pago" no painel. Só promovemos a partir de
+    // "aguardando_pagamento" — se o admin já avançou (preparando, enviado…),
+    // o status dele é preservado.
+    if (novoStatus === "aprovado") {
+      const snap = await ref.get();
+      const statusAtual = snap.exists ? snap.data().status : null;
+      if (!statusAtual || statusAtual === "aguardando_pagamento") {
+        atualizacao.status = "pago";
+        atualizacao.pagoEm = FieldValue.serverTimestamp();
+      }
+    }
+
+    await ref.set(atualizacao, { merge: true });
+
+    console.log(
+      `[/api/webhook-mp] pedido ${pedidoId} -> pagamento ${novoStatus}` +
+      `${atualizacao.status ? ` + status ${atualizacao.status}` : ""} (MP: ${pagamento.status})`
+    );
+    return res.status(200).json({
+      pedidoId,
+      status: novoStatus,
+      statusPedido: atualizacao.status || null,
+      statusMP: pagamento.status
+    });
   } catch (erro) {
     console.error("[/api/webhook-mp]", erro && erro.message, JSON.stringify(erro && erro.detalhe));
     // 200 mesmo em erro interno: evita o MP floodar de retry. O log

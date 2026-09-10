@@ -84,6 +84,46 @@
         </div>
         <p class="admin-msg" id="msg-pix" style="display:none;"></p>
       </div>
+
+      <!-- ── Banner / carrossel da home ──────────────────────────── -->
+      <div class="admin-bloco">
+        <h2>Banner da home (carrossel)</h2>
+        <p style="font-size:0.8rem; color:var(--text-muted,#999); margin-bottom:1rem;">
+          As fotos grandes do topo da página inicial, o título e a frase de
+          apoio. As imagens passam automaticamente. Sem nenhuma foto aqui, a
+          loja usa as imagens padrão do projeto.
+        </p>
+
+        <div class="admin-campo">
+          <label for="cfg-hero-titulo">Título</label>
+          <input type="text" id="cfg-hero-titulo" maxlength="80" placeholder="Sua essência, nossa paixão">
+          <small style="display:block; margin-top:0.3rem; font-size:0.72rem; color:var(--text-muted,#999);">
+            Use <code>*palavra*</code> para deixar uma palavra em itálico dourado.
+            Ex.: <code>Sua *essência*, nossa paixão</code>
+          </small>
+        </div>
+        <div class="admin-campo">
+          <label for="cfg-hero-subtitulo">Frase de apoio</label>
+          <input type="text" id="cfg-hero-subtitulo" maxlength="140" placeholder="Perfumes, maquiagem e acessórios que contam a sua história.">
+        </div>
+        <div class="admin-campo">
+          <label for="cfg-hero-intervalo">Trocar de foto a cada (segundos)</label>
+          <input type="number" id="cfg-hero-intervalo" min="2" max="30" step="1" value="4.5">
+        </div>
+
+        <div class="admin-campo">
+          <label>Fotos do carrossel</label>
+          <div id="hero-slots" class="hero-slots"></div>
+          <button type="button" class="admin-btn admin-btn-outline admin-btn-sm" id="btn-add-hero-foto" style="margin-top:0.6rem;">
+            + Adicionar foto
+          </button>
+        </div>
+
+        <div class="admin-modal-acoes" style="justify-content:flex-start;">
+          <button class="admin-btn admin-btn-primary" id="btn-salvar-hero">Salvar banner</button>
+        </div>
+        <p class="admin-msg" id="msg-hero" style="display:none;"></p>
+      </div>
     </main>
   </div>
 

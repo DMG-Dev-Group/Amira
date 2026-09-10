@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Carrinho — Amira</title>
+  <title>Meus pedidos — Amira</title>
   <link rel="icon" type="image/svg+xml" href="images/amira-favicon.svg">
   <link rel="alternate icon" type="image/x-icon" href="images/amira-favicon.ico">
   <link rel="apple-touch-icon" href="images/amira-apple-touch.png">
@@ -12,6 +12,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles/style.css">
   <link rel="stylesheet" href="styles/carrinho.css">
+  <link rel="stylesheet" href="styles/pedidos-cliente.css">
 </head>
 <body>
 
@@ -22,9 +23,6 @@
         <img class="logo-amira logo-amira--claro" src="images/amira-claro.svg" alt="Amira">
         <img class="logo-amira logo-amira--escuro" src="images/amira-escuro.svg" alt="Amira">
       </a>
-    </div>
-    <div class="nav-categorias-wrapper">
-      <a href="produtos.html" class="nav-categorias-btn" style="text-decoration:none;">← Continuar comprando</a>
     </div>
     <div class="nav-actions">
       <div id="nav-carrinho-slot"></div>
@@ -123,12 +121,13 @@
     </div>
   </aside>
 
-  <!-- ── CARRINHO ─────────────────────────────────────────── -->
-  <main class="carrinho-main">
-    <h1>Meu Carrinho</h1>
-
-    <div id="carrinho-conteudo">
-      <p class="carrinho-vazio">Carregando seu carrinho...</p>
+  <main class="mp-main">
+    <div class="mp-cabecalho">
+      <h1>Meus pedidos</h1>
+      <p id="mp-contagem"></p>
+    </div>
+    <div id="mp-lista">
+      <p class="carrinho-vazio">Carregando seus pedidos...</p>
     </div>
   </main>
 
@@ -137,7 +136,7 @@
   <script src="services/nav-busca.js"></script>
   <script type="module" src="services/nav-conta.js"></script>
   <script type="module" src="services/nav-carrinho.js"></script>
-  <script type="module" src="js/carrinho-checkout.js"></script>
+  <script type="module" src="js/meus-pedidos.js"></script>
   <script type="module" src="services/nav-mobile-menu.js"></script>
   <script type="module" src="services/consentimento-cookies.js"></script>
 </body>

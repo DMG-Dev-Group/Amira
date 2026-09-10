@@ -1369,10 +1369,18 @@ body[data-theme="light"] .social-btn {
   text-decoration: none;
   z-index: 200;
   box-shadow: 0 4px 20px rgba(37,211,102,0.4);
-  transition: transform 0.2s;
-  font-size: 1.6rem;
+  transition: transform 0.2s, box-shadow 0.2s;
+  color: #fff;
 }
-.whatsapp-btn:hover { transform: scale(1.1); }
+.whatsapp-btn svg {
+  width: 30px;
+  height: 30px;
+  display: block;
+}
+.whatsapp-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 26px rgba(37,211,102,0.55);
+}
 
 /* ── SCROLL REVEAL ───────────────────── */
 .reveal {
@@ -2359,6 +2367,23 @@ body[data-theme="light"] .social-btn {
   text-align: center;
   text-decoration: none;
   margin-top: 1rem;
+  border-radius: 10px;
+}
+
+/* Código de retirada na confirmação do pedido (retirada na loja) */
+.pc-retirada {
+  text-align: center;
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--gold) 55%, var(--border));
+  background: color-mix(in srgb, var(--gold) 8%, transparent);
+}
+.pc-codigo {
+  font-family: 'Jost', sans-serif;
+  font-size: 1.7rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  color: var(--gold);
+  margin-top: 0.5rem;
 }
 .pc-entrega {
   font-size: 0.82rem;

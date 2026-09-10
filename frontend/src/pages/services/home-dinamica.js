@@ -39,10 +39,11 @@ function precoCardHtml(p) {
 
 // ── Carrossel de anúncio (B1) ─────────────────────────────────────────────
 // Fotos da marca passando automaticamente, sem navegação manual (é
-// divulgação da loja, não de um produto). As imagens podem ser trocadas
-// sem código no documento configuracoes/homeCarrossel:
-//   { imagens: ["https://...", ...], intervaloMs: 4500 }
-// Sem esse documento, usa as fotos locais da pasta images/.
+// divulgação da loja, não de um produto). TUDO é editável em
+// Admin → Configurações → "Banner da home", que grava em
+// configuracoes/homeCarrossel:
+//   { imagens: [dataURI|url, ...], titulo, subtitulo, intervaloMs }
+// Sem esse documento, valem os padrões abaixo.
 const IMAGENS_CARROSSEL_PADRAO = [
   "images/look_rosa.jpeg",
   "images/look_amarelo.jpeg",
@@ -50,6 +51,16 @@ const IMAGENS_CARROSSEL_PADRAO = [
   "images/look_branco.jpeg"
 ];
 const INTERVALO_CARROSSEL_PADRAO_MS = 4500;
+const TITULO_PADRAO = "Sua *essência*, nossa paixão";
+const SUBTITULO_PADRAO = "Perfumes, maquiagem e acessórios que contam a sua história.";
+
+// O título aceita *palavra* para destacar em itálico dourado — é o único
+// "markup" que o admin precisa, e nada além disso escapa do escapeHtml.
+function tituloComDestaque(texto) {
+  return escapeHtml(texto)
+    .replace(/\*([^*]+)\*/g, "<em>$1</em>")
+    .replace(/\n/g, "<br>");
+}
 
 async function iniciarCarrosselAnuncio() {
   const container = document.getElementById("hero-carrossel");
@@ -57,6 +68,8 @@ async function iniciarCarrosselAnuncio() {
 
   let imagens = IMAGENS_CARROSSEL_PADRAO;
   let intervalo = INTERVALO_CARROSSEL_PADRAO_MS;
+  let titulo = TITULO_PADRAO;
+  let subtitulo = SUBTITULO_PADRAO;
 
   try {
     const snap = await getDoc(doc(db, "configuracoes", "homeCarrossel"));
@@ -68,9 +81,15 @@ async function iniciarCarrosselAnuncio() {
       if (Number(dados.intervaloMs) >= 1500) {
         intervalo = Number(dados.intervaloMs);
       }
+      if (typeof dados.titulo === "string" && dados.titulo.trim()) {
+        titulo = dados.titulo.trim();
+      }
+      if (typeof dados.subtitulo === "string" && dados.subtitulo.trim()) {
+        subtitulo = dados.subtitulo.trim();
+      }
     }
   } catch (erro) {
-    console.error("Carrossel: usando imagens padrão (config indisponível):", erro);
+    console.error("Carrossel: usando conteúdo padrão (config indisponível):", erro);
   }
 
   container.innerHTML = `
@@ -79,8 +98,8 @@ async function iniciarCarrosselAnuncio() {
     `).join("")}
     <div class="hero-slide-overlay"></div>
     <div class="hero-slide-conteudo">
-      <h1 class="hero-title">Sua <em>essência</em>,<br>nossa paixão</h1>
-      <p class="hero-subtitle">Perfumes, maquiagem e acessórios que contam a sua história.</p>
+      <h1 class="hero-title">${tituloComDestaque(titulo)}</h1>
+      ${subtitulo ? `<p class="hero-subtitle">${escapeHtml(subtitulo)}</p>` : ""}
     </div>
   `;
 

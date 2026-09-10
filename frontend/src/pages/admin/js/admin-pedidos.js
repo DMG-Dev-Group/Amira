@@ -1,7 +1,7 @@
 import { protegerPaginaAdmin } from "./admin-auth.js";
 import { confirmar, toast } from "../../services/ui-feedback.js";
 import { escapeHtml } from "../../services/seguranca.js";
-import { derivarTotaisDePedidos } from "../../services/pedidos.js";
+import { derivarTotaisDePedidos, codigoRetirada, tomDoStatus } from "../../services/pedidos.js";
 import { db } from "../../services/firebase-config.js";
 import {
   collection,
@@ -37,6 +37,23 @@ function formatarPreco(valor) {
   return (valor || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
+// Com o Mercado Pago ligado, o webhook confirma o pagamento sozinho e já
+// promove o pedido para "pago" — este selo mostra o que o provedor disse,
+// sem depender de conferência manual do comprovante.
+const ROTULO_PAGAMENTO = {
+  aprovado: "Pago",
+  pendente: "Aguardando",
+  recusado: "Recusado"
+};
+
+function badgePagamento(pedido) {
+  const st = pedido.pagamento?.status || "pendente";
+  const tom = tomDoStatus(pedido);
+  const classe = { pago: "badge-aprovado", pendente: "badge-pendente", recusado: "badge-rejeitado", cancelado: "badge-rejeitado" }[tom] || "badge-pendente";
+  const metodo = { pix: "PIX", mercadopago: "Cartão", pix_whatsapp: "manual" }[pedido.pagamento?.metodo] || "—";
+  return `<span class="badge ${classe}" title="${escapeHtml(metodo)}">${escapeHtml(ROTULO_PAGAMENTO[st] || st)}</span>`;
+}
+
 function formatarData(timestamp) {
   if (!timestamp?.toDate) return "—";
   return timestamp.toDate().toLocaleDateString("pt-BR", {
@@ -66,11 +83,12 @@ function renderizarTabela() {
     <table class="admin-tabela">
       <thead>
         <tr>
-          <th>ID</th>
+          <th>Código</th>
           <th>Data</th>
           <th>Itens</th>
           <th>Entrega</th>
           <th>Total</th>
+          <th>Pagamento</th>
           <th>Status</th>
           <th>Ações</th>
         </tr>
@@ -78,20 +96,23 @@ function renderizarTabela() {
       <tbody>
         ${lista.map((p) => `
           <tr>
-            <td>${escapeHtml(p.id.slice(0, 8))}...
+            <td>
+              <strong>${escapeHtml(codigoRetirada(p.id))}</strong>
               ${(totaisCache.get(p.id)?.avisos || []).length > 0 ? '<span class="badge badge-pendente" title="Há avisos — abra os detalhes">⚠</span>' : ""}
             </td>
             <td>${formatarData(p.criadoEm)}</td>
             <td>${(p.itens || []).length} item(ns)</td>
             <td>${p.modoEntrega === "retirada" ? "Retirada" : "Entrega"}</td>
             <td>${formatarPreco(totaisCache.get(p.id)?.total ?? 0)}</td>
+            <td>${badgePagamento(p)}</td>
             <td>
               <select class="select-status" data-id="${escapeHtml(p.id)}" style="background:transparent; border:1px solid var(--border); color:inherit; border-radius:4px; padding:0.3rem;">
                 ${STATUS_OPCOES.map((s) => `<option value="${s}" ${s === p.status ? "selected" : ""}>${s.replace(/_/g, " ")}</option>`).join("")}
               </select>
             </td>
-            <td>
-              <button class="admin-btn admin-btn-outline admin-btn-sm btn-ver-detalhe" data-id="${escapeHtml(p.id)}">Ver detalhes</button>
+            <td style="white-space:nowrap;">
+              <button class="admin-btn admin-btn-outline admin-btn-sm btn-ver-detalhe" data-id="${escapeHtml(p.id)}">Detalhes</button>
+              <a class="admin-btn admin-btn-outline admin-btn-sm" href="../comprovante.html?id=${encodeURIComponent(p.id)}" target="_blank" rel="noopener" style="text-decoration:none;">Comprovante</a>
             </td>
           </tr>
         `).join("")}
@@ -135,8 +156,15 @@ function abrirDetalhe(pedidoId) {
   `).join("");
 
   modalConteudo.innerHTML = `
-    <p style="font-size:0.85rem; margin-bottom:1rem;"><strong>Pedido:</strong> ${escapeHtml(p.id)}</p>
-    <p style="font-size:0.85rem; margin-bottom:1rem;"><strong>Data:</strong> ${formatarData(p.criadoEm)}</p>
+    <p style="font-size:1.05rem; margin-bottom:0.4rem;">
+      <strong>Código:</strong> <span style="letter-spacing:0.12em; color:var(--gold);">${escapeHtml(codigoRetirada(p.id))}</span>
+      ${p.modoEntrega === "retirada" ? '<span class="badge badge-aprovado" style="margin-left:0.4rem;">RETIRADA</span>' : ""}
+    </p>
+    <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:1rem;">id ${escapeHtml(p.id)}</p>
+    <p style="font-size:0.85rem; margin-bottom:0.4rem;"><strong>Data:</strong> ${formatarData(p.criadoEm)}</p>
+    <p style="font-size:0.85rem; margin-bottom:1rem;"><strong>Pagamento:</strong> ${badgePagamento(p)}
+      ${p.pagamento?.provedorPagamentoId ? `<span style="font-size:0.72rem; color:var(--text-muted);"> · MP ${escapeHtml(String(p.pagamento.provedorPagamentoId))}</span>` : ""}
+    </p>
 
     ${totais.avisos.length > 0 ? `
       <div class="admin-msg" style="display:block; margin-bottom:1rem;">
@@ -161,6 +189,11 @@ function abrirDetalhe(pedidoId) {
       Os valores acima são derivados dos preços atuais da coleção "produtos" —
       é este total que deve bater com o PIX recebido.
     </p>
+
+    <a class="admin-btn admin-btn-outline admin-btn-sm" style="margin-top:1rem; display:inline-block; text-decoration:none;"
+       href="../comprovante.html?id=${encodeURIComponent(p.id)}" target="_blank" rel="noopener">
+      Abrir comprovante
+    </a>
   `;
 
   modal.style.display = "flex";
