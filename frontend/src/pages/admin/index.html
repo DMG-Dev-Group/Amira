@@ -3,6 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- ⚠️ NÃO REMOVER. Com "cleanUrls": true no vercel.json, esta página é
+       servida em /admin (sem "/index.html"), e aí todo caminho relativo
+       passaria a resolver a partir da RAIZ do site: admin.css viraria
+       /admin.css (404) e o link "produtos.html" da sidebar levaria ao
+       catálogo da LOJA em vez do painel. O <base> fixa a pasta.
+       Só páginas index.html dentro de subpasta têm esse problema — as
+       outras (/admin/produtos etc.) mantêm o contexto sozinhas. -->
+  <base href="/admin/">
   <title>Dashboard — Painel Admin Amira</title>
   <link rel="icon" type="image/svg+xml" href="../images/amira-favicon.svg">
   <link rel="alternate icon" type="image/x-icon" href="../images/amira-favicon.ico">

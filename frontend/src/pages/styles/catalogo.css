@@ -500,8 +500,14 @@ a.catalogo-card:hover .catalogo-card-img::after {
   color: var(--gold);
 }
 
-/* Busca que abre no hover/foco (desktop): fica só o ícone e cresce ao
-   interagir. No mobile a barra continua inteira, ao lado do Atacado. */
+/* Busca que abre no hover/foco (desktop): fechada mostra só a lupa e
+   cresce ao interagir. No mobile a barra continua inteira, ao lado do
+   Atacado.
+
+   ⚠️ O input PRECISA de `min-width: 0` + `flex-basis: 0`: um <input> tem
+   largura intrínseca (~170px) e, como item flex, não encolhe abaixo dela
+   por padrão. Dentro da pílula de 44px com `overflow: hidden`, isso
+   empurrava o botão da lupa para fora e a busca fechada aparecia VAZIA. */
 @media (min-width: 901px) {
   .nav-busca-form {
     flex: 0 0 auto;
@@ -518,16 +524,27 @@ a.catalogo-card:hover .catalogo-card-img::after {
     padding: 0.4rem 0.9rem;
     justify-content: flex-start;
   }
+
+  /* A lupa é o que fica visível com a busca fechada — nunca encolhe. */
   .nav-busca-form button {
     order: -1;
-    flex-shrink: 0;
+    flex: 0 0 auto;
+    color: var(--text-main);
   }
+
   .nav-busca-form input {
+    flex: 0 1 0;
+    min-width: 0;
+    width: 0;
+    padding: 0;
     opacity: 0;
-    transition: opacity 0.25s ease;
+    transition: opacity 0.25s ease, width 0.3s ease, margin 0.3s ease;
   }
   .nav-busca-form:hover input,
   .nav-busca-form:focus-within input {
+    flex: 1 1 auto;
+    width: auto;
+    margin-left: 0.6rem;
     opacity: 1;
   }
 }

@@ -13,4 +13,16 @@ if (form && input) {
     const termo = input.value.trim();
     window.location.href = `produtos.html${termo ? `?busca=${encodeURIComponent(termo)}` : ""}`;
   });
+
+  // No desktop a barra fica fechada (só a lupa) e abre no hover — mas em
+  // tela larga SEM mouse (tablet, notebook touch) não existe hover, e o
+  // toque na lupa só dispararia uma busca vazia. Aqui o primeiro clique
+  // com o campo ainda fechado abre e foca em vez de enviar.
+  form.addEventListener("click", (evento) => {
+    const fechada = input.getBoundingClientRect().width < 20;
+    if (!fechada) return;
+    if (!evento.target.closest("button")) return;
+    evento.preventDefault();
+    input.focus();
+  });
 }
