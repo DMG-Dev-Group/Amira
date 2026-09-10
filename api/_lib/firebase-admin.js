@@ -13,16 +13,40 @@ const { getFirestore } = require("firebase-admin/firestore");
 let _db = null;
 
 function credenciais() {
-  const bruto = process.env.FIREBASE_SERVICE_ACCOUNT;
+  let bruto = process.env.FIREBASE_SERVICE_ACCOUNT;
   if (!bruto || !bruto.trim()) {
     throw new Error("FIREBASE_SERVICE_ACCOUNT não configurada nas Environment Variables da Vercel.");
   }
+  bruto = bruto.trim();
+
+  // Aceita o JSON cru OU o JSON em base64. O base64 evita o problema mais
+  // comum: as quebras de linha da private_key vêm como \n literais no
+  // arquivo, mas campos de texto às vezes as convertem em quebras reais,
+  // o que torna o JSON inválido.
+  if (!bruto.startsWith("{")) {
+    try {
+      const decodificado = Buffer.from(bruto, "base64").toString("utf8").trim();
+      if (decodificado.startsWith("{")) bruto = decodificado;
+    } catch {
+      /* segue com o valor original */
+    }
+  }
+
   let obj;
   try {
     obj = JSON.parse(bruto);
   } catch {
-    throw new Error("FIREBASE_SERVICE_ACCOUNT não é um JSON válido (cole o conteúdo inteiro do arquivo).");
+    throw new Error(
+      "FIREBASE_SERVICE_ACCOUNT não é um JSON válido. Cole o conteúdo inteiro do " +
+      "arquivo (a partir de um editor de texto puro) OU o arquivo em base64."
+    );
   }
+
+  // Normaliza a private_key caso venha com \n duplo-escapado.
+  if (typeof obj.private_key === "string") {
+    obj.private_key = obj.private_key.replace(/\\n/g, "\n");
+  }
+
   if (!obj.project_id || !obj.private_key || !obj.client_email) {
     throw new Error("FIREBASE_SERVICE_ACCOUNT incompleta (faltam project_id / private_key / client_email).");
   }
