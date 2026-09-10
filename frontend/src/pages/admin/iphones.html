@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>iPhones — Painel Admin Amira</title>
+  <link rel="icon" type="image/svg+xml" href="../images/amira-favicon.svg">
+  <link rel="alternate icon" type="image/x-icon" href="../images/amira-favicon.ico">
+  <link rel="apple-touch-icon" href="../images/amira-apple-touch.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body data-theme="dark">
+
+  <div class="admin-layout">
+    <div id="admin-sidebar-slot"></div>
+
+    <main class="admin-conteudo">
+      <div class="admin-topo">
+        <div>
+          <h1>iPhones</h1>
+          <p id="contagem-iphones"></p>
+        </div>
+        <a class="admin-btn admin-btn-outline admin-btn-sm" href="../iphones.html" target="_blank" rel="noopener" style="text-decoration:none;">
+          Ver na loja
+        </a>
+      </div>
+
+      <!-- Aparece só quando faltam as opções na camada principal -->
+      <div class="admin-bloco" id="iphones-setup" hidden></div>
+
+      <div class="admin-bloco">
+        <div class="secao-iphone__cabecalho">
+          <div>
+            <h2>Aparelhos</h2>
+            <p>Os iPhones em si — seminovos, lacrados, etc.</p>
+          </div>
+          <button class="admin-btn admin-btn-primary admin-btn-sm" id="btn-novo-aparelho" disabled>
+            + Adicionar aparelho
+          </button>
+        </div>
+        <div id="tabela-aparelhos">
+          <p class="admin-vazio">Carregando…</p>
+        </div>
+      </div>
+
+      <div class="admin-bloco">
+        <div class="secao-iphone__cabecalho">
+          <div>
+            <h2>Acessórios</h2>
+            <p>Capas, cabos, películas e afins.</p>
+          </div>
+          <button class="admin-btn admin-btn-primary admin-btn-sm" id="btn-novo-acessorio" disabled>
+            + Adicionar acessório
+          </button>
+        </div>
+        <div id="tabela-acessorios">
+          <p class="admin-vazio">Carregando…</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script type="module" src="js/admin-sidebar.js"></script>
+  <script src="../services/tema.js"></script>
+  <script type="module" src="js/admin-iphones.js"></script>
+</body>
+</html>

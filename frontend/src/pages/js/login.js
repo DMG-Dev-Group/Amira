@@ -3,6 +3,7 @@ import {
   traduzErroAuth,
   observarAuth,
   loginComGoogle,
+  concluirLoginGoogle,
   emailEstaVerificado,
   reenviarVerificacaoEmail,
   logoutUsuario
@@ -40,6 +41,14 @@ function redirecionarConformePerfil(perfil) {
     window.location.href = "./index.html";
   }
 }
+
+// Quando o pop-up do Google é bloqueado, o login vira redirect: a pessoa
+// volta para cá já autenticada. Isto fecha esse fluxo e, principalmente,
+// mostra o erro (domínio não autorizado, provedor desligado…) que antes
+// se perdia silenciosamente.
+concluirLoginGoogle().catch((erro) => {
+  mostrarMensagem(traduzErroAuth(erro?.code));
+});
 
 // Pré-preenche o e-mail se o usuário marcou "lembrar" anteriormente
 const emailSalvo =
