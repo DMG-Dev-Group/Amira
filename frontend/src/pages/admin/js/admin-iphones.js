@@ -20,7 +20,7 @@ import {
   excluirProduto
 } from "../../services/produtos.js";
 import { montarGaleriaProduto } from "./fotos-produto.js";
-import { listarCamadas, camadaPrincipal } from "../../services/camadas.js";
+import { listarCamadas, camadaPrincipal, salvarOpcoes, gerarSlug } from "../../services/camadas.js";
 import {
   agruparIphones,
   listarOpcoesIphone,
@@ -31,7 +31,6 @@ import {
 } from "../../services/iphones.js";
 
 const contagem = document.getElementById("contagem-iphones");
-const blocoSetup = document.getElementById("iphones-setup");
 const tabelaAparelhos = document.getElementById("tabela-aparelhos");
 const tabelaAcessorios = document.getElementById("tabela-acessorios");
 const btnNovoAparelho = document.getElementById("btn-novo-aparelho");
@@ -76,32 +75,32 @@ function renderizarGrupo(container, produtos, vazio) {
     </table>`;
 }
 
-// Sem as opções cadastradas na camada principal não há como marcar o
-// produto — em vez de um botão que não faz nada, explicamos o que falta.
-function mostrarSetup(principal, opcoes) {
-  const temAparelho = opcoes.some((o) => grupoDaOpcao(o) !== GRUPO_ACESSORIOS);
-  const temAcessorio = opcoes.some((o) => grupoDaOpcao(o) === GRUPO_ACESSORIOS);
-  if (temAparelho && temAcessorio) return false;
+// A seção depende de uma opção na camada principal ("iPhones" e
+// "iPhones — Acessórios"). Antes a tela só AVISAVA que elas faltavam e
+// deixava o botão desabilitado — o que parecia um botão quebrado. Agora a
+// opção que faltar é criada na hora do primeiro cadastro.
+const NOME_OPCAO = {
+  [GRUPO_APARELHOS]: "iPhones",
+  [GRUPO_ACESSORIOS]: "iPhones — Acessórios"
+};
 
-  const faltando = [];
-  if (!temAparelho) faltando.push('<strong>iPhones</strong> (os aparelhos)');
-  if (!temAcessorio) faltando.push('<strong>iPhones — Acessórios</strong>');
+async function garantirOpcao(grupo) {
+  const existente = opcaoDoGrupo(grupo);
+  if (existente) return existente;
 
-  blocoSetup.hidden = false;
-  blocoSetup.innerHTML = `
-    <h2>Falta configurar a seção</h2>
-    <p style="font-size:0.85rem; color:var(--text-muted,#999); line-height:1.6;">
-      A seção de iPhones é montada a partir da camada principal de filtros
-      ${principal ? `(<strong>${escapeHtml(principal.nome)}</strong>)` : ""}.
-      Crie ${faltando.length === 2 ? "as opções" : "a opção"} ${faltando.join(" e ")}
-      em <em>Camadas de filtro</em> — o nome precisa começar com “iPhone”, e
-      quem tiver “acessório” no nome vira a prateleira de acessórios.
-    </p>
-    <a class="admin-btn admin-btn-primary admin-btn-sm" href="camadas.html"
-       style="margin-top:0.9rem; display:inline-block; text-decoration:none;">
-      Ir para Camadas de filtro
-    </a>`;
-  return true;
+  const principal = camadaPrincipal(contexto.camadas);
+  if (!principal) {
+    throw new Error("Crie uma camada de filtro antes — a seção de iPhones se apoia na camada principal.");
+  }
+
+  const nova = { nome: NOME_OPCAO[grupo], slug: gerarSlug(NOME_OPCAO[grupo]), imagemURL: "" };
+  await salvarOpcoes(principal.id, [...(principal.opcoes || []), nova]);
+
+  // atualiza o contexto local para o save seguir sem recarregar tudo
+  if (grupo === GRUPO_ACESSORIOS) contexto.opAcessorio = nova;
+  else contexto.opAparelho = nova;
+  contexto.principalSlug = principal.slug;
+  return nova;
 }
 
 // ── Modal de criar/editar ────────────────────────────────────────────
@@ -172,9 +171,11 @@ async function salvar() {
   const nome = campo("i-nome").value.trim();
   if (!nome) return toast("O nome é obrigatório.", "erro");
 
-  const opcao = opcaoDoGrupo(selGrupo.value);
-  if (!opcao || !contexto.principalSlug) {
-    return toast("Falta cadastrar as opções de iPhone na camada principal.", "erro");
+  let opcao;
+  try {
+    opcao = await garantirOpcao(selGrupo.value);
+  } catch (erro) {
+    return toast(erro.message, "erro");
   }
 
   const precoVarejo = Number(campo("i-preco-varejo").value) || 0;
@@ -275,10 +276,6 @@ async function carregar() {
     opAparelho: opcoes.find((o) => grupoDaOpcao(o) !== GRUPO_ACESSORIOS) || null,
     opAcessorio: opcoes.find((o) => grupoDaOpcao(o) === GRUPO_ACESSORIOS) || null
   };
-
-  mostrarSetup(principal, opcoes);
-  btnNovoAparelho.disabled = !contexto.opAparelho;
-  btnNovoAcessorio.disabled = !contexto.opAcessorio;
 
   const { aparelhos, acessorios } = agruparIphones(produtos, camadas);
   contagem.textContent =

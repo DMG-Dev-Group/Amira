@@ -60,6 +60,7 @@ import {
   orderBy,
   limit as limitarQtd,
   startAfter,
+  writeBatch,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
@@ -167,12 +168,43 @@ export async function listarProdutosPaginado({ tamanhoPagina = 24, aposDoc = nul
   };
 }
 
+// Quantos produtos buscar antes de aplicar a ordem manual. A vitrine
+// mostra poucos, mas um produto antigo pode ter sido arrastado para o topo
+// — sem esta folga ele nem entraria na consulta.
+const POOL_VITRINE = 60;
+
 /**
- * Lista os produtos mais recentes (seção de produtos da home — B2).
+ * Lista os produtos da vitrine da home (B2).
+ *
+ * A ordem é a definida no painel (campo "ordem", arrastando as linhas em
+ * Admin > Produtos). Quem ainda não tem "ordem" vai para o fim, mantendo
+ * o critério antigo — mais recentes primeiro. A ordenação é feita em
+ * memória de propósito: ordenar por "ordem" no Firestore exigiria um
+ * índice composto novo para um punhado de documentos.
  */
 export async function listarProdutosRecentes(max = 8) {
-  const { produtos } = await listarProdutosPaginado({ tamanhoPagina: max });
-  return produtos;
+  const { produtos } = await listarProdutosPaginado({ tamanhoPagina: POOL_VITRINE });
+
+  const ordenados = produtos.slice().sort((a, b) => {
+    const oa = Number.isFinite(Number(a.ordem)) ? Number(a.ordem) : Infinity;
+    const ob = Number.isFinite(Number(b.ordem)) ? Number(b.ordem) : Infinity;
+    return oa - ob; // empate mantém a ordem da consulta (criadoEm desc)
+  });
+
+  return ordenados.slice(0, max);
+}
+
+/**
+ * Grava a ordem manual dos produtos (drag and drop do painel).
+ * Recebe os ids na ordem desejada e escreve ordem = posição.
+ * @param {string[]} idsNaOrdem
+ */
+export async function reordenarProdutos(idsNaOrdem) {
+  const lote = writeBatch(db);
+  idsNaOrdem.forEach((id, indice) => {
+    lote.update(doc(db, COLECAO, id), { ordem: indice });
+  });
+  return lote.commit();
 }
 
 /**

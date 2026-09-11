@@ -2,6 +2,7 @@ import { protegerPaginaAdmin } from "./admin-auth.js";
 import { confirmar, toast } from "../../services/ui-feedback.js";
 import {
   criarProduto,
+  reordenarProdutos,
   atualizarProduto,
   excluirProduto,
   estoquePorModo,
@@ -131,7 +132,7 @@ function ordenarLista(lista, criterio) {
     case "estoque-menor":
       return copia.sort((a, b) => estoquePorModo(a) - estoquePorModo(b));
     default:
-      return copia; // "recentes" = ordem original (mais recentes primeiro)
+      return copia; // "vitrine" = ordem manual (arrastavel) + criadoEm
   }
 }
 
@@ -163,6 +164,7 @@ function renderizarTabela() {
     <table class="admin-tabela">
       <thead>
         <tr>
+          <th style="width:28px;" title="Arraste para reordenar"></th>
           <th></th>
           <th>Nome</th>
           <th>${escapeHtml(camadaPrincipal(camadasCache)?.nome || "Filtro")}</th>
@@ -174,7 +176,8 @@ function renderizarTabela() {
       </thead>
       <tbody>
         ${lista.map((p) => `
-          <tr>
+          <tr draggable="true" data-id="${escapeHtml(p.id)}">
+            <td class="arrastar" aria-hidden="true">⠿</td>
             <td><img class="thumb" src="${urlImagemSegura(primeiraImagem(p), '../images/amira-placeholder.svg')}" alt=""></td>
             <td>${escapeHtml(p.nome)}
               ${p.bannerHero ? '<span class="badge badge-aprovado" title="No banner Produto da Estação">BANNER</span>' : ""}
@@ -204,6 +207,88 @@ function renderizarTabela() {
   document.querySelectorAll(".btn-excluir").forEach((btn) => {
     btn.addEventListener("click", () => confirmarExclusao(btn.dataset.id));
   });
+
+  ligarArrastar();
+}
+
+// ── Reordenar arrastando (define quem aparece primeiro na home) ───────
+// A vitrine "Nossos produtos" passa a respeitar o campo "ordem"
+// (services/produtos.js). Só faz sentido arrastar com a lista INTEIRA à
+// vista: com filtro ativo, a posição na tela não é a posição real.
+let linhaArrastada = null;
+
+function podeReordenar() {
+  // com busca ativa ou ordenacao que nao seja a manual, a posicao na tela
+  // nao corresponde a posicao real da vitrine
+  const ordenacao = selectOrdenar.value;
+  return !inputBusca.value.trim() && (ordenacao === "" || ordenacao === "recentes" || ordenacao === "manual");
+}
+
+function ligarArrastar() {
+  const corpo = tabela.querySelector("tbody");
+  if (!corpo) return;
+
+  const habilitado = podeReordenar();
+  corpo.classList.toggle("reordenavel", habilitado);
+
+  corpo.querySelectorAll("tr").forEach((tr) => {
+    tr.draggable = habilitado;
+    if (!habilitado) return;
+
+    tr.addEventListener("dragstart", (e) => {
+      linhaArrastada = tr;
+      tr.classList.add("arrastando");
+      e.dataTransfer.effectAllowed = "move";
+      // o Firefox só inicia o arraste se algo for escrito no dataTransfer
+      e.dataTransfer.setData("text/plain", tr.dataset.id);
+    });
+
+    tr.addEventListener("dragend", () => {
+      tr.classList.remove("arrastando");
+      corpo.querySelectorAll("tr").forEach((l) => l.classList.remove("alvo"));
+      linhaArrastada = null;
+    });
+
+    tr.addEventListener("dragover", (e) => {
+      if (!linhaArrastada || linhaArrastada === tr) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      tr.classList.add("alvo");
+    });
+
+    tr.addEventListener("dragleave", () => tr.classList.remove("alvo"));
+
+    tr.addEventListener("drop", async (e) => {
+      e.preventDefault();
+      tr.classList.remove("alvo");
+      if (!linhaArrastada || linhaArrastada === tr) return;
+
+      // move o DOM primeiro: a lista reage na hora, sem esperar a rede
+      const linhas = Array.from(corpo.querySelectorAll("tr"));
+      const de = linhas.indexOf(linhaArrastada);
+      const para = linhas.indexOf(tr);
+      corpo.insertBefore(linhaArrastada, de < para ? tr.nextSibling : tr);
+
+      await persistirOrdem(corpo);
+    });
+  });
+}
+
+async function persistirOrdem(corpo) {
+  const ids = Array.from(corpo.querySelectorAll("tr")).map((tr) => tr.dataset.id).filter(Boolean);
+  try {
+    await reordenarProdutos(ids);
+    // mantém o cache alinhado para não "pular" no próximo render
+    ids.forEach((id, i) => {
+      const p = produtosCache.find((x) => x.id === id);
+      if (p) p.ordem = i;
+    });
+    produtosCache.sort((a, b) => (a.ordem ?? Infinity) - (b.ordem ?? Infinity));
+    toast("Ordem salva. É essa a sequência da vitrine da home.", "sucesso");
+  } catch (erro) {
+    console.error(erro);
+    toast("Não foi possível salvar a ordem. Recarregue a página.", "erro");
+  }
 }
 
 // imagemURL continua sendo o campo principal (compatibilidade com o
@@ -219,7 +304,13 @@ async function carregarTabela() {
   // prateleira, com formulario proprio, e misturados aqui so poluiam a
   // lista de perfumaria.
   const daSecaoIphone = new Set(filtrarProdutosIphone(todos, camadasCache).map((p) => p.id));
-  produtosCache = todos.filter((p) => !daSecaoIphone.has(p.id));
+  produtosCache = todos
+    .filter((p) => !daSecaoIphone.has(p.id))
+    // mesma regra da vitrine (services/produtos.js): quem tem "ordem" vem
+    // primeiro, o resto segue por criadoEm. Assim o que voce arrasta aqui
+    // e exatamente o que a home mostra.
+    .sort((a, b) => (Number.isFinite(Number(a.ordem)) ? Number(a.ordem) : Infinity)
+                  - (Number.isFinite(Number(b.ordem)) ? Number(b.ordem) : Infinity));
 
   if (daSecaoIphone.size > 0 && avisoIphones) {
     avisoIphones.hidden = false;
