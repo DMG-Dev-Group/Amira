@@ -22,6 +22,26 @@ service cloud.firestore {
         get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.role == "admin";
     }
 
+    // ── EQUIPE DA LOJA (sistema interno) ─────────────────────────────
+    // O MESMO banco atende dois sistemas: a loja (amira-phi.vercel.app) e
+    // o sistema interno (flora-5754a-interno.web.app), que usa o mesmo
+    // projeto e o mesmo usuarios/{uid}. Lá o papel "vendedor" existe e é
+    // tão válido quanto "admin" — só com menos alcance.
+    //
+    // ⚠️ Estas rules são a UNIÃO dos dois sistemas. Tirar uma coleção
+    // daqui porque "a loja não usa" derruba o sistema interno, e foi
+    // exatamente isso que aconteceu com "caixa" e "vendas": elas não
+    // estavam listadas e caíam no bloqueio padrão lá embaixo.
+    function ehEquipe() {
+      return estaLogado() &&
+        exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
+        (get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.role == "admin" ||
+         get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.role == "vendedor") &&
+        // o sistema interno barra quem está inativo; a regra faz o mesmo,
+        // senão desativar alguém lá não tira o acesso ao banco
+        get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.get("ativo", true) != false;
+    }
+
     function ehRevendedorAprovado() {
       return estaLogado() &&
         exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
@@ -63,7 +83,13 @@ service cloud.firestore {
       return ['nome', 'email', 'role', 'tipoConta', 'telefone', 'dataNascimento',
         'fotoURL', 'aceiteTermos', 'aceiteMarketing', 'consentimentoEm',
         'consentimentoVersao', 'criadoEm', 'atualizadoEm',
-        'cnpj', 'razaoSocial', 'provavelMEI', 'porteEmpresa', 'statusRevendedor'];
+        'cnpj', 'razaoSocial', 'provavelMEI', 'porteEmpresa', 'statusRevendedor',
+        // Campos do SISTEMA INTERNO. Entram na allowlist porque o
+        // documento é o mesmo: sem eles, um vendedor que também é cliente
+        // não conseguia salvar o próprio perfil na loja — o hasOnly()
+        // reprovava por causa de campos que ele nem editou.
+        // Quem PODE mudá-los é só o admin (ver o update do dono abaixo).
+        'ativo', 'comissao'];
     }
     function stringsUsuarioNoLimite(d) {
       return (!('nome' in d) || (d.nome is string && d.nome.size() <= 120)) &&
@@ -92,6 +118,11 @@ service cloud.firestore {
       allow update: if ehDono(uid) &&
         request.resource.data.keys().hasOnly(chavesUsuarioPermitidas()) &&
         request.resource.data.role == resource.data.role &&
+        // "ativo" e "comissao" são do sistema interno: o dono pode
+        // CARREGAR os campos, nunca mudá-los. Senão um vendedor se
+        // reativaria sozinho ou inventaria a própria comissão.
+        request.resource.data.get('ativo', true) == resource.data.get('ativo', true) &&
+        request.resource.data.get('comissao', {}) == resource.data.get('comissao', {}) &&
         request.resource.data.get("aceiteTermos", true) == true &&
         stringsUsuarioNoLimite(request.resource.data) &&
         (
@@ -104,6 +135,11 @@ service cloud.firestore {
           (request.resource.data.get("statusRevendedor", "") == "pendente" &&
             resource.data.get("statusRevendedor", "") != "aprovado")
         );
+      // O sistema interno cria a conta do vendedor e grava o perfil dele
+      // logo em seguida, com o admin logado — ou seja, um CREATE num uid
+      // que não é o do próprio admin. Sem esta linha, cadastrar vendedor
+      // quebra (as regras acima só deixam a pessoa criar o PRÓPRIO perfil).
+      allow create: if ehAdmin();
       allow update: if ehAdmin();
       allow delete: if ehAdmin();
     }
@@ -292,6 +328,24 @@ service cloud.firestore {
         request.resource.data.criadoEm == request.time;
       allow read: if ehAdmin();
       allow update, delete: if ehAdmin();
+    }
+
+    // ── caixa/{docId} e vendas/{docId} — SISTEMA INTERNO ─────────────────
+    // A loja não toca nestas duas; elas são do sistema interno
+    // (flora-5754a-interno.web.app), onde caixa.js e vendas.js são
+    // liberados para toda a equipe (admin e vendedor). Antes elas não
+    // estavam listadas e caíam no bloqueio padrão — era o que quebrava a
+    // cada deploy de rules feito a partir deste repositório.
+    //
+    // Sem allowlist de campos por enquanto: o shape desses documentos é
+    // definido pelo outro sistema, e chutar uma allowlist aqui quebraria
+    // ele de novo, de um jeito diferente. O portão é o papel.
+    match /caixa/{docId} {
+      allow read, write: if ehEquipe();
+    }
+
+    match /vendas/{docId} {
+      allow read, write: if ehEquipe();
     }
 
     // ── Bloqueio padrão ──────────────────────────────────────────────────

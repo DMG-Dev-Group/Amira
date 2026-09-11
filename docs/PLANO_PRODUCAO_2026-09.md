@@ -49,6 +49,44 @@ segurança de base (Fase 0) vem antes de qualquer mudança de produto.
 - **Projeto Firebase:** `flora-5754a` — criado como **ambiente de testes**.
   Ainda não existe projeto de produção.
 
+### ⚠️ O banco é COMPARTILHADO com o sistema interno
+
+`flora-5754a` atende **dois sistemas**, com o mesmo Firestore, o mesmo
+`usuarios/{uid}` e a **mesma folha de rules**:
+
+| Sistema | Onde | Papéis que usam |
+| --- | --- | --- |
+| Loja Amira | `amira-phi.vercel.app` (este repositório) | `cliente`, `admin` |
+| Sistema interno | `flora-5754a-interno.web.app` (outro repositório) | `admin`, `vendedor` |
+
+Coleções por sistema:
+
+| Coleção | Loja | Interno |
+| --- | --- | --- |
+| `usuarios` | ✅ | ✅ (campos `ativo`, `comissao`, papel `vendedor`) |
+| `produtos`, `camadas`, `configuracoes` | ✅ | ✅ |
+| `pedidos` | ✅ | ✅ (leitura, admin) |
+| `carrinhos`, `metricas` | ✅ | — |
+| `caixa`, `vendas` | — | ✅ |
+
+**Consequências que já morderam:**
+
+1. `firebase deploy --only firestore:rules` **a partir de qualquer um dos
+   dois repositórios sobrescreve as rules do outro.** O arquivo
+   `firestore.rules` daqui precisa ser a UNIÃO dos dois sistemas — tirar
+   uma coleção porque "a loja não usa" derruba o interno. Foi o que
+   aconteceu com `caixa` e `vendas`: não estavam listadas e caíam no
+   bloqueio padrão.
+2. `firebase apps:list` **não** revela isso: o sistema interno reusa o
+   mesmo app web, então a listagem mostra um app só. Conferir pelo
+   `projectId` no código de cada sistema, não pela listagem.
+3. Antes de mexer em `usuarios`, lembrar que o mesmo documento é lido
+   pelos dois lados — inclusive o `role`.
+
+**Pendente:** decidir se os dois seguem dividindo o banco (e então manter
+uma folha de rules única e versionada em um lugar só) ou se o interno
+ganha projeto/database próprio na migração para produção.
+
 ## 1.2 O que já sustenta a produção
 
 - O modelo de segurança está **inteiramente nas `firestore.rules`** — não há
