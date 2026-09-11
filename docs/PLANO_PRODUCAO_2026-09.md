@@ -85,8 +85,8 @@ Coleções por sistema:
 | `usuarios` | ✅ | ✅ (campos `ativo`, `comissao`, papel `vendedor`) |
 | `produtos`, `camadas`, `configuracoes` | ✅ | ✅ |
 | `pedidos` | ✅ | ✅ (leitura, admin) |
-| `carrinhos`, `metricas` | ✅ | — |
-| `caixa`, `vendas` | — | ✅ |
+| `carrinhos`, `metricas`, `avaliacoes` | ✅ | — |
+| `caixa`, `vendas`, `comissoes`, `indicadores` | — | ✅ |
 
 **Consequências que já morderam:**
 

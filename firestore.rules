@@ -386,6 +386,37 @@ service cloud.firestore {
       allow update, delete: if ehAdmin();
     }
 
+    // ── indicadores/{docId} — SISTEMA INTERNO ────────────────────────────
+    // Cadastro de "indicadores" (afiliados/parceiros com link ?ref=). A
+    // página é 100% admin no sistema interno (requireAuth({roles:["admin"]})),
+    // então a regra espelha isso: nada aqui é lido nem escrito por vendedor.
+    //
+    // ⚠️ Igual a "caixa"/"vendas" (ver bloco abaixo): não estava listada e
+    // caía no bloqueio padrão, quebrando a página inteira. Só passou batido
+    // no levantamento anterior porque indicadores.js e comissoes.js não são
+    // importadas por nenhum outro arquivo do sistema interno — só linkadas
+    // pelo menu, então o rastreamento por import nunca chegou nelas.
+    match /indicadores/{docId} {
+      allow read, write: if ehAdmin();
+    }
+
+    // ── comissoes/{periodo} e comissoes/{periodo}/vendedores/{vendedorUid} ──
+    // Fechamento de comissão por período, mesmo sistema interno, mesmo bug.
+    // O vendedor só pode ler o PRÓPRIO fechamento — é dado de renda, não
+    // dá para um vendedor ver a comissão do colega. Fechar ("Fechar") e
+    // marcar como pago ("Pago") são ações exclusivas do admin na UI, e a
+    // regra faz valer isso independente da UI: um vendedor chamando
+    // setDoc/updateDoc direto no console não consegue mexer no próprio
+    // fechamento nem no de ninguém.
+    match /comissoes/{periodo} {
+      allow read: if ehEquipe();
+      allow write: if ehAdmin();
+    }
+    match /comissoes/{periodo}/vendedores/{vendedorUid} {
+      allow read: if ehAdmin() || (ehEquipe() && vendedorUid == request.auth.uid);
+      allow write: if ehAdmin();
+    }
+
     // ── caixa/{docId} e vendas/{docId} — SISTEMA INTERNO ─────────────────
     // A loja não toca nestas duas; elas são do sistema interno
     // (flora-5754a-interno.web.app), onde caixa.js e vendas.js são
