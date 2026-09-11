@@ -2634,31 +2634,6 @@ body[data-theme="light"] .social-btn {
   background: color-mix(in srgb, var(--danger) 8%, transparent);
 }
 
-/* Código de barras (Code 39, gerado em services/codigo-barras.js).
-   Fica em style.css porque aparece tanto na confirmação do pedido quanto
-   no comprovante. Preto sobre branco nos dois temas: leitor de código
-   precisa de contraste real, não de cor de marca. */
-.cp-barras {
-  margin: 0.7rem auto 0.5rem;
-  max-width: 100%;
-  padding: 0.5rem 0.7rem;
-  border-radius: 8px;
-  background: #fff;
-  color: #000;
-  overflow-x: auto;
-}
-
-/* height:auto de propósito: fixar a altura fazia o "meet" reescalar o
-   desenho inteiro e afinar as barras. Assim a proporção do viewBox é
-   respeitada e só encolhe junto quando a tela é estreita. */
-.cp-barras svg {
-  display: block;
-  margin: 0 auto;
-  width: 100%;
-  max-width: 320px;
-  height: auto;
-}
-
 /* QR do comprovante. Mesmo princípio do código de barras — preto sobre
    branco nos dois temas, porque leitor precisa de contraste real — mas
    quadrado, e com a "zona quieta" branca já embutida no viewBox
@@ -2683,7 +2658,6 @@ body[data-theme="light"] .social-btn {
 }
 
 @media print {
-  .cp-barras { background: none; padding: 0; }
   /* no papel o leitor costuma estar mais longe: um pouco maior ajuda */
   .cp-qr { background: none; padding: 0; }
   .cp-qr svg { width: 150px; height: 150px; }

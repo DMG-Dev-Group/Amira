@@ -87,6 +87,16 @@ function render(pedido, totais) {
 
       <section class="cp-itens">
         <table class="cp-tabela">
+          <!-- As larguras ficam no <colgroup>: sem elas a tabela se
+               ajustava ao TAMANHO DO NOME do item, e um pedido com um
+               produto de nome curto espalhava Qtd/Unit./Total pela
+               largura toda, cada um num lugar diferente. -->
+          <colgroup>
+            <col class="cp-col-item">
+            <col class="cp-col-qtd">
+            <col class="cp-col-valor">
+            <col class="cp-col-valor">
+          </colgroup>
           <thead>
             <tr><th>Item</th><th>Qtd</th><th>Unit.</th><th>Total</th></tr>
           </thead>
@@ -103,17 +113,26 @@ function render(pedido, totais) {
               </tr>
             `).join("")}
           </tbody>
+          <!-- Os totais moram DENTRO da tabela: como bloco separado, a
+               coluna de valor deles nunca batia com a coluna Total dos
+               itens. Aqui o alinhamento é estrutural, não ajustado no
+               olho. -->
+          <tfoot>
+            <tr class="cp-total-linha">
+              <td colspan="3">Subtotal</td>
+              <td>${formatarPreco(totais.subtotal)}</td>
+            </tr>
+            ${totais.frete ? `
+              <tr class="cp-total-linha">
+                <td colspan="3">Frete${totais.frete.zona?.nome ? ` · ${escapeHtml(totais.frete.zona.nome)}` : ""}</td>
+                <td>${formatarPreco(totais.frete.valor)}</td>
+              </tr>` : ""}
+            <tr class="cp-total-linha cp-total-linha--final">
+              <td colspan="3">Total</td>
+              <td>${formatarPreco(totais.total)}</td>
+            </tr>
+          </tfoot>
         </table>
-      </section>
-
-      <section class="cp-totais">
-        <div class="cp-total-linha"><span>Subtotal</span><span>${formatarPreco(totais.subtotal)}</span></div>
-        ${totais.frete ? `
-          <div class="cp-total-linha">
-            <span>Frete${totais.frete.zona?.nome ? ` · ${escapeHtml(totais.frete.zona.nome)}` : ""}</span>
-            <span>${formatarPreco(totais.frete.valor)}</span>
-          </div>` : ""}
-        <div class="cp-total-linha cp-total-linha--final"><span>Total</span><span>${formatarPreco(totais.total)}</span></div>
       </section>
 
       ${pedido.endereco ? `

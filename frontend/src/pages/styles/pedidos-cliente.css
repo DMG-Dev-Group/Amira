@@ -155,6 +155,12 @@
   font-size: 0.86rem;
 }
 
+/* Larguras fixas nas colunas de número; o nome do item fica com o resto.
+   Sem isto a tabela se moldava ao tamanho do nome e as colunas mudavam
+   de lugar a cada pedido. */
+.cp-col-qtd { width: 4.5rem; }
+.cp-col-valor { width: 7.5rem; }
+
 .cp-tabela th {
   text-align: left;
   font-size: 0.68rem;
@@ -191,24 +197,21 @@
 }
 
 /* Totais -------------------------------------------------------------- */
-.cp-totais {
-  margin-top: 1.2rem;
-  margin-left: auto;
-  max-width: 320px;
-}
-
-.cp-total-linha {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  font-family: 'Jost', sans-serif;
+/* Totais: agora sao linhas do <tfoot>, entao herdam as colunas da tabela
+   e o valor cai exatamente embaixo da coluna "Total" dos itens. */
+.cp-total-linha td {
+  border-bottom: none;
+  padding: 0.3rem 0;
   font-size: 0.88rem;
   color: var(--text-muted);
-  padding: 0.35rem 0;
 }
 
-.cp-total-linha--final {
-  margin-top: 0.4rem;
+/* A primeira linha do rodape se descola dos itens. */
+.cp-tabela tfoot tr:first-child td {
+  padding-top: 0.9rem;
+}
+
+.cp-total-linha--final td {
   padding-top: 0.7rem;
   border-top: 1px solid var(--border);
   font-size: 1.1rem;
@@ -216,7 +219,7 @@
   color: var(--text-main);
 }
 
-.cp-total-linha--final span:last-child {
+.cp-total-linha--final td:last-child {
   color: var(--gold);
 }
 
@@ -416,8 +419,12 @@
   .cp-main, .mp-main { padding: 6.5rem 1.1rem 4rem; }
   .cp { padding: 1.3rem; }
   .cp-meta { grid-template-columns: 1fr; }
-  .cp-totais { max-width: none; }
   .cp-codigo { font-size: 1.5rem; }
+  /* Na tela estreita as colunas de número apertam: o .cp-itens já tem
+     overflow-x, mas encolher aqui evita ter que rolar por uma coluna só. */
+  .cp-col-qtd { width: 3rem; }
+  .cp-col-valor { width: 5.8rem; }
+  .cp-tabela { font-size: 0.8rem; }
 }
 
 /* ── Impressão ───────────────────────────────────────────────────────── */

@@ -17,7 +17,7 @@ import {
 } from "../services/pedidos.js";
 import { esvaziarCarrinho } from "../services/carrinho.js";
 import { escapeHtml, urlImagemSegura } from "../services/seguranca.js";
-import { svgCodigoBarras } from "../services/codigo-barras.js";
+import { svgQrCode } from "../services/qrcode.js";
 import { textoParcelamento } from "../services/parcelamento.js";
 import { toast, confirmar, carregando } from "../services/ui-feedback.js";
 import { db, auth } from "../services/firebase-config.js";
@@ -107,7 +107,7 @@ function blocoPago(pedido) {
         <h3 class="pc-card__titulo">Código de retirada</h3>
         <p class="pc-muted">Mostre este código no balcão para retirar o pedido.</p>
         <p class="pc-codigo">${escapeHtml(codigoRetirada(pedido.id))}</p>
-        <div class="cp-barras">${svgCodigoBarras(codigoRetirada(pedido.id))}</div>
+        <div class="cp-qr">${svgQrCode(codigoRetirada(pedido.id), `QR Code do pedido ${codigoRetirada(pedido.id)}`)}</div>
       </div>
     ` : ""}
     <a href="comprovante.html?id=${encodeURIComponent(pedido.id)}" class="btn-primary pc-btn-bloco">
