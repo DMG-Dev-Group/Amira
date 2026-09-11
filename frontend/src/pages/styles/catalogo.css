@@ -1285,6 +1285,44 @@
   text-align: right;
 }
 
+/* ── "Você também pode gostar" ───────────────────────────────────────
+   Fica FORA do .produto-layout, na largura inteira: a coluna da direita
+   é curta e a imagem é alta, então sugestão espremida ali do lado só
+   acentuaria o vazio em vez de resolver. */
+.produto-relacionados {
+  margin-top: 3.5rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border);
+}
+
+.produto-relacionados[hidden] { display: none; }
+
+.produto-relacionados__titulo {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.4rem;
+  font-weight: 400;
+  color: var(--text-main);
+  margin-bottom: 1.4rem;
+}
+
+.produto-relacionados__grade {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.2rem;
+}
+
+@media (max-width: 900px) {
+  .produto-relacionados__grade { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 640px) {
+  /* Duas colunas, como o catálogo no celular — uma só viraria uma lista
+     comprida demais logo abaixo do botão de comprar. */
+  .produto-relacionados__grade { grid-template-columns: repeat(2, 1fr); gap: 0.8rem; }
+  .produto-relacionados { margin-top: 2.5rem; }
+  .produto-relacionados__titulo { font-size: 1.2rem; }
+}
+
 .produto-msg {
   font-family: 'Jost', sans-serif;
   font-size: 0.85rem;

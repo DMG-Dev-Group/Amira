@@ -1,5 +1,6 @@
 import { buscarProdutoPorId, infoPreco, estoquePorModo, disponivelNoModo, podeSerEntregue, filtrosDoProduto } from "../services/produtos.js";
 import { listarCamadas, camadaPrincipal } from "../services/camadas.js";
+import { produtosRelacionados } from "../services/relacionados.js";
 import { observarAuth } from "../services/auth.js";
 import { adicionarAoCarrinho } from "../services/carrinho.js";
 import { registrarVisita } from "../services/metricas.js";
@@ -222,16 +223,64 @@ async function carregarProduto() {
         ${ficha ? `<div class="produto-ficha">${ficha}</div>` : ""}
       </div>
     </div>
+
+    <!-- Preenchido depois, por carregarRelacionados(): a lista exige
+         baixar o catálogo, e isso não pode atrasar o preço e o botão. -->
+    <section class="produto-relacionados" id="produto-relacionados" hidden></section>
   `;
 
   if (todasImagens.length > 1) {
     configurarCarrossel(todasImagens.length);
   }
 
+  carregarRelacionados(p);
+
   if (disponivel) {
     configurarSeletorQtd();
     configurarBotaoCarrinho();
   }
+}
+
+// ── "Você também pode gostar" ────────────────────────────────────────────
+// Roda DEPOIS da página montada, e em silêncio: se falhar ou não houver
+// candidato, a seção simplesmente não aparece. Sugestão é um extra —
+// não pode segurar nem quebrar a compra.
+async function carregarRelacionados(produto) {
+  const alvo = document.getElementById("produto-relacionados");
+  if (!alvo) return;
+
+  let lista = [];
+  try {
+    lista = await produtosRelacionados(produto, 4);
+  } catch (erro) {
+    console.error("Relacionados indisponíveis:", erro);
+    return;
+  }
+  if (lista.length === 0) return;
+
+  alvo.innerHTML = `
+    <h2 class="produto-relacionados__titulo">Você também pode gostar</h2>
+    <div class="produto-relacionados__grade">
+      ${lista.map((p) => {
+        const preco = infoPreco(p, "varejo");
+        const semEstoque = estoquePorModo(p) <= 0;
+        return `
+          <a class="catalogo-card" href="produto.html?id=${encodeURIComponent(p.id)}">
+            <div class="catalogo-card-img">
+              <img src="${urlImagemSegura(p.imagemURL)}" alt="${escapeHtml(p.nome)}" loading="lazy">
+              ${preco.temDesconto ? `<span class="desconto-selo">-${preco.percentual}%</span>` : ""}
+              ${semEstoque ? `<span class="catalogo-card-esgotado-selo">Esgotado</span>` : ""}
+            </div>
+            <div class="catalogo-card-info">
+              <h3 class="catalogo-card-nome">${escapeHtml(p.nome)}</h3>
+              <span class="catalogo-card-preco">${formatarPreco(preco.precoFinal)}</span>
+            </div>
+          </a>
+        `;
+      }).join("")}
+    </div>
+  `;
+  alvo.hidden = false;
 }
 
 // ── Carrossel de imagens do produto ──────────────────────────────────────
