@@ -1,7 +1,8 @@
 import { protegerPaginaAdmin } from "./admin-auth.js";
-import { confirmar, toast } from "../../services/ui-feedback.js";
+import { confirmar, toast, carregando } from "../../services/ui-feedback.js";
 import { escapeHtml } from "../../services/seguranca.js";
-import { db } from "../../services/firebase-config.js";
+import { formatarCNPJ, validarCNPJ } from "../../services/cnpj.js";
+import { db, auth } from "../../services/firebase-config.js";
 import {
   collection,
   doc,
@@ -12,6 +13,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
 let revendedoresCache = [];
+let usuariosCache = [];
 
 const contagem = document.getElementById("contagem-revendedores");
 const tabelaPendentes = document.getElementById("tabela-pendentes");
@@ -124,10 +126,211 @@ async function mudarStatusRevendedor(uid, novoStatus) {
   }
 }
 
+// ── Cadastrar conta pelo painel ──────────────────────────────────────
+// Passa por /api/admin-usuario porque criar usuário com senha exige o
+// Admin SDK: o createUserWithEmailAndPassword do SDK web trocaria a
+// sessão do admin pela do usuário recém-criado.
+const campo = (id) => document.getElementById(id);
+const chkRevendedor = campo("u-revendedor");
+const camposRevendedorNovo = campo("campos-revendedor-novo");
+
+chkRevendedor.addEventListener("change", () => {
+  camposRevendedorNovo.style.display = chkRevendedor.checked ? "block" : "none";
+});
+
+campo("u-cnpj").addEventListener("input", (e) => { e.target.value = formatarCNPJ(e.target.value); });
+campo("u-telefone").addEventListener("input", (e) => {
+  let v = e.target.value.replace(/\D/g, "").slice(0, 11);
+  if (v.length > 10) v = v.replace(/(\d{2})(\d{5})(\d{0,4})/, "($1) $2-$3");
+  else if (v.length > 6) v = v.replace(/(\d{2})(\d{4})(\d{0,4})/, "($1) $2-$3");
+  else if (v.length > 2) v = v.replace(/(\d{2})(\d{0,5})/, "($1) $2");
+  e.target.value = v;
+});
+
+campo("btn-criar-usuario").addEventListener("click", async () => {
+  const nome = campo("u-nome").value.trim();
+  const email = campo("u-email").value.trim();
+  const senha = campo("u-senha").value;
+  const comoRevendedor = chkRevendedor.checked;
+  const cnpj = campo("u-cnpj").value.trim();
+  const razaoSocial = campo("u-razao-social").value.trim();
+
+  if (!nome) return toast("Informe o nome.", "erro");
+  if (!email) return toast("Informe o e-mail.", "erro");
+  if (senha.length < 6) return toast("A senha precisa ter pelo menos 6 caracteres.", "erro");
+  if (comoRevendedor) {
+    if (!cnpj || !razaoSocial) return toast("Para revendedor, informe CNPJ e razão social.", "erro");
+    if (!validarCNPJ(cnpj)) return toast("CNPJ inválido. Verifique os números.", "erro");
+  }
+
+  const btn = campo("btn-criar-usuario");
+  btn.disabled = true;
+  btn.textContent = "Criando...";
+  const fim = carregando("Criando a conta…");
+  try {
+    // O ID token prova ao servidor que quem chama é admin de verdade.
+    const idToken = await auth.currentUser.getIdToken();
+    const resp = await fetch("/api/admin-usuario", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        idToken,
+        nome,
+        email,
+        senha,
+        telefone: campo("u-telefone").value,
+        comoRevendedor,
+        cnpj,
+        razaoSocial
+      })
+    });
+    const dados = await resp.json().catch(() => ({}));
+    if (!resp.ok) throw new Error(dados.erro || `HTTP ${resp.status}`);
+
+    fim();
+    toast(`Conta de ${dados.nome} criada.`, "sucesso");
+    ["u-nome", "u-email", "u-senha", "u-telefone", "u-cnpj", "u-razao-social"].forEach((id) => {
+      campo(id).value = "";
+    });
+    chkRevendedor.checked = false;
+    camposRevendedorNovo.style.display = "none";
+    await recarregar();
+  } catch (erro) {
+    fim();
+    console.error(erro);
+    toast(erro.message || "Não foi possível criar a conta agora.", "erro");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Criar conta";
+  }
+});
+
+// ── Promover uma conta que já existe ─────────────────────────────────
+// Só mexe no Firestore: as rules já permitem update de usuarios/{uid}
+// para admin. Nada de Auth envolvido.
+const buscaUsuario = campo("busca-usuario");
+const resultadoBusca = campo("resultado-busca-usuario");
+const modalPromover = campo("modal-promover");
+let alvoPromocao = null;
+
+async function buscarTodosUsuarios() {
+  const snap = await getDocs(collection(db, "usuarios"));
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+function renderizarBusca() {
+  const termo = buscaUsuario.value.trim().toLowerCase();
+  if (!termo) {
+    resultadoBusca.innerHTML = `<p class="admin-vazio">Digite para buscar.</p>`;
+    return;
+  }
+
+  const achados = usuariosCache
+    .filter((u) => `${u.nome || ""} ${u.email || ""}`.toLowerCase().includes(termo))
+    .slice(0, 20);
+
+  if (achados.length === 0) {
+    resultadoBusca.innerHTML = `<p class="admin-vazio">Nenhuma conta encontrada.</p>`;
+    return;
+  }
+
+  resultadoBusca.innerHTML = `
+    <table class="admin-tabela">
+      <thead><tr><th>Nome</th><th>E-mail</th><th>Conta</th><th>Ações</th></tr></thead>
+      <tbody>
+        ${achados.map((u) => {
+          const jaAprovado = u.tipoConta === "revendedor" && u.statusRevendedor === "aprovado";
+          return `
+            <tr>
+              <td>${escapeHtml(u.nome || "—")}</td>
+              <td>${escapeHtml(u.email || "—")}</td>
+              <td>${jaAprovado
+                ? '<span class="badge badge-aprovado">revendedor</span>'
+                : u.role === "admin"
+                  ? '<span class="badge badge-pendente">admin</span>'
+                  : '<span class="badge badge-pendente">cliente</span>'}</td>
+              <td>
+                ${jaAprovado
+                  ? '<span style="font-size:0.75rem; color:var(--text-muted,#999);">já tem acesso</span>'
+                  : `<button class="admin-btn admin-btn-primary admin-btn-sm btn-promover" data-id="${escapeHtml(u.id)}">Tornar revendedor</button>`}
+              </td>
+            </tr>`;
+        }).join("")}
+      </tbody>
+    </table>`;
+
+  resultadoBusca.querySelectorAll(".btn-promover").forEach((btn) => {
+    btn.addEventListener("click", () => abrirPromocao(btn.dataset.id));
+  });
+}
+
+function abrirPromocao(uid) {
+  alvoPromocao = usuariosCache.find((u) => u.id === uid) || null;
+  if (!alvoPromocao) return;
+  campo("promover-quem").textContent =
+    `${alvoPromocao.nome || "Sem nome"} · ${alvoPromocao.email || ""}`;
+  campo("p-cnpj").value = formatarCNPJ(alvoPromocao.cnpj || "");
+  campo("p-razao-social").value = alvoPromocao.razaoSocial || "";
+  modalPromover.style.display = "flex";
+}
+
+function fecharPromocao() {
+  modalPromover.style.display = "none";
+  alvoPromocao = null;
+}
+
+campo("p-cnpj").addEventListener("input", (e) => { e.target.value = formatarCNPJ(e.target.value); });
+campo("btn-cancelar-promover").addEventListener("click", fecharPromocao);
+modalPromover.addEventListener("click", (e) => { if (e.target === modalPromover) fecharPromocao(); });
+
+campo("btn-confirmar-promover").addEventListener("click", async () => {
+  if (!alvoPromocao) return;
+  const cnpj = campo("p-cnpj").value.trim();
+  const razaoSocial = campo("p-razao-social").value.trim();
+  if (!cnpj || !razaoSocial) return toast("Informe CNPJ e razão social.", "erro");
+  if (!validarCNPJ(cnpj)) return toast("CNPJ inválido. Verifique os números.", "erro");
+
+  const btn = campo("btn-confirmar-promover");
+  btn.disabled = true;
+  btn.textContent = "Salvando...";
+  try {
+    await updateDoc(doc(db, "usuarios", alvoPromocao.id), {
+      tipoConta: "revendedor",
+      statusRevendedor: "aprovado",
+      cnpj,
+      razaoSocial
+    });
+    toast(`${alvoPromocao.nome || "Conta"} agora é revendedor.`, "sucesso");
+    fecharPromocao();
+    await recarregar();
+    renderizarBusca();
+  } catch (erro) {
+    console.error(erro);
+    toast("Não foi possível promover agora. Tente novamente.", "erro");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Tornar revendedor";
+  }
+});
+
+let debounceBusca;
+buscaUsuario.addEventListener("input", () => {
+  clearTimeout(debounceBusca);
+  debounceBusca = setTimeout(renderizarBusca, 180);
+});
+
+// ── Carga ────────────────────────────────────────────────────────────
+async function recarregar() {
+  [revendedoresCache, usuariosCache] = await Promise.all([
+    buscarRevendedores(),
+    buscarTodosUsuarios()
+  ]);
+  renderizarTabelas();
+}
+
 protegerPaginaAdmin(async () => {
   try {
-    revendedoresCache = await buscarRevendedores();
-    renderizarTabelas();
+    await recarregar();
   } catch (erro) {
     console.error("Erro ao carregar revendedores:", erro);
     tabelaPendentes.innerHTML = `<p class="admin-vazio">Não foi possível carregar os dados agora.</p>`;

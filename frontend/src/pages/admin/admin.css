@@ -1070,3 +1070,31 @@ body {
 @media (max-width: 560px) {
   .iphone-form-grid { grid-template-columns: 1fr; }
 }
+
+/* Formulario de cadastro de conta (Revendedores) */
+.admin-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0 0.9rem;
+}
+.admin-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  cursor: pointer;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.admin-check input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  flex-shrink: 0;
+  accent-color: var(--gold);
+  cursor: pointer;
+}
+@media (max-width: 560px) {
+  .admin-form-grid { grid-template-columns: 1fr; }
+}
