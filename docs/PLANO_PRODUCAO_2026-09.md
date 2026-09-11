@@ -49,6 +49,25 @@ segurança de base (Fase 0) vem antes de qualquer mudança de produto.
 - **Projeto Firebase:** `flora-5754a` — criado como **ambiente de testes**.
   Ainda não existe projeto de produção.
 
+### ⚠️ A versão do Node na Vercel está FIXADA em 22
+
+`package.json` tem `engines.node = "22.x"` e **não pode baixar disso**.
+
+O `firebase-admin` puxa `jwks-rsa`, que faz `require("jose")`, e o `jose`
+6 é ESM puro. `require()` de ESM só funciona a partir do Node 20.19 /
+22.12 — abaixo disso o processo **morre** com `ERR_REQUIRE_ESM`, antes de
+qualquer `try/catch`, e a função responde 500 sem JSON nenhum.
+
+Isso derrubou tudo que valida ID token: `/api/pagamento`, `/api/pix`,
+`/api/admin-usuario` e o `/api/status`. Sintoma característico: a função
+"não responde" em vez de devolver erro, e o cliente vê `HTTP 500` sem
+corpo.
+
+Rede de proteção em `api/_lib/firebase-admin.js`: o `require` do
+`firebase-admin/auth` é feito só dentro de `getAuthAdmin()`. Se voltar a
+falhar, quebra dentro do handler (vira JSON com mensagem clara) em vez de
+matar o processo — e o Firestore continua funcionando.
+
 ### ⚠️ O banco é COMPARTILHADO com o sistema interno
 
 `flora-5754a` atende **dois sistemas**, com o mesmo Firestore, o mesmo

@@ -3,5 +3,8 @@
     "boxicons": "^2.1.4",
     "firebase": "^12.18.0",
     "firebase-admin": "^14.3.0"
+  },
+  "engines": {
+    "node": "22.x"
   }
 }
