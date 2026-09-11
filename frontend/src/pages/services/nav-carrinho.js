@@ -1,45 +1,50 @@
+// ── Contador do carrinho na navbar ─────────────────────────────────────
+// O ÍCONE é HTML estático (está no markup de cada página, ao lado de
+// Atacado e iPhones). Antes este módulo criava o ícone inteiro, mas só
+// depois de o Firebase responder — ele aparecia atrasado, "pulando" na
+// barra enquanto o botão de iPhones já estava lá desde o primeiro
+// desenho. Aqui só o NÚMERO é dinâmico.
+//
+// O ícone aparece para todo mundo, inclusive quem não entrou: adicionar
+// ao carrinho já exige login em toda a loja, e clicar deslogado leva
+// para o login — o mesmo caminho de antes, sem o ícone piscando.
+
 import { observarAuth } from "./auth.js";
 import { obterCarrinho } from "./carrinho.js";
 
-const slot = document.getElementById("nav-carrinho-slot");
+const contador = document.getElementById("nav-carrinho-contador");
 const mobileLink = document.getElementById("mobile-nav-carrinho");
 const mobileBadge = document.getElementById("mobile-carrinho-badge");
 
-if (slot || mobileLink) {
+function pintar(quantidade) {
+  if (contador) {
+    contador.textContent = quantidade > 0 ? String(quantidade) : "";
+    contador.hidden = quantidade <= 0;
+  }
+  if (mobileBadge) {
+    mobileBadge.textContent = quantidade > 0 ? String(quantidade) : "";
+    mobileBadge.style.display = quantidade > 0 ? "flex" : "none";
+  }
+}
+
+if (contador || mobileLink) {
   observarAuth(async ({ usuario }) => {
     if (!usuario) {
-      if (slot) slot.innerHTML = "";
+      // O link do menu lateral continua escondido para quem não entrou —
+      // lá o espaço é de uma lista, não da barra, e não há "pulo".
       if (mobileLink) mobileLink.style.display = "none";
+      pintar(0);
       return;
     }
 
-    let quantidadeTotal = 0;
+    if (mobileLink) mobileLink.style.display = "flex";
+
     try {
       const itens = await obterCarrinho(usuario.uid);
-      quantidadeTotal = itens.reduce((soma, i) => soma + i.quantidade, 0);
+      pintar(itens.reduce((soma, i) => soma + i.quantidade, 0));
     } catch (erro) {
       console.error("Erro ao carregar contador do carrinho:", erro);
-    }
-
-    if (slot) {
-      slot.innerHTML = `
-        <a href="carrinho.html" class="nav-carrinho-btn" aria-label="Ver carrinho">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
-            <circle cx="9" cy="21" r="1"/>
-            <circle cx="20" cy="21" r="1"/>
-            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
-          </svg>
-          ${quantidadeTotal > 0 ? `<span class="nav-carrinho-contador">${quantidadeTotal}</span>` : ""}
-        </a>
-      `;
-    }
-
-    if (mobileLink) {
-      mobileLink.style.display = "flex";
-      if (mobileBadge) {
-        mobileBadge.textContent = quantidadeTotal > 0 ? String(quantidadeTotal) : "";
-        mobileBadge.style.display = quantidadeTotal > 0 ? "flex" : "none";
-      }
+      pintar(0);
     }
   });
 }

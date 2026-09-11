@@ -1,0 +1,508 @@
+/* ── LOGIN E CADASTRO — Amira ─────────────────────────────────────────────
+   Folha única das duas telas de conta. Antes cada uma tinha a sua, com a
+   paleta BORDÔ antiga e Montserrat — nada a ver com o resto da loja, que
+   é mocha/creme/nude em Playfair Display + Jost.
+
+   Estas páginas não carregam styles/style.css (são telas isoladas, sem
+   navbar nem rodapé), então os tokens de cor são repetidos aqui — mesmos
+   valores e mesmos nomes de style.css, incluindo o tema claro/escuro
+   aplicado por services/tema.js em body[data-theme].
+
+   Os nomes de classe são os que o JS já usa (.input-box, .login,
+   .form-msg, bx-show/bx-hide…) — a identidade mudou, o contrato não. */
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500;600&display=swap');
+
+/* ── Paleta oficial (espelho de styles/style.css) ─────────────────────── */
+:root {
+  --color-1: #7A5147;
+  --color-2: #5C3B33;
+  --color-3: #ECC1A0;
+  --color-4: #F3D8C4;
+  --color-5: #FEF5EF;
+
+  --brand: #8A5B4E;
+  --brand-strong: #75463B;
+  --on-brand: #FEF5EF;
+
+  --bg: #1C1512;
+  --surface: #241A17;
+  --gold: var(--color-3);
+  --cream: var(--color-5);
+  --text-main: var(--color-5);
+  --text-muted: rgba(254, 245, 239, 0.68);
+  --border: rgba(236, 193, 160, 0.22);
+  --campo: rgba(254, 245, 239, 0.04);
+
+  --danger: #F08A7E;
+  --success: #7DBE86;
+}
+
+body[data-theme="light"] {
+  --bg: #FEF5EF;
+  --surface: #FFFFFF;
+  --gold: var(--color-1);
+  --text-main: #2E211C;
+  --text-muted: rgba(46, 33, 28, 0.66);
+  --border: rgba(122, 81, 71, 0.2);
+  --campo: rgba(122, 81, 71, 0.04);
+
+  --danger: #B3261E;
+  --success: #2E7D46;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text-main);
+  font-family: 'Jost', sans-serif;
+  transition: background 0.35s ease, color 0.35s ease;
+}
+
+/* ── Layout: marca à esquerda, formulário à direita ───────────────────── */
+.auth-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 100vh;
+}
+
+/* O painel da marca usa o mesmo gradiente da seção de iPhones da home, e
+   pelo mesmo motivo de lá: é faixa de destaque, então o texto é sempre
+   claro nos dois temas. */
+.auth-marca {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1.4rem;
+  padding: 4rem 3.5rem;
+  background: linear-gradient(135deg, var(--brand-strong) 0%, var(--brand) 55%, var(--color-2) 100%);
+  color: var(--on-brand);
+}
+
+.auth-marca::after {
+  content: '';
+  position: absolute;
+  right: -15%;
+  top: -25%;
+  width: 70%;
+  height: 150%;
+  background: radial-gradient(circle, rgba(236, 193, 160, 0.22) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+.auth-marca > * { position: relative; z-index: 1; }
+
+.auth-marca__logo { width: 116px; height: auto; }
+
+.auth-marca__titulo {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.9rem, 3vw, 2.6rem);
+  font-weight: 400;
+  line-height: 1.22;
+  max-width: 15ch;
+}
+
+.auth-marca__titulo em {
+  font-style: italic;
+  color: var(--color-4);
+}
+
+.auth-marca__texto {
+  font-size: 0.9rem;
+  line-height: 1.7;
+  max-width: 38ch;
+  color: rgba(254, 245, 239, 0.82);
+}
+
+.auth-marca__selos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.4rem;
+}
+
+.auth-marca__selo {
+  padding: 0.35rem 0.75rem;
+  border: 1px solid rgba(254, 245, 239, 0.32);
+  border-radius: 999px;
+  font-size: 0.66rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.auth-painel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1.5rem;
+}
+
+/* ── Formulário ───────────────────────────────────────────────────────── */
+.container {
+  width: 100%;
+  max-width: 400px;
+}
+
+.container h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.85rem;
+  font-weight: 400;
+  line-height: 1.2;
+  color: var(--text-main);
+  margin-bottom: 0.4rem;
+}
+
+.container h1 em {
+  font-style: italic;
+  color: var(--gold);
+}
+
+.auth-sub {
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+  margin-bottom: 1.8rem;
+}
+
+.input-box {
+  position: relative;
+  margin-bottom: 0.9rem;
+}
+
+.input-box input {
+  width: 100%;
+  height: 50px;
+  padding: 0 2.8rem 0 1rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--campo);
+  color: var(--text-main);
+  font-family: 'Jost', sans-serif;
+  font-size: 0.92rem;
+  outline: none;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.input-box input:focus {
+  border-color: var(--gold);
+  background: var(--surface);
+}
+
+.input-box input::placeholder { color: var(--text-muted); }
+
+/* O campo de data é o único com rótulo visível — sem ele o navegador
+   mostra "dd/mm/aaaa" e ninguém sabe o que é. */
+.input-box--data label {
+  display: block;
+  margin: 0 0 0.35rem 0.15rem;
+  font-size: 0.74rem;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.input-box--data input { padding-right: 1rem; }
+.input-box--data input::-webkit-calendar-picker-indicator { filter: opacity(0.6); cursor: pointer; }
+
+/* Ícone à direita do campo — SVG inline, sem depender de fonte de ícones */
+.input-box__ic,
+.input-box__olho {
+  position: absolute;
+  top: 50%;
+  right: 0.85rem;
+  transform: translateY(-50%);
+  width: 19px;
+  height: 19px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.input-box__ic svg,
+.input-box__olho svg { width: 100%; height: 100%; display: block; }
+
+.input-box__olho {
+  pointer-events: auto;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: color 0.18s ease;
+}
+
+.input-box__olho:hover { color: var(--gold); }
+
+/* O JS alterna estas classes (ver js/login.js e js/cadastro.js) — cada
+   estado mostra um dos dois desenhos. */
+.input-box__olho.bx-hide .olho-aberto,
+.input-box__olho.bx-show .olho-fechado { display: none; }
+
+/* ── Lembrar / esqueci ────────────────────────────────────────────────── */
+.remember-forgot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0.9rem 0 1.4rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.remember-forgot label {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  cursor: pointer;
+}
+
+.remember-forgot input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--brand);
+  cursor: pointer;
+}
+
+.remember-forgot a {
+  color: var(--gold);
+  text-decoration: none;
+  text-underline-offset: 3px;
+}
+
+.remember-forgot a:hover { text-decoration: underline; }
+
+/* ── Botões ───────────────────────────────────────────────────────────── */
+.login {
+  width: 100%;
+  height: 50px;
+  border: none;
+  border-radius: 10px;
+  background: var(--brand);
+  color: var(--on-brand);
+  font-family: 'Jost', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.login:hover:not(:disabled) {
+  background: var(--brand-strong);
+  transform: translateY(-1px);
+}
+
+.login:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+.login-google {
+  background: var(--surface);
+  color: var(--text-main);
+  border: 1px solid var(--border);
+}
+
+.login-google:hover:not(:disabled) {
+  background: var(--surface);
+  border-color: var(--gold);
+}
+
+.divisor-ou {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin: 1.3rem 0;
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.divisor-ou::before,
+.divisor-ou::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ── Rodapé do formulário ─────────────────────────────────────────────── */
+.register-link {
+  margin-top: 1.5rem;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.register-link a {
+  color: var(--gold);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.register-link a:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+.voltar-link {
+  display: block;
+  margin-top: 0.9rem;
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 0.18s ease;
+}
+
+.voltar-link:hover { color: var(--gold); }
+
+/* ── Mensagens de estado ──────────────────────────────────────────────── */
+.form-msg {
+  margin-top: 0.9rem;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: var(--danger);
+}
+
+.form-msg:empty { margin-top: 0; }
+
+.form-msg.sucesso { color: var(--success); }
+
+.verificacao-alerta {
+  padding: 0.9rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--gold) 40%, var(--border));
+  border-left: 3px solid var(--gold);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--gold) 8%, transparent);
+  color: var(--text-main);
+}
+
+.verificacao-alerta button {
+  margin-top: 0.6rem;
+  padding: 0.45rem 0.9rem;
+  border: 1px solid var(--gold);
+  border-radius: 8px;
+  background: none;
+  color: var(--gold);
+  font-family: 'Jost', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.verificacao-alerta button:hover { background: color-mix(in srgb, var(--gold) 14%, transparent); }
+
+/* ── Cadastro: cliente x lojista ──────────────────────────────────────── */
+.tipo-conta-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-bottom: 0.7rem;
+}
+
+.tipo-conta-btn {
+  padding: 0.7rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--campo);
+  color: var(--text-muted);
+  font-family: 'Jost', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.tipo-conta-btn:hover { border-color: color-mix(in srgb, var(--gold) 45%, var(--border)); }
+
+.tipo-conta-btn.active {
+  border-color: var(--gold);
+  background: color-mix(in srgb, var(--gold) 10%, transparent);
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+.tipo-conta-info {
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+  margin-bottom: 1.2rem;
+}
+
+.cnpj-status {
+  font-size: 0.76rem;
+  line-height: 1.5;
+  margin: -0.4rem 0 0.9rem;
+  color: var(--text-muted);
+}
+
+.cnpj-status.ok { color: var(--success); }
+.cnpj-status.erro { color: var(--danger); }
+
+/* ── Consentimentos (LGPD) ────────────────────────────────────────────── */
+.consentimentos {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  margin: 1.1rem 0 1.4rem;
+}
+
+.consentimento {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.consentimento input[type="checkbox"] {
+  margin-top: 0.15rem;
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  accent-color: var(--brand);
+  cursor: pointer;
+}
+
+.consentimento a {
+  color: var(--gold);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ── Telas menores ────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  /* O painel da marca vira uma faixa no topo: mantém a identidade sem
+     roubar a tela do formulário, que é o que a pessoa veio fazer. */
+  .auth-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-marca {
+    padding: 2rem 1.5rem;
+    gap: 0.8rem;
+  }
+
+  .auth-marca__logo { width: 88px; }
+  .auth-marca__titulo { font-size: 1.5rem; max-width: none; }
+  .auth-marca__texto,
+  .auth-marca__selos { display: none; }
+
+  .auth-painel { padding: 2.2rem 1.2rem 3rem; }
+}
+
+@media (max-width: 420px) {
+  .auth-marca { padding: 1.6rem 1.2rem; }
+  .auth-marca__titulo { font-size: 1.32rem; }
+  .container h1 { font-size: 1.6rem; }
+  .tipo-conta-toggle { grid-template-columns: 1fr; }
+}

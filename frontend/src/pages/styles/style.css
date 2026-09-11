@@ -173,6 +173,10 @@ body[data-theme="light"] nav:not(.scrolled) .mobile-menu-btn {
   color: var(--gold);
 }
 
+/* o atributo hidden precisa vencer o display:flex abaixo — o contador
+   nasce escondido e só aparece quando há item no carrinho */
+.nav-carrinho-contador[hidden] { display: none; }
+
 .nav-carrinho-contador {
   position: absolute;
   top: -2px;

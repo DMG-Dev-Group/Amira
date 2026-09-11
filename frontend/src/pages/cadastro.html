@@ -3,14 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="./styles/cadastro.css">
+    <link rel="icon" type="image/svg+xml" href="images/amira-favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="./styles/auth.css">
     <title>Amira — Cadastro</title>
 </head>
-<body>
-    <main class="container">
+<body data-theme="light">
+    <div class="auth-layout">
+
+        <aside class="auth-marca">
+            <img class="auth-marca__logo" src="images/amira-claro.svg" alt="Amira">
+            <h2 class="auth-marca__titulo">Sua <em>essência</em>, nossa paixão</h2>
+            <p class="auth-marca__texto">
+                Crie sua conta para acompanhar pedidos, salvar endereço e — se
+                você tem loja — pedir acesso aos preços de atacado.
+            </p>
+            <div class="auth-marca__selos">
+                <span class="auth-marca__selo">Produtos originais</span>
+                <span class="auth-marca__selo">Atacado e varejo</span>
+            </div>
+        </aside>
+
+        <main class="auth-painel">
+    <div class="container">
         <form id="form-cadastro">
-            <h1>Criar conta</h1>
+            <h1>Criar <em>conta</em></h1>
+            <p class="auth-sub">Leva menos de um minuto.</p>
 
             <div class="tipo-conta-toggle" id="tipo-conta-toggle">
                 <button type="button" class="tipo-conta-btn active" data-tipo="cliente">Sou cliente</button>
@@ -20,15 +39,15 @@
 
             <div class="input-box">
                 <input id="cad-nome" placeholder="Nome completo" type="text" required autocomplete="name">
-                <i class="bx bxs-user-circle"></i>
+                <span class="input-box__ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.2"/><circle cx="12" cy="10" r="3.1"/><path d="M5.6 19a7 7 0 0 1 12.8 0"/></svg></span>
             </div>
             <div class="input-box">
                 <input id="cad-email" placeholder="E-mail" type="email" required autocomplete="email">
-                <i class="bx bxs-user"></i>
+                <span class="input-box__ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4.5" width="19" height="15" rx="2.5"/><path d="m3 6.5 9 6 9-6"/></svg></span>
             </div>
             <div class="input-box">
                 <input id="cad-telefone" placeholder="Telefone / WhatsApp" type="tel" required autocomplete="tel" inputmode="numeric" maxlength="16">
-                <i class="bx bxs-phone"></i>
+                <span class="input-box__ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.6"/><path d="M10.6 18.6h2.8"/></svg></span>
             </div>
             <div class="input-box input-box--data">
                 <label for="cad-nascimento">Data de nascimento</label>
@@ -39,22 +58,22 @@
             <div id="campos-revendedor" style="display:none;">
                 <div class="input-box">
                     <input id="cad-cnpj" placeholder="CNPJ (00.000.000/0000-00)" type="text" maxlength="18">
-                    <i class="bx bxs-briefcase"></i>
+                    <span class="input-box__ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7" width="19" height="13" rx="2.4"/><path d="M8.5 7V5.4A1.9 1.9 0 0 1 10.4 3.5h3.2A1.9 1.9 0 0 1 15.5 5.4V7"/><path d="M2.5 12.5h19"/></svg></span>
                 </div>
                 <p class="cnpj-status" id="cnpj-status"></p>
                 <div class="input-box">
                     <input id="cad-razao-social" placeholder="Razão social da empresa" type="text">
-                    <i class="bx bxs-store"></i>
+                    <span class="input-box__ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h18l-1.2-4.2A1.5 1.5 0 0 0 18.35 3.7H5.65A1.5 1.5 0 0 0 4.2 4.8L3 9Z"/><path d="M4.6 9v10.4a.6.6 0 0 0 .6.6h13.6a.6.6 0 0 0 .6-.6V9"/></svg></span>
                 </div>
             </div>
 
             <div class="input-box">
                 <input id="cad-senha" placeholder="Senha (mín. 6 caracteres)" type="password" required autocomplete="new-password" minlength="6">
-                <i class="bx bx-hide toggle-senha" data-alvo="cad-senha" role="button" tabindex="0" aria-label="Mostrar senha"></i>
+                <button type="button" class="input-box__olho bx-hide toggle-senha" data-alvo="cad-senha" aria-label="Mostrar senha"><svg class="olho-fechado" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.9 4.7A9.8 9.8 0 0 1 12 4.5c5 0 9 4.5 10 7.5a13 13 0 0 1-2.4 3.7M6.3 6.7A13.4 13.4 0 0 0 2 12c1 3 5 7.5 10 7.5a9.9 9.9 0 0 0 4.2-.9"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="m3 3 18 18"/></svg><svg class="olho-aberto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.8-7.5 10-7.5S22 12 22 12s-3.8 7.5-10 7.5S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button>
             </div>
             <div class="input-box">
                 <input id="cad-confirma" placeholder="Confirme sua senha" type="password" required autocomplete="new-password" minlength="6">
-                <i class="bx bx-hide toggle-senha" data-alvo="cad-confirma" role="button" tabindex="0" aria-label="Mostrar senha"></i>
+                <button type="button" class="input-box__olho bx-hide toggle-senha" data-alvo="cad-confirma" aria-label="Mostrar senha"><svg class="olho-fechado" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.9 4.7A9.8 9.8 0 0 1 12 4.5c5 0 9 4.5 10 7.5a13 13 0 0 1-2.4 3.7M6.3 6.7A13.4 13.4 0 0 0 2 12c1 3 5 7.5 10 7.5a9.9 9.9 0 0 0 4.2-.9"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="m3 3 18 18"/></svg><svg class="olho-aberto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.8-7.5 10-7.5S22 12 22 12s-3.8 7.5-10 7.5S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button>
             </div>
 
             <div class="consentimentos">
@@ -95,7 +114,10 @@
             </div>
             <a href="./index.html" class="voltar-link">← Voltar para a loja</a>
         </form>
-    </main>
+    </div>
+        </main>
+    </div>
+    <script src="services/tema.js"></script>
     <script type="module" src="./js/cadastro.js"></script>
     <script type="module" src="./services/consentimento-cookies.js"></script>
 </body>

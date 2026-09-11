@@ -55,6 +55,8 @@ const inputPrecoMin = document.getElementById("filtro-preco-min");
 const inputPrecoMax = document.getElementById("filtro-preco-max");
 const btnAplicarPreco = document.getElementById("btn-aplicar-preco");
 const btnLimparFiltros = document.getElementById("btn-limpar-filtros");
+const filtroBusca = document.getElementById("filtro-busca");
+const filtroBuscaLimpar = document.getElementById("filtro-busca-limpar");
 const sentinela = document.getElementById("catalogo-sentinela");
 
 const TAMANHO_PAGINA = 24;
@@ -75,6 +77,7 @@ let modoFiltroCompleto = false; // true = algum filtro ativo (lista completa car
 const params = new URLSearchParams(window.location.search);
 termoBusca = params.get("busca") || "";
 if (buscaInput) buscaInput.value = termoBusca;
+if (filtroBusca) filtroBusca.value = termoBusca;
 
 // ── Seleção ────────────────────────────────────────────────────────────
 function marcadas(camadaSlug) {
@@ -447,11 +450,43 @@ if (sentinela) {
 }
 
 // ── Eventos ───────────────────────────────────────────────────────────────
+// As duas caixas (navbar e painel de filtros) editam o MESMO termo, então
+// sempre que uma muda a outra acompanha — senão a tela mostra dois
+// estados diferentes do mesmo filtro.
 function aoBuscar(termo) {
   termoBusca = termo.trim();
   if (buscaInput) buscaInput.value = termoBusca;
+  if (filtroBusca) filtroBusca.value = termoBusca;
+  if (filtroBuscaLimpar) filtroBuscaLimpar.hidden = !termoBusca;
   reiniciarCatalogo();
 }
+
+// A busca do painel filtra AO VIVO. A espera existe para não recarregar a
+// grade a cada tecla — sem filtro ativo, digitar a primeira letra troca o
+// modo paginado pelo modo lista completa, que é uma consulta inteira.
+const ESPERA_BUSCA_MS = 250;
+let timerBusca = null;
+
+filtroBusca?.addEventListener("input", () => {
+  if (filtroBuscaLimpar) filtroBuscaLimpar.hidden = !filtroBusca.value.trim();
+  clearTimeout(timerBusca);
+  timerBusca = setTimeout(() => aoBuscar(filtroBusca.value), ESPERA_BUSCA_MS);
+});
+
+// Enter não deve recarregar a página (o input vive fora de um <form>,
+// mas type="search" ainda dispara em alguns navegadores).
+filtroBusca?.addEventListener("keydown", (e) => {
+  if (e.key !== "Enter") return;
+  e.preventDefault();
+  clearTimeout(timerBusca);
+  aoBuscar(filtroBusca.value);
+});
+
+filtroBuscaLimpar?.addEventListener("click", () => {
+  clearTimeout(timerBusca);
+  aoBuscar("");
+  filtroBusca.focus();
+});
 
 buscaForm?.addEventListener("submit", (evento) => {
   evento.preventDefault();
@@ -480,6 +515,8 @@ btnLimparFiltros.addEventListener("click", () => {
   precoMax = null;
   selecao = {};
   if (buscaInput) buscaInput.value = "";
+  if (filtroBusca) filtroBusca.value = "";
+  if (filtroBuscaLimpar) filtroBuscaLimpar.hidden = true;
   inputPrecoMin.value = "";
   inputPrecoMax.value = "";
   selectOrdenar.value = "relevancia";
@@ -519,6 +556,7 @@ async function iniciar() {
 
   lerSelecaoDaURL();
   montarPainelCamadas();
+  if (filtroBuscaLimpar) filtroBuscaLimpar.hidden = !termoBusca;
   await reiniciarCatalogo();
 }
 iniciar();
