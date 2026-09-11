@@ -38,7 +38,14 @@ module.exports = async (req, res) => {
       await exigirAdmin(tokenDaRequisicao(req));
       adminConfirmado = true;
     } catch (erro) {
-      if (!erro.status) erro._etapa = "verificarAdmin";
+      // Sem status = não foi "não é admin", foi o próprio Firebase falhando
+      // ao verificar. Precisa se identificar: é a única etapa que roda
+      // ANTES de sabermos que quem chama é admin, então é a única que não
+      // pode carregar _diag.
+      if (!erro.status) {
+        erro._etapa = "verificarAdmin";
+        erro.publico = `Falha ao verificar o administrador (código: ${erro.code || "sem código"}).`;
+      }
       throw erro;
     }
 
@@ -92,7 +99,27 @@ module.exports = async (req, res) => {
         const [status, mensagem] = conhecidos[codigo];
         return res.status(status).json({ erro: mensagem, _diag: { etapa: "createUser", codigo } });
       }
+      // Código desconhecido: antes de desistir, testa se a service account
+      // consegue falar com o Auth Admin DE QUALQUER JEITO. Isso separa as
+      // duas causas possíveis, que pedem soluções opostas:
+      //   • a sonda também falha → a credencial não tem acesso ao Auth
+      //     (papel de IAM faltando, ou a API Identity Toolkit desligada)
+      //   • a sonda passa → o problema é este cadastro específico
+      // Uma chamada a mais, só no caminho do erro.
+      let sonda;
+      try {
+        await getAuthAdmin().listUsers(1);
+        sonda = "o Auth Admin responde — o problema é este cadastro";
+      } catch (erroSonda) {
+        sonda =
+          "a service account NÃO consegue usar o Firebase Auth " +
+          `(${erroSonda.code || erroSonda.message}). No Google Cloud > IAM, ` +
+          "confira o papel dela; e em APIs e serviços, se a Identity Toolkit API está ativada";
+      }
       erro._etapa = "createUser";
+      // O código do Firebase é identificador ("auth/alguma-coisa"), não
+      // conteúdo — pode ir para a tela. A mensagem crua fica só no log.
+      erro.publico = `O Firebase recusou a criação da conta. Código: ${codigo || "sem código"}. Diagnóstico: ${sonda}.`;
       throw erro;
     }
 
@@ -130,6 +157,7 @@ module.exports = async (req, res) => {
       // poder tentar de novo com o mesmo e-mail.
       try { await getAuthAdmin().deleteUser(usuario.uid); } catch { /* nada a fazer */ }
       erro._etapa = "gravarPerfil";
+      erro.publico = `A conta foi criada mas o perfil não gravou, então ela foi desfeita. Código: ${erro.code || "sem código"}.`;
       throw erro;
     }
 
@@ -145,7 +173,9 @@ module.exports = async (req, res) => {
       console.error("[/api/admin-usuario]", erro && erro.code, erro && erro.message);
     }
     return res.status(status).json({
-      erro: status === 500 ? "Não foi possível criar a conta agora." : erro.message,
+      erro: status === 500
+        ? (erro.publico || "Não foi possível criar a conta agora.")
+        : erro.message,
       // Diagnóstico junto da resposta: sem isto a causa só aparece no log
       // da Vercel, e um 500 opaco vira adivinhação. Só para admin
       // confirmado, e some na limpeza pré-lançamento.
