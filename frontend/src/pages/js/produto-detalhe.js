@@ -37,20 +37,58 @@ function formatarPeso(gramas) {
   return `${gramas} g`;
 }
 
+// Ícones dos avisos. Traço fino, como o resto da loja — e nada de emoji,
+// que muda de desenho (e de tamanho) a cada sistema operacional.
+const IC_LOJA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9h18l-1.2-4.2A1.5 1.5 0 0 0 18.35 3.7H5.65A1.5 1.5 0 0 0 4.2 4.8L3 9Z"/><path d="M4.6 9v10.4a.6.6 0 0 0 .6.6h13.6a.6.6 0 0 0 .6-.6V9"/><path d="M9.6 20v-5.2h4.8V20"/></svg>';
+const IC_ETIQUETA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 12.3 12.3 20.6a1.6 1.6 0 0 1-2.3 0l-7-7V4.3a1.3 1.3 0 0 1 1.3-1.3h9.3l7.3 7.3a1.6 1.6 0 0 1 0 2.3Z"/><circle cx="7.9" cy="7.9" r="1.25"/></svg>';
+
+function aviso(icone, titulo, corpo) {
+  return `
+    <div class="produto-aviso">
+      <span class="produto-aviso-ic">${icone}</span>
+      <div class="produto-aviso-texto">
+        <strong>${titulo}</strong>
+        <span>${corpo}</span>
+      </div>
+    </div>
+  `;
+}
+
+// A opção do produto na camada principal vira a etiqueta acima do nome
+// (mesma informação que o card do catálogo mostra). Por isso a camada
+// principal NÃO se repete na tabela de detalhes lá embaixo.
+function etiquetaPrincipal(produto) {
+  const principal = camadaPrincipal(camadasCache);
+  if (!principal) return "";
+  const slugs = filtrosDoProduto(produto, principal.slug)[principal.slug] || [];
+  if (slugs.length === 0) return "";
+  return slugs.map((s) => principal.opcoes.find((o) => o.slug === s)?.nome || s).join(", ");
+}
+
 // Uma linha por camada de filtro em que o produto tem opção marcada
-// (Tipo, Origem, Gênero…). Substitui a antiga linha única "Categoria".
-function linhasCamadas(produto) {
-  const principalSlug = camadaPrincipal(camadasCache)?.slug || null;
-  const filtros = filtrosDoProduto(produto, principalSlug);
+// (Tipo, Gênero…), mais peso, SKU e código de barras. Campo vazio não
+// vira linha: três traços seguidos só ocupavam espaço sem informar nada.
+function linhasFicha(produto) {
+  const principal = camadaPrincipal(camadasCache);
+  const filtros = filtrosDoProduto(produto, principal?.slug || null);
+
   const linhas = camadasCache
+    .filter((camada) => camada.slug !== principal?.slug)
     .map((camada) => {
       const slugs = filtros[camada.slug] || [];
-      if (slugs.length === 0) return "";
+      if (slugs.length === 0) return null;
       const nomes = slugs.map((s) => camada.opcoes.find((o) => o.slug === s)?.nome || s);
-      return `<div><span>${escapeHtml(camada.nome)}</span><span>${escapeHtml(nomes.join(", "))}</span></div>`;
+      return [camada.nome, nomes.join(", ")];
     })
     .filter(Boolean);
-  return linhas.join("") || `<div><span>Categoria</span><span>—</span></div>`;
+
+  if (produto.peso) linhas.push(["Peso", formatarPeso(produto.peso)]);
+  if (produto.sku) linhas.push(["SKU", produto.sku]);
+  if (produto.codigoBarras) linhas.push(["Código de barras", produto.codigoBarras]);
+
+  return linhas
+    .map(([rotulo, valor]) => `<div><span>${escapeHtml(rotulo)}</span><span>${escapeHtml(valor)}</span></div>`)
+    .join("");
 }
 
 async function carregarProduto() {
@@ -93,6 +131,35 @@ async function carregarProduto() {
   const todasImagens = [p.imagemURL, ...(p.imagensExtras || [])].filter(Boolean);
   if (todasImagens.length === 0) todasImagens.push("images/amira-placeholder.svg");
 
+  const etiqueta = etiquetaPrincipal(p);
+
+  // Os dois avisos ficam DEPOIS do botão: são condição de compra, não
+  // chamada — antes eles empurravam preço e botão para baixo da dobra.
+  const avisos = [
+    somenteRetirada
+      ? aviso(IC_LOJA, "Retirada na loja",
+          "Este produto não tem entrega. Retire no Monumental Shopping, 2º piso.")
+      : "",
+    disponivelNoModo(p, "atacado")
+      ? aviso(IC_ETIQUETA,
+          `${temVarejo ? "No atacado" : "Exclusivo do atacado"}: ${formatarPreco(infoPreco(p, "atacado").precoFinal)}/un.`,
+          `Preço por unidade para revendedores. <a href="atacado.html">Ver modo atacado</a>`)
+      : ""
+  ].filter(Boolean).join("");
+
+  // Descrição e tabela só entram quando têm conteúdo — "Sem descrição
+  // disponível" seguido de três traços deixava a página com cara de vazia.
+  const descricao = String(p.descricao || "").trim();
+  const linhas = linhasFicha(p);
+  const ficha = [
+    descricao
+      ? `<section class="produto-bloco"><h3>Descrição</h3><p>${escapeHtml(descricao)}</p></section>`
+      : "",
+    linhas
+      ? `<section class="produto-bloco"><h3>Detalhes</h3><div class="produto-detalhes-tabela">${linhas}</div></section>`
+      : ""
+  ].filter(Boolean).join("");
+
   conteudo.innerHTML = `
     <div class="produto-layout">
       <div>
@@ -118,61 +185,40 @@ async function carregarProduto() {
         </div>
       </div>
       <div class="produto-info">
+        ${etiqueta ? `<span class="produto-etiqueta">${escapeHtml(etiqueta)}</span>` : ""}
         <h1>${escapeHtml(p.nome)}</h1>
-        ${p.sku ? `<p class="produto-sku">SKU: ${escapeHtml(p.sku)}</p>` : ""}
 
         ${temVarejo ? `
           <div class="produto-preco">
-            ${formatarPreco(preco.precoFinal)}
+            <span class="produto-preco-valor">${formatarPreco(preco.precoFinal)}</span>
             ${preco.temDesconto ? `
               <span class="preco-antigo">${formatarPreco(preco.precoOriginal)}</span>
               <span class="desconto-badge">-${preco.percentual}%</span>
             ` : ""}
           </div>
         ` : ""}
-        ${disponivelNoModo(p, "atacado") ? `
-          <p class="produto-preco-atacado">
-            ${temVarejo ? "No atacado" : "Produto exclusivo do atacado"}:
-            ${formatarPreco(infoPreco(p, "atacado").precoFinal)}/un. para revendedores.
-            <a href="atacado.html">Ver modo atacado</a>
-          </p>
-        ` : ""}
-        ${somenteRetirada ? `
-          <p class="produto-preco-atacado">
-            🏬 Este produto não tem entrega — disponível apenas para retirada na loja
-            (Monumental Shopping, 2º piso).
-          </p>
-        ` : ""}
 
         ${temVarejo ? `
           <p class="produto-estoque ${disponivel ? "disponivel" : "indisponivel"}">
-            ${disponivel ? `Em estoque (${estoque} unidades)` : "Produto fora de estoque"}
+            <span class="produto-estoque-ponto" aria-hidden="true"></span>
+            ${disponivel ? `Em estoque · ${estoque} ${estoque === 1 ? "unidade" : "unidades"}` : "Fora de estoque"}
           </p>
         ` : ""}
 
         ${disponivel ? `
-          <div class="produto-qtd-wrap">
+          <div class="produto-compra">
             <div class="produto-qtd-controle">
-              <button type="button" id="qtd-menos">−</button>
-              <input type="number" id="qtd-input" value="1" min="1" max="${estoque}">
-              <button type="button" id="qtd-mais">+</button>
+              <button type="button" id="qtd-menos" aria-label="Diminuir quantidade">−</button>
+              <input type="number" id="qtd-input" value="1" min="1" max="${estoque}" aria-label="Quantidade">
+              <button type="button" id="qtd-mais" aria-label="Aumentar quantidade">+</button>
             </div>
-          </div>
-          <div class="produto-acoes">
             <button class="btn-primary" id="btn-add-carrinho">Adicionar ao carrinho</button>
           </div>
         ` : ""}
 
-        <div class="produto-descricao">
-          <h3>Descrição</h3>
-          <p>${escapeHtml(p.descricao || "Sem descrição disponível.")}</p>
-        </div>
+        ${avisos}
 
-        <div class="produto-detalhes-tabela">
-          ${linhasCamadas(p)}
-          <div><span>Peso</span><span>${formatarPeso(p.peso)}</span></div>
-          <div><span>Código de barras</span><span>${escapeHtml(p.codigoBarras || "—")}</span></div>
-        </div>
+        ${ficha ? `<div class="produto-ficha">${ficha}</div>` : ""}
       </div>
     </div>
   `;
