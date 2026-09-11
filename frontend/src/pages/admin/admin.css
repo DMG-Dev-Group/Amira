@@ -1,5 +1,38 @@
 /* ── PAINEL ADMINISTRATIVO — Amira ──────────────────────────────────────── */
 
+/* ── Tela de verificação de acesso ────────────────────────────────────────
+   O <body> das páginas do painel nasce com data-admin-verificando e só
+   perde o atributo quando admin-auth.js confirma que a pessoa é admin.
+
+   POR QUE EM CSS E NÃO EM JS: este arquivo é um <link> no <head>, ou seja,
+   bloqueia a primeira pintura. Esconder pelo JS só funcionaria depois de o
+   navegador já ter desenhado o painel — que é exatamente o "pisca" de
+   alguns milésimos ao abrir /admin em guia anônima.
+
+   Isso é COSMÉTICO, não é o controle de acesso: o HTML do painel é
+   estático e continua sendo servido para qualquer um. Quem protege os
+   dados são as firestore.rules (e, no /api, a checagem do ID token).
+   O ganho aqui é a página não parecer que abriu para quem não entrou. */
+body[data-admin-verificando] .admin-layout {
+  visibility: hidden;
+}
+
+body[data-admin-verificando]::before {
+  content: 'Verificando acesso…';
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  color: var(--text-muted);
+  font-family: 'Jost', sans-serif;
+  font-size: 0.85rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
 * {
   box-sizing: border-box;
 }
