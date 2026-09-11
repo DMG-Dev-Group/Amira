@@ -82,6 +82,13 @@ module.exports = async (req, res) => {
         emailVerified: true
       });
     } catch (erro) {
+      // Erro que JÁ se explica (o getAuthAdmin diagnostica o ESM/Node)
+      // sobe intacto. Sem isto a sonda abaixo rodava, falhava pelo MESMO
+      // motivo — o módulo não carregou — e concluía "a service account
+      // não tem permissão", mandando quem lê procurar papel de IAM e API
+      // desativada. Diagnóstico errado custa mais que nenhum.
+      if (erro && erro.publico) throw erro;
+
       const codigo = erro && erro.code;
       const conhecidos = {
         "auth/email-already-exists": [409, "Já existe uma conta com esse e-mail."],
@@ -108,15 +115,26 @@ module.exports = async (req, res) => {
       //     (papel de IAM faltando, ou a API Identity Toolkit desligada)
       //   • a sonda passa → o problema é este cadastro específico
       // Uma chamada a mais, só no caminho do erro.
+      //
+      // ⚠️ A sonda só pode acusar IAM quando ela CHEGOU a falar com o
+      // Google. Erro de carregamento de módulo (ERR_REQUIRE_*, MODULE_NOT_
+      // FOUND) acontece antes de qualquer rede: culpar permissão nesse
+      // caso manda a pessoa procurar no lugar errado.
+      const ehFalhaDeModulo = (e) =>
+        typeof e?.code === "string" && (e.code.startsWith("ERR_REQUIRE") || e.code === "MODULE_NOT_FOUND");
+
       let sonda;
       try {
         await getAuthAdmin().listUsers(1);
         sonda = "o Auth Admin responde — o problema é este cadastro";
       } catch (erroSonda) {
-        sonda =
-          "a service account NÃO consegue usar o Firebase Auth " +
-          `(${erroSonda.code || erroSonda.message}). No Google Cloud > IAM, ` +
-          "confira o papel dela; e em APIs e serviços, se a Identity Toolkit API está ativada";
+        sonda = ehFalhaDeModulo(erroSonda) || ehFalhaDeModulo(erro)
+          ? "o SDK do Firebase Auth nem carregou nesta função — é a versão do " +
+            "Node na Vercel (Settings > General > Node.js Version > 22.x), " +
+            "NÃO é permissão nem API desativada"
+          : "a service account NÃO consegue usar o Firebase Auth " +
+            `(${erroSonda.code || erroSonda.message}). No Google Cloud > IAM, ` +
+            "confira o papel dela; e em APIs e serviços, se a Identity Toolkit API está ativada";
       }
       erro._etapa = "createUser";
       // O código do Firebase é identificador ("auth/alguma-coisa"), não
