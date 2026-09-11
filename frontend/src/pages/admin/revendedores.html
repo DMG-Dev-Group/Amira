@@ -25,6 +25,77 @@
         </div>
       </div>
 
+      <!-- ── Cadastrar conta pelo painel ──────────────────────────── -->
+      <div class="admin-bloco">
+        <h2>Cadastrar usuário</h2>
+        <p style="font-size:0.8rem; color:var(--text-muted,#999); margin-bottom:1rem;">
+          Cria a conta já confirmada, com a senha que você definir. Use para
+          quem fechou com a loja pessoalmente. Avise a pessoa para trocar a
+          senha depois, em Minha Conta.
+        </p>
+
+        <div class="admin-form-grid">
+          <div class="admin-campo">
+            <label for="u-nome">Nome *</label>
+            <input type="text" id="u-nome" placeholder="Nome completo">
+          </div>
+          <div class="admin-campo">
+            <label for="u-email">E-mail *</label>
+            <input type="email" id="u-email" placeholder="pessoa@email.com" autocomplete="off">
+          </div>
+          <div class="admin-campo">
+            <label for="u-senha">Senha * (mín. 6)</label>
+            <input type="text" id="u-senha" placeholder="senha inicial" autocomplete="off">
+          </div>
+          <div class="admin-campo">
+            <label for="u-telefone">Celular / WhatsApp</label>
+            <input type="tel" id="u-telefone" placeholder="(98) 9xxxx-xxxx" maxlength="16">
+          </div>
+        </div>
+
+        <div class="admin-campo">
+          <label class="admin-check">
+            <input type="checkbox" id="u-revendedor">
+            <span>Já cadastrar como revendedor aprovado (acesso ao atacado)</span>
+          </label>
+        </div>
+
+        <div id="campos-revendedor-novo" style="display:none;">
+          <div class="admin-form-grid">
+            <div class="admin-campo">
+              <label for="u-cnpj">CNPJ *</label>
+              <input type="text" id="u-cnpj" placeholder="00.000.000/0000-00" maxlength="18">
+            </div>
+            <div class="admin-campo">
+              <label for="u-razao-social">Razão social *</label>
+              <input type="text" id="u-razao-social" placeholder="Nome da empresa">
+            </div>
+          </div>
+        </div>
+
+        <div class="admin-modal-acoes" style="justify-content:flex-start;">
+          <button class="admin-btn admin-btn-primary" id="btn-criar-usuario">Criar conta</button>
+        </div>
+      </div>
+
+      <!-- ── Promover usuário existente ───────────────────────────── -->
+      <div class="admin-bloco">
+        <h2>Tornar revendedor</h2>
+        <p style="font-size:0.8rem; color:var(--text-muted,#999); margin-bottom:1rem;">
+          Para quem já tem conta na loja: busque pelo nome ou e-mail e
+          promova — o acesso ao atacado libera na hora.
+        </p>
+
+        <div class="admin-campo">
+          <label for="busca-usuario">Buscar conta</label>
+          <input type="search" id="busca-usuario" placeholder="nome ou e-mail" autocomplete="off">
+        </div>
+
+        <div id="resultado-busca-usuario">
+          <p class="admin-vazio">Digite para buscar.</p>
+        </div>
+      </div>
+
       <div class="admin-bloco">
         <h2>Pendentes de aprovação</h2>
         <div id="tabela-pendentes">
@@ -46,6 +117,28 @@
         </div>
       </div>
     </main>
+  </div>
+
+  <!-- Modal: dados da empresa ao promover uma conta existente -->
+  <div class="admin-modal-overlay" id="modal-promover" style="display:none;">
+    <div class="admin-modal">
+      <h2>Tornar revendedor</h2>
+      <p id="promover-quem" style="font-size:0.85rem; color:var(--text-muted,#999); margin-bottom:1rem;"></p>
+
+      <div class="admin-campo">
+        <label for="p-cnpj">CNPJ *</label>
+        <input type="text" id="p-cnpj" placeholder="00.000.000/0000-00" maxlength="18">
+      </div>
+      <div class="admin-campo">
+        <label for="p-razao-social">Razão social *</label>
+        <input type="text" id="p-razao-social" placeholder="Nome da empresa">
+      </div>
+
+      <div class="admin-modal-acoes">
+        <button type="button" class="admin-btn admin-btn-outline" id="btn-cancelar-promover">Cancelar</button>
+        <button type="button" class="admin-btn admin-btn-primary" id="btn-confirmar-promover">Tornar revendedor</button>
+      </div>
+    </div>
   </div>
 
   <script type="module" src="js/admin-sidebar.js"></script>

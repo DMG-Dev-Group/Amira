@@ -28,16 +28,13 @@
         </a>
       </div>
 
-      <!-- Aparece só quando faltam as opções na camada principal -->
-      <div class="admin-bloco" id="iphones-setup" hidden></div>
-
       <div class="admin-bloco">
         <div class="secao-iphone__cabecalho">
           <div>
             <h2>Aparelhos</h2>
             <p>Os iPhones em si — seminovos, lacrados, etc.</p>
           </div>
-          <button class="admin-btn admin-btn-primary admin-btn-sm" id="btn-novo-aparelho" disabled>
+          <button class="admin-btn admin-btn-primary admin-btn-sm" id="btn-novo-aparelho">
             + Adicionar aparelho
           </button>
         </div>
@@ -52,7 +49,7 @@
             <h2>Acessórios</h2>
             <p>Capas, cabos, películas e afins.</p>
           </div>
-          <button class="admin-btn admin-btn-primary admin-btn-sm" id="btn-novo-acessorio" disabled>
+          <button class="admin-btn admin-btn-primary admin-btn-sm" id="btn-novo-acessorio">
             + Adicionar acessório
           </button>
         </div>
@@ -61,6 +58,100 @@
         </div>
       </div>
     </main>
+  </div>
+
+
+  <!-- ── Modal: criar/editar item da seção de iPhones ──────────── -->
+  <div class="admin-modal-overlay" id="modal-iphone" style="display:none;">
+    <div class="admin-modal">
+      <h2 id="modal-iphone-titulo">Novo aparelho</h2>
+
+      <div class="admin-campo">
+        <label for="i-grupo">Prateleira</label>
+        <select id="i-grupo">
+          <option value="aparelhos">Aparelho (iPhone)</option>
+          <option value="acessorios">Acessório</option>
+        </select>
+      </div>
+
+      <div class="admin-campo">
+        <label for="i-nome">Nome *</label>
+        <input type="text" id="i-nome" placeholder="iPhone 13 128GB — Meia-noite">
+      </div>
+
+      <div class="admin-campo">
+        <label for="i-descricao">Descrição</label>
+        <textarea id="i-descricao" rows="3" placeholder="Estado, bateria, acompanha caixa..."></textarea>
+      </div>
+
+      <div class="admin-campo">
+        <label>Fotos</label>
+        <div id="lista-imagens-iphone"></div>
+        <button type="button" class="admin-btn admin-btn-outline admin-btn-sm" id="btn-add-imagem-iphone" style="margin-top:0.6rem;">
+          + Adicionar foto
+        </button>
+      </div>
+
+      <div class="iphone-form-grid">
+        <div class="admin-campo">
+          <label for="i-preco-varejo">Preço de varejo (R$)</label>
+          <input type="number" id="i-preco-varejo" min="0" step="0.01">
+        </div>
+        <div class="admin-campo">
+          <label for="i-preco-atacado">Preço de atacado (R$)</label>
+          <input type="number" id="i-preco-atacado" min="0" step="0.01" placeholder="deixe vazio se não vende no atacado">
+        </div>
+        <div class="admin-campo">
+          <label for="i-estoque">Estoque</label>
+          <input type="number" id="i-estoque" min="0" step="1" value="0">
+        </div>
+        <div class="admin-campo">
+          <label for="i-peso">Peso (g)</label>
+          <input type="number" id="i-peso" min="0" step="1" value="0">
+        </div>
+      </div>
+
+      <div class="admin-campo">
+        <label for="i-desconto-ativo">Desconto</label>
+        <select id="i-desconto-ativo">
+          <option value="false">Sem desconto</option>
+          <option value="true">Com desconto</option>
+        </select>
+      </div>
+      <div class="admin-campo" id="campo-desconto-iphone" style="display:none;">
+        <label for="i-desconto-percentual">Percentual de desconto (1 a 90)</label>
+        <input type="number" id="i-desconto-percentual" min="1" max="90" step="1">
+      </div>
+
+      <div class="iphone-form-grid">
+        <div class="admin-campo">
+          <label for="i-frete-disponivel">Entrega</label>
+          <select id="i-frete-disponivel">
+            <option value="true">Pode ser entregue</option>
+            <option value="false">Só retirada na loja</option>
+          </select>
+        </div>
+        <div class="admin-campo">
+          <label for="i-ativo">Situação</label>
+          <select id="i-ativo">
+            <option value="true">Ativo na loja</option>
+            <option value="false">Inativo</option>
+          </select>
+        </div>
+        <div class="admin-campo">
+          <label for="i-destaque">Destaque na home</label>
+          <select id="i-destaque">
+            <option value="false">Não</option>
+            <option value="true">Sim</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="admin-modal-acoes">
+        <button type="button" class="admin-btn admin-btn-outline" id="btn-cancelar-iphone">Cancelar</button>
+        <button type="button" class="admin-btn admin-btn-primary" id="btn-salvar-iphone">Salvar</button>
+      </div>
+    </div>
   </div>
 
   <script type="module" src="js/admin-sidebar.js"></script>

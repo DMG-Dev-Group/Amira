@@ -27,7 +27,7 @@
           <input type="text" id="busca-produtos-admin" placeholder="Buscar por nome ou SKU..."
             style="background:var(--surface,#201115); color:inherit; border:1px solid var(--border,rgba(210, 86, 108,0.2)); border-radius:5px; padding:0.5rem 0.8rem; font-family:'Jost',sans-serif; font-size:0.82rem; min-width:220px;">
           <select id="select-ordenar-admin" style="background:var(--surface,#201115); color:inherit; border:1px solid var(--border,rgba(210, 86, 108,0.2)); border-radius:5px; padding:0.5rem 0.7rem; font-family:'Jost',sans-serif; font-size:0.82rem;">
-            <option value="recentes">Mais recentes</option>
+            <option value="recentes">Ordem da vitrine (arraste)</option>
             <option value="categoria-az">Categoria (A-Z)</option>
             <option value="preco-maior">Preço (maior)</option>
             <option value="preco-menor">Preço (menor)</option>
@@ -39,6 +39,7 @@
       </div>
 
       <div class="admin-bloco">
+        <p class="admin-aviso-secao" id="aviso-iphones" hidden></p>
         <div id="tabela-produtos">
           <p class="admin-vazio">Carregando produtos...</p>
         </div>

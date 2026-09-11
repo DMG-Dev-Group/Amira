@@ -9,8 +9,10 @@
 
 const { initializeApp, getApps, cert } = require("firebase-admin/app");
 const { getFirestore } = require("firebase-admin/firestore");
+const { getAuth } = require("firebase-admin/auth");
 
 let _db = null;
+let _auth = null;
 
 function credenciais() {
   let bruto = process.env.FIREBASE_SERVICE_ACCOUNT;
@@ -61,6 +63,43 @@ function getDb() {
   return _db;
 }
 
+/** Retorna o Auth (Admin). Usado para criar usuário e validar ID token. */
+function getAuthAdmin() {
+  if (_auth) return _auth;
+  const app = getApps()[0] || initializeApp({ credential: cert(credenciais()) });
+  _auth = getAuth(app);
+  return _auth;
+}
+
+/**
+ * Verifica o ID token de quem chamou e exige que seja ADMIN.
+ * O papel não vem do token: é lido de usuarios/{uid}.role, a mesma fonte
+ * que as firestore.rules usam. Lança em qualquer falha.
+ * @returns {Promise<{uid: string, email: string}>}
+ */
+async function exigirAdmin(idToken) {
+  if (!idToken) {
+    const e = new Error("Sem credencial de administrador.");
+    e.status = 401;
+    throw e;
+  }
+  let decodificado;
+  try {
+    decodificado = await getAuthAdmin().verifyIdToken(String(idToken));
+  } catch {
+    const e = new Error("Credencial inválida ou expirada. Entre de novo no painel.");
+    e.status = 401;
+    throw e;
+  }
+  const snap = await getDb().collection("usuarios").doc(decodificado.uid).get();
+  if (!snap.exists || snap.data().role !== "admin") {
+    const e = new Error("Só administradores podem fazer isso.");
+    e.status = 403;
+    throw e;
+  }
+  return { uid: decodificado.uid, email: decodificado.email || "" };
+}
+
 /** Diagnóstico sem lançar — usado por /api/status. Mesma lógica de credenciais(). */
 function diagnosticoServiceAccount() {
   try {
@@ -71,4 +110,4 @@ function diagnosticoServiceAccount() {
   }
 }
 
-module.exports = { getDb, diagnosticoServiceAccount };
+module.exports = { getDb, getAuthAdmin, exigirAdmin, diagnosticoServiceAccount };

@@ -694,12 +694,15 @@
    espaço. Fica aqui (e não no style.css) porque esta folha carrega por
    último — é a que realmente vence na cascata. */
 @media (max-width: 900px) {
+  /* A busca é o único item elástico da navbar mobile — ela cede o espaço
+     que Atacado, iPhones e carrinho precisam. flex-basis 0 + min-width 0
+     faz ela encolher de verdade em vez de empurrar os outros para fora. */
   .nav-busca-form {
-    flex: 1 1 auto;
-    min-width: 0;
-    max-width: 46vw;
+    flex: 1 1 0;
+    min-width: 44px;
+    max-width: 30vw;
     margin: 0;
-    padding: 0.28rem 0.6rem;
+    padding: 0.26rem 0.5rem;
     overflow: hidden;
   }
 
@@ -714,7 +717,7 @@
   }
 
   .nav-busca-form input::placeholder {
-    font-size: 0.8rem;
+    font-size: 0.76rem;
   }
 
   .nav-busca-form button {

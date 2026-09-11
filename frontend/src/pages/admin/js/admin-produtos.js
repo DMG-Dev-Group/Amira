@@ -2,13 +2,16 @@ import { protegerPaginaAdmin } from "./admin-auth.js";
 import { confirmar, toast } from "../../services/ui-feedback.js";
 import {
   criarProduto,
+  reordenarProdutos,
   atualizarProduto,
   excluirProduto,
   estoquePorModo,
   filtrosDoProduto
 } from "../../services/produtos.js";
 import { listarCamadas, camadaPrincipal } from "../../services/camadas.js";
+import { filtrarProdutosIphone } from "../../services/iphones.js";
 import { comprimirImagem, montarUploadFoto } from "../../services/imagem-upload.js";
+import { montarGaleriaProduto } from "./fotos-produto.js";
 import { escapeHtml, urlImagemSegura } from "../../services/seguranca.js";
 import { db } from "../../services/firebase-config.js";
 import {
@@ -38,6 +41,7 @@ const camposBannerHero = document.getElementById("campos-banner-hero");
 const selectDescontoAtivo = document.getElementById("p-desconto-ativo");
 const camposDesconto = document.getElementById("campos-desconto");
 const listaImagens = document.getElementById("lista-imagens-produto");
+const avisoIphones = document.getElementById("aviso-iphones");
 const btnAddImagem = document.getElementById("btn-add-imagem");
 
 // Imagem do banner "Produto da Estação" — upload de arquivo (imagem larga,
@@ -128,7 +132,7 @@ function ordenarLista(lista, criterio) {
     case "estoque-menor":
       return copia.sort((a, b) => estoquePorModo(a) - estoquePorModo(b));
     default:
-      return copia; // "recentes" = ordem original (mais recentes primeiro)
+      return copia; // "vitrine" = ordem manual (arrastavel) + criadoEm
   }
 }
 
@@ -160,6 +164,7 @@ function renderizarTabela() {
     <table class="admin-tabela">
       <thead>
         <tr>
+          <th style="width:28px;" title="Arraste para reordenar"></th>
           <th></th>
           <th>Nome</th>
           <th>${escapeHtml(camadaPrincipal(camadasCache)?.nome || "Filtro")}</th>
@@ -171,7 +176,8 @@ function renderizarTabela() {
       </thead>
       <tbody>
         ${lista.map((p) => `
-          <tr>
+          <tr draggable="true" data-id="${escapeHtml(p.id)}">
+            <td class="arrastar" aria-hidden="true">⠿</td>
             <td><img class="thumb" src="${urlImagemSegura(primeiraImagem(p), '../images/amira-placeholder.svg')}" alt=""></td>
             <td>${escapeHtml(p.nome)}
               ${p.bannerHero ? '<span class="badge badge-aprovado" title="No banner Produto da Estação">BANNER</span>' : ""}
@@ -201,6 +207,88 @@ function renderizarTabela() {
   document.querySelectorAll(".btn-excluir").forEach((btn) => {
     btn.addEventListener("click", () => confirmarExclusao(btn.dataset.id));
   });
+
+  ligarArrastar();
+}
+
+// ── Reordenar arrastando (define quem aparece primeiro na home) ───────
+// A vitrine "Nossos produtos" passa a respeitar o campo "ordem"
+// (services/produtos.js). Só faz sentido arrastar com a lista INTEIRA à
+// vista: com filtro ativo, a posição na tela não é a posição real.
+let linhaArrastada = null;
+
+function podeReordenar() {
+  // com busca ativa ou ordenacao que nao seja a manual, a posicao na tela
+  // nao corresponde a posicao real da vitrine
+  const ordenacao = selectOrdenar.value;
+  return !inputBusca.value.trim() && (ordenacao === "" || ordenacao === "recentes" || ordenacao === "manual");
+}
+
+function ligarArrastar() {
+  const corpo = tabela.querySelector("tbody");
+  if (!corpo) return;
+
+  const habilitado = podeReordenar();
+  corpo.classList.toggle("reordenavel", habilitado);
+
+  corpo.querySelectorAll("tr").forEach((tr) => {
+    tr.draggable = habilitado;
+    if (!habilitado) return;
+
+    tr.addEventListener("dragstart", (e) => {
+      linhaArrastada = tr;
+      tr.classList.add("arrastando");
+      e.dataTransfer.effectAllowed = "move";
+      // o Firefox só inicia o arraste se algo for escrito no dataTransfer
+      e.dataTransfer.setData("text/plain", tr.dataset.id);
+    });
+
+    tr.addEventListener("dragend", () => {
+      tr.classList.remove("arrastando");
+      corpo.querySelectorAll("tr").forEach((l) => l.classList.remove("alvo"));
+      linhaArrastada = null;
+    });
+
+    tr.addEventListener("dragover", (e) => {
+      if (!linhaArrastada || linhaArrastada === tr) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      tr.classList.add("alvo");
+    });
+
+    tr.addEventListener("dragleave", () => tr.classList.remove("alvo"));
+
+    tr.addEventListener("drop", async (e) => {
+      e.preventDefault();
+      tr.classList.remove("alvo");
+      if (!linhaArrastada || linhaArrastada === tr) return;
+
+      // move o DOM primeiro: a lista reage na hora, sem esperar a rede
+      const linhas = Array.from(corpo.querySelectorAll("tr"));
+      const de = linhas.indexOf(linhaArrastada);
+      const para = linhas.indexOf(tr);
+      corpo.insertBefore(linhaArrastada, de < para ? tr.nextSibling : tr);
+
+      await persistirOrdem(corpo);
+    });
+  });
+}
+
+async function persistirOrdem(corpo) {
+  const ids = Array.from(corpo.querySelectorAll("tr")).map((tr) => tr.dataset.id).filter(Boolean);
+  try {
+    await reordenarProdutos(ids);
+    // mantém o cache alinhado para não "pular" no próximo render
+    ids.forEach((id, i) => {
+      const p = produtosCache.find((x) => x.id === id);
+      if (p) p.ordem = i;
+    });
+    produtosCache.sort((a, b) => (a.ordem ?? Infinity) - (b.ordem ?? Infinity));
+    toast("Ordem salva. É essa a sequência da vitrine da home.", "sucesso");
+  } catch (erro) {
+    console.error(erro);
+    toast("Não foi possível salvar a ordem. Recarregue a página.", "erro");
+  }
 }
 
 // imagemURL continua sendo o campo principal (compatibilidade com o
@@ -210,7 +298,27 @@ function primeiraImagem(produto) {
 }
 
 async function carregarTabela() {
-  produtosCache = await buscarTodosProdutosAdmin();
+  const todos = await buscarTodosProdutosAdmin();
+
+  // iPhones e acessorios tem aba propria (Admin > iPhones): sao outra
+  // prateleira, com formulario proprio, e misturados aqui so poluiam a
+  // lista de perfumaria.
+  const daSecaoIphone = new Set(filtrarProdutosIphone(todos, camadasCache).map((p) => p.id));
+  produtosCache = todos
+    .filter((p) => !daSecaoIphone.has(p.id))
+    // mesma regra da vitrine (services/produtos.js): quem tem "ordem" vem
+    // primeiro, o resto segue por criadoEm. Assim o que voce arrasta aqui
+    // e exatamente o que a home mostra.
+    .sort((a, b) => (Number.isFinite(Number(a.ordem)) ? Number(a.ordem) : Infinity)
+                  - (Number.isFinite(Number(b.ordem)) ? Number(b.ordem) : Infinity));
+
+  if (daSecaoIphone.size > 0 && avisoIphones) {
+    avisoIphones.hidden = false;
+    avisoIphones.innerHTML =
+      `${daSecaoIphone.size} item(ns) da secao de iPhones nao aparecem aqui. ` +
+      `<a href="iphones.html">Gerenciar em iPhones</a>.`;
+  }
+
   renderizarTabela();
 }
 
@@ -220,94 +328,17 @@ async function carregarTabela() {
 // camada e a home. Aqui fica só a UI de múltiplas fotos por produto.
 const MAX_FOTOS = 5;
 
-// Cada "slot" guarda a foto atual (data URI ou URL antiga) em dataset.valor.
-function criarSlotImagem(valor = "", ehPrincipal = false) {
-  const slot = document.createElement("div");
-  slot.className = "img-slot";
-  slot.dataset.valor = valor || "";
-
-  slot.innerHTML = `
-    <div class="img-slot-preview">
-      <img alt="" src="${valor ? urlImagemSegura(valor, '../images/amira-placeholder.svg') : '../images/amira-placeholder.svg'}">
-    </div>
-    <div class="img-slot-acoes">
-      <span class="img-slot-tag">${ehPrincipal ? "Foto principal" : "Foto adicional"}</span>
-      <label class="admin-btn admin-btn-outline admin-btn-sm img-slot-escolher">
-        ${valor ? "Trocar foto" : "Escolher foto"}
-        <input type="file" accept="image/*" hidden>
-      </label>
-      ${!ehPrincipal ? `<button type="button" class="admin-btn admin-btn-danger admin-btn-sm btn-remover-imagem">Remover</button>` : ""}
-    </div>
-    <p class="img-slot-msg" style="display:none;"></p>
-  `;
-
-  const input = slot.querySelector('input[type="file"]');
-  const preview = slot.querySelector("img");
-  const escolher = slot.querySelector(".img-slot-escolher");
-  const msg = slot.querySelector(".img-slot-msg");
-
-  function setRotuloEscolher(texto) {
-    escolher.childNodes[0].nodeValue = `${texto} `;
-  }
-
-  input.addEventListener("change", async () => {
-    const arquivo = input.files && input.files[0];
-    if (!arquivo) return;
-    msg.style.display = "none";
-    escolher.classList.add("processando");
-    setRotuloEscolher("Processando...");
-    try {
-      const dataURI = await comprimirImagem(arquivo);
-      slot.dataset.valor = dataURI;
-      preview.src = dataURI;
-      setRotuloEscolher("Trocar foto");
-    } catch (erro) {
-      console.error(erro);
-      msg.textContent = erro.message || "Não foi possível processar essa imagem.";
-      msg.style.display = "block";
-      setRotuloEscolher(slot.dataset.valor ? "Trocar foto" : "Escolher foto");
-    } finally {
-      input.value = "";
-      escolher.classList.remove("processando");
-    }
-  });
-
-  slot.querySelector(".btn-remover-imagem")?.addEventListener("click", () => slot.remove());
-  return slot;
-}
-
-function slotsAtuais() {
-  return Array.from(listaImagens.querySelectorAll(".img-slot"));
-}
-
-function resetarListaImagens() {
-  listaImagens.innerHTML = "";
-  listaImagens.appendChild(criarSlotImagem("", true));
-}
-
-function preencherListaImagens(produto) {
-  listaImagens.innerHTML = "";
-  listaImagens.appendChild(criarSlotImagem(produto.imagemURL || "", true));
-  (produto.imagensExtras || []).forEach((url) => {
-    listaImagens.appendChild(criarSlotImagem(url, false));
-  });
-}
-
-function coletarImagens() {
-  const valores = slotsAtuais().map((s) => s.dataset.valor || "").filter(Boolean);
-  return {
-    imagemURL: valores[0] || "",
-    imagensExtras: valores.slice(1)
-  };
-}
-
-btnAddImagem.addEventListener("click", () => {
-  if (slotsAtuais().length >= MAX_FOTOS) {
-    toast(`Máximo de ${MAX_FOTOS} fotos por produto.`, "erro");
-    return;
-  }
-  listaImagens.appendChild(criarSlotImagem("", false));
+// A UI dos slots vive em ./fotos-produto.js — a aba de iPhones usa a mesma.
+const galeria = montarGaleriaProduto(listaImagens, {
+  max: MAX_FOTOS,
+  aoExcederMax: (max) => toast(`Máximo de ${max} fotos por produto.`, "erro")
 });
+
+const resetarListaImagens = () => galeria.limpar();
+const preencherListaImagens = (produto) => galeria.carregar(produto);
+const coletarImagens = () => galeria.coletar();
+
+btnAddImagem.addEventListener("click", () => galeria.adicionar());
 
 // ── Modal de criar/editar produto ────────────────────────────────────────
 function limparForm() {
