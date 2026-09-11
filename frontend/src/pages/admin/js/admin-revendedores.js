@@ -185,7 +185,12 @@ campo("btn-criar-usuario").addEventListener("click", async () => {
       })
     });
     const dados = await resp.json().catch(() => ({}));
-    if (!resp.ok) throw new Error(dados.erro || `HTTP ${resp.status}`);
+    if (!resp.ok) {
+      // O _diag diz em QUAL etapa quebrou (verificarAdmin / createUser /
+      // gravarPerfil) e o código do Firebase — sem ele um 500 é cego.
+      if (dados._diag) console.error("[/api/admin-usuario]", resp.status, dados._diag);
+      throw new Error(dados.erro || `HTTP ${resp.status}`);
+    }
 
     fim();
     toast(`Conta de ${dados.nome} criada.`, "sucesso");

@@ -29,7 +29,12 @@ module.exports = async (req, res) => {
 
   try {
     const corpo = req.body || {};
-    await exigirAdmin(corpo.idToken || (req.headers.authorization || "").replace(/^Bearer\s+/i, ""));
+    try {
+      await exigirAdmin(corpo.idToken || (req.headers.authorization || "").replace(/^Bearer\s+/i, ""));
+    } catch (erro) {
+      if (!erro.status) erro._etapa = "verificarAdmin";
+      throw erro;
+    }
 
     const email = limpar(corpo.email, 200).toLowerCase();
     const senha = String(corpo.senha || "");
@@ -62,12 +67,26 @@ module.exports = async (req, res) => {
         emailVerified: true
       });
     } catch (erro) {
-      if (erro && erro.code === "auth/email-already-exists") {
-        return res.status(409).json({ erro: "Já existe uma conta com esse e-mail." });
+      const codigo = erro && erro.code;
+      const conhecidos = {
+        "auth/email-already-exists": [409, "Já existe uma conta com esse e-mail."],
+        "auth/invalid-password": [400, "Senha recusada pelo Firebase (mínimo 6 caracteres)."],
+        "auth/invalid-email": [400, "E-mail recusado pelo Firebase."],
+        // Este é o mais provável quando tudo mais está certo: a service
+        // account tem acesso ao Firestore mas não ao Firebase Auth. Ver
+        // api/README.md — precisa do papel "Firebase Authentication Admin"
+        // em IAM no Google Cloud.
+        "auth/insufficient-permission": [
+          500,
+          "A service account não tem permissão para criar usuários. " +
+          "No Google Cloud > IAM, dê o papel 'Firebase Authentication Admin' a ela."
+        ]
+      };
+      if (conhecidos[codigo]) {
+        const [status, mensagem] = conhecidos[codigo];
+        return res.status(status).json({ erro: mensagem, _diag: { etapa: "createUser", codigo } });
       }
-      if (erro && erro.code === "auth/invalid-password") {
-        return res.status(400).json({ erro: "Senha recusada pelo Firebase (mínimo 6 caracteres)." });
-      }
+      erro._etapa = "createUser";
       throw erro;
     }
 
@@ -97,7 +116,16 @@ module.exports = async (req, res) => {
       perfil.statusRevendedor = "aprovado";
     }
 
-    await getDb().collection("usuarios").doc(usuario.uid).set(perfil);
+    try {
+      await getDb().collection("usuarios").doc(usuario.uid).set(perfil);
+    } catch (erro) {
+      // A conta no Auth já existe neste ponto; sem o doc do Firestore ela
+      // ficaria órfã (login funciona, perfil não). Desfaz para o admin
+      // poder tentar de novo com o mesmo e-mail.
+      try { await getAuthAdmin().deleteUser(usuario.uid); } catch { /* nada a fazer */ }
+      erro._etapa = "gravarPerfil";
+      throw erro;
+    }
 
     return res.status(201).json({
       uid: usuario.uid,
@@ -107,9 +135,17 @@ module.exports = async (req, res) => {
     });
   } catch (erro) {
     const status = erro && erro.status ? erro.status : 500;
-    if (status === 500) console.error("[/api/admin-usuario]", erro && erro.message);
+    if (status === 500) {
+      console.error("[/api/admin-usuario]", erro && erro.code, erro && erro.message);
+    }
     return res.status(status).json({
-      erro: status === 500 ? "Não foi possível criar a conta agora." : erro.message
+      erro: status === 500 ? "Não foi possível criar a conta agora." : erro.message,
+      // Diagnóstico junto da resposta: sem isto a causa só aparece no log
+      // da Vercel, e um 500 opaco vira adivinhação. Sai na limpeza
+      // pré-lançamento, junto com /api/status.
+      _diag: status === 500
+        ? { etapa: erro._etapa || "desconhecida", codigo: erro && erro.code, mensagem: erro && erro.message }
+        : undefined
     });
   }
 };
