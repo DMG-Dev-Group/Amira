@@ -20,7 +20,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="admin.css">
 </head>
-<body data-theme="dark">
+<!-- data-admin-verificando: o painel nasce ESCONDIDO e só aparece quando
+     admin-auth.js confirma o acesso. Sem isso o conteúdo pisca na tela
+     antes do redirecionamento — e se o JS não carregar, nada aparece. -->
+<body data-theme="dark" data-admin-verificando>
 
   <div class="admin-layout">
     <div id="admin-sidebar-slot"></div>

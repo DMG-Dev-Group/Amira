@@ -12,6 +12,10 @@ import { confirmar } from "../../services/ui-feedback.js";
  */
 export function protegerPaginaAdmin(callback) {
   return exigirAdmin(({ usuario, perfil }) => {
+    // Revela o painel — ele nasce escondido por CSS (ver admin.css). Quem
+    // não é admin nunca chega aqui: exigirAdmin redireciona antes.
+    document.body.removeAttribute("data-admin-verificando");
+
     callback({ usuario, perfil });
 
     // Liga o botão de logout da sidebar (montada por admin-sidebar.js,
