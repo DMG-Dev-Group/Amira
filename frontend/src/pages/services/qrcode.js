@@ -1,8 +1,8 @@
 // ── QR Code — Amira ────────────────────────────────────────────────────
-// Desenha o código do pedido como QR, em SVG, sem nenhuma dependência —
-// mesma escolha do código de barras (services/codigo-barras.js): o site
-// não tem build, e uma biblioteca de CDN viraria requisição externa e
-// entrada nova na CSP.
+// Desenha o código do pedido como QR, em SVG, sem nenhuma dependência: o
+// site não tem build, e uma biblioteca de CDN viraria requisição externa
+// e entrada nova na CSP. (Substituiu um Code 39 escrito aqui do mesmo
+// jeito — QR lê de qualquer ângulo e pela câmera do celular.)
 //
 // Escopo de propósito ENXUTO, para caber em código auditável:
 //   • modo BYTE, com o texto em UTF-8
