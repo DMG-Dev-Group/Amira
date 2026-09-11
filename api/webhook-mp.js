@@ -154,9 +154,13 @@ module.exports = async (req, res) => {
       statusMP: pagamento.status
     });
   } catch (erro) {
-    // 401/403 da reconciliação são resposta de verdade, não erro do MP.
-    if (erro && (erro.status === 401 || erro.status === 403)) {
-      return res.status(erro.status).json({ erro: erro.message });
+    // 401/403/500 da reconciliação são resposta de verdade, não erro do
+    // MP — o 500 só pode vir daqui (exigirAdmin), nunca do fluxo público
+    // de notificação, que não chama exigirAdmin. Sem isso, um erro de
+    // configuração (FIREBASE_SERVICE_ACCOUNT quebrada) virava um 200
+    // vazio e o admin não fazia ideia do que aconteceu.
+    if (erro && (erro.status === 401 || erro.status === 403 || erro.status === 500)) {
+      return res.status(erro.status).json({ erro: erro.publico || erro.message });
     }
     console.error("[/api/webhook-mp]", erro && erro.message, JSON.stringify(erro && erro.detalhe));
     // 200 mesmo em erro interno: evita o MP floodar de retry. O log
