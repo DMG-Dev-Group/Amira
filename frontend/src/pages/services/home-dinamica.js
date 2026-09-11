@@ -10,7 +10,7 @@ import { produtoEhIphone, opcoesSemIphone, listarProdutosIphone } from "./iphone
 import { observarAuth } from "./auth.js";
 import { adicionarAoCarrinho } from "./carrinho.js";
 import { ativarReveals } from "./script.js";
-import { escapeHtml, urlImagemSegura } from "./seguranca.js";
+import { escapeHtml, urlImagemSegura, urlFundoSegura } from "./seguranca.js";
 import { db } from "./firebase-config.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
@@ -113,7 +113,7 @@ async function iniciarCarrosselAnuncio() {
 
   container.innerHTML = `
     ${imagens.map((url, i) => `
-      <div class="hero-slide ${i === 0 ? "ativa" : ""}" style="background-image:url('${urlImagemSegura(url)}')"></div>
+      <div class="hero-slide ${i === 0 ? "ativa" : ""}" style="background-image:url('${urlFundoSegura(url)}')"></div>
     `).join("")}
     <div class="hero-slide-overlay"></div>
     <div class="hero-slide-conteudo">

@@ -4,13 +4,20 @@
 // Pagamento com CARTÃO via Checkout Pro (redirect). Para PIX na própria
 // página, ver /api/pix.
 //
-//  1. Lê pedidos/{pedidoId} e RECALCULA o total no servidor
+//  1. Confere o ID token e que o pedido é de quem está chamando.
+//  2. Lê pedidos/{pedidoId} e RECALCULA o total no servidor
 //     (_lib/total-pedido) — nunca confia no cliente.
-//  2. Calcula as parcelas sem juros (regra do carrinho).
-//  3. Cria a preferência do Mercado Pago e devolve a URL do checkout.
-//  4. O STATUS é atualizado pelo webhook (/api/webhook-mp).
+//  3. Calcula as parcelas sem juros (regra do carrinho).
+//  4. Cria a preferência do Mercado Pago e devolve a URL do checkout.
+//  5. O STATUS é atualizado pelo webhook (/api/webhook-mp).
+//
+// ⚠️ POR QUE O PASSO 1 EXISTE: esta função escreve com o Admin SDK, que
+// ignora as firestore.rules. Sem o token, saber um pedidoId bastava para
+// criar cobrança no pedido de outra pessoa, sobrescrever o provedorId de
+// um checkout em andamento e ler o total alheio na resposta.
 
-const { getDb } = require("./_lib/firebase-admin");
+const { getDb, tokenDaRequisicao, exigirUsuario } = require("./_lib/firebase-admin");
+const { limitar } = require("./_lib/limite");
 const { criarPreferencia } = require("./_lib/mercadopago");
 const { parcelasSemJuros } = require("./_lib/parcelamento");
 const { calcularTotalPedido } = require("./_lib/total-pedido");
@@ -26,9 +33,16 @@ module.exports = async (req, res) => {
     if (!pedidoId) return res.status(400).json({ erro: "pedidoId é obrigatório" });
 
     const db = getDb();
+    const { uid } = await exigirUsuario(tokenDaRequisicao(req));
+    await limitar(db, `pagamento:${uid}`, { max: 10, janelaSegundos: 300 });
+
     const pedidoRef = db.collection("pedidos").doc(String(pedidoId));
     const pedidoSnap = await pedidoRef.get();
-    if (!pedidoSnap.exists) return res.status(404).json({ erro: "Pedido não encontrado" });
+    // 404 (e não 403) de propósito para quem não é dono: responder
+    // "existe, mas não é seu" confirmaria pedidoIds para quem chuta.
+    if (!pedidoSnap.exists || pedidoSnap.data().uidComprador !== uid) {
+      return res.status(404).json({ erro: "Pedido não encontrado" });
+    }
 
     const pedido = pedidoSnap.data();
     if (pedido.pagamento && pedido.pagamento.status === "aprovado") {
@@ -85,11 +99,11 @@ module.exports = async (req, res) => {
     });
   } catch (erro) {
     const status = erro && erro.status ? erro.status : 500;
+    // O detalhe do erro fica SÓ no log da Vercel: a resposta do Mercado
+    // Pago costuma citar id de conta e configuração da integração.
     console.error("[/api/pagamento]", erro && erro.message, JSON.stringify(erro && erro.detalhe));
     return res.status(status).json({
-      erro: status === 500 ? "Não foi possível iniciar o pagamento agora." : erro.message,
-      // Diagnóstico — remover/proteger antes de abrir a loja ao público.
-      _diag: { message: erro && erro.message, mp: (erro && erro.detalhe) || null }
+      erro: status === 500 ? "Não foi possível iniciar o pagamento agora." : erro.message
     });
   }
 };

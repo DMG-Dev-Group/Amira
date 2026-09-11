@@ -24,7 +24,7 @@ export function escapeHtml(valor) {
  * próprio site (ex: "images/amira-placeholder.svg"). Qualquer outra coisa — http://,
  * javascript:, data:, etc. — cai no fallback.
  */
-export function urlImagemSegura(url, fallback = "images/amira-placeholder.svg") {
+function validarUrlImagem(url, fallback) {
   const texto = String(url ?? "").trim();
   if (!texto) return fallback;
 
@@ -38,16 +38,46 @@ export function urlImagemSegura(url, fallback = "images/amira-placeholder.svg") 
 
   // Caminho relativo do próprio site (sem esquema e sem "//host")
   if (!texto.includes(":") && !texto.startsWith("//")) {
-    return escapeHtml(texto);
+    return texto;
   }
 
   try {
     const analisada = new URL(texto);
     if (analisada.protocol === "https:") {
-      return escapeHtml(texto);
+      return texto;
     }
   } catch {
     // URL malformada → fallback
   }
   return fallback;
+}
+
+/**
+ * URL de imagem pronta para um atributo src="".
+ */
+export function urlImagemSegura(url, fallback = "images/amira-placeholder.svg") {
+  return escapeHtml(validarUrlImagem(url, fallback));
+}
+
+/**
+ * URL de imagem pronta para DENTRO DE CSS — style="background-image:url('…')".
+ *
+ * POR QUE NÃO DÁ PARA USAR urlImagemSegura() AQUI: o navegador decodifica
+ * as entidades HTML do atributo ANTES de o CSS ser lido. Um &#39; vira uma
+ * aspa simples de verdade na hora que o parser de CSS olha, fechando o
+ * url('…') e deixando injetar outras declarações — CSS injection, que
+ * serve para vazar dados por seletor+background e para desfigurar a
+ * página. escapeHtml() protege o atributo, não o CSS dentro dele.
+ *
+ * A saída aqui percent-encoda o que quebra o url(...) — aspas, parênteses,
+ * barra invertida e espaço em branco. É codificação de URL legítima: uma
+ * imagem de verdade continua carregando.
+ */
+export function urlFundoSegura(url, fallback = "images/amira-placeholder.svg") {
+  const crua = validarUrlImagem(url, fallback);
+  const paraCss = crua.replace(
+    /['"()\\\s]/g,
+    (c) => "%" + c.charCodeAt(0).toString(16).padStart(2, "0")
+  );
+  return escapeHtml(paraCss);
 }

@@ -15,7 +15,7 @@
 // loja, presencialmente ou por combinação direta, então não faz sentido
 // exigir o link de confirmação que o fluxo público exige.
 
-const { getDb, getAuthAdmin, exigirAdmin } = require("./_lib/firebase-admin");
+const { getDb, getAuthAdmin, tokenDaRequisicao, exigirAdmin } = require("./_lib/firebase-admin");
 const { FieldValue } = require("firebase-admin/firestore");
 
 const VERSAO_POLITICA_PRIVACIDADE = "2026-09-03";
@@ -27,10 +27,16 @@ function limpar(valor, max) {
 module.exports = async (req, res) => {
   if (req.method !== "POST") return res.status(405).json({ erro: "Método não permitido" });
 
+  // O _diag abaixo só sai depois que o chamador provou ser admin — antes
+  // disso um 500 na própria verificação vazaria detalhe interno para
+  // qualquer um que alcançasse a URL.
+  let adminConfirmado = false;
+
   try {
     const corpo = req.body || {};
     try {
-      await exigirAdmin(corpo.idToken || (req.headers.authorization || "").replace(/^Bearer\s+/i, ""));
+      await exigirAdmin(tokenDaRequisicao(req));
+      adminConfirmado = true;
     } catch (erro) {
       if (!erro.status) erro._etapa = "verificarAdmin";
       throw erro;
@@ -141,9 +147,9 @@ module.exports = async (req, res) => {
     return res.status(status).json({
       erro: status === 500 ? "Não foi possível criar a conta agora." : erro.message,
       // Diagnóstico junto da resposta: sem isto a causa só aparece no log
-      // da Vercel, e um 500 opaco vira adivinhação. Sai na limpeza
-      // pré-lançamento, junto com /api/status.
-      _diag: status === 500
+      // da Vercel, e um 500 opaco vira adivinhação. Só para admin
+      // confirmado, e some na limpeza pré-lançamento.
+      _diag: status === 500 && adminConfirmado
         ? { etapa: erro._etapa || "desconhecida", codigo: erro && erro.code, mensagem: erro && erro.message }
         : undefined
     });
