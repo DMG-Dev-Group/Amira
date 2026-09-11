@@ -1047,3 +1047,26 @@ body {
 .secao-iphone__cabecalho .admin-btn {
   flex-shrink: 0;
 }
+
+/* Aviso de que uma parte do catalogo vive em outra aba (iPhones) */
+.admin-aviso-secao {
+  margin: 0 0 1rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--gold);
+  border-radius: 8px;
+  background: var(--bg);
+  font-size: 0.8rem;
+  color: var(--text-muted, #999);
+}
+.admin-aviso-secao a { color: var(--gold); }
+
+/* Grade de campos curtos no formulario de iPhones */
+.iphone-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0 0.9rem;
+}
+@media (max-width: 560px) {
+  .iphone-form-grid { grid-template-columns: 1fr; }
+}

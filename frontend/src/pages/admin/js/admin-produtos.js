@@ -8,7 +8,9 @@ import {
   filtrosDoProduto
 } from "../../services/produtos.js";
 import { listarCamadas, camadaPrincipal } from "../../services/camadas.js";
+import { filtrarProdutosIphone } from "../../services/iphones.js";
 import { comprimirImagem, montarUploadFoto } from "../../services/imagem-upload.js";
+import { montarGaleriaProduto } from "./fotos-produto.js";
 import { escapeHtml, urlImagemSegura } from "../../services/seguranca.js";
 import { db } from "../../services/firebase-config.js";
 import {
@@ -38,6 +40,7 @@ const camposBannerHero = document.getElementById("campos-banner-hero");
 const selectDescontoAtivo = document.getElementById("p-desconto-ativo");
 const camposDesconto = document.getElementById("campos-desconto");
 const listaImagens = document.getElementById("lista-imagens-produto");
+const avisoIphones = document.getElementById("aviso-iphones");
 const btnAddImagem = document.getElementById("btn-add-imagem");
 
 // Imagem do banner "Produto da Estação" — upload de arquivo (imagem larga,
@@ -210,7 +213,21 @@ function primeiraImagem(produto) {
 }
 
 async function carregarTabela() {
-  produtosCache = await buscarTodosProdutosAdmin();
+  const todos = await buscarTodosProdutosAdmin();
+
+  // iPhones e acessorios tem aba propria (Admin > iPhones): sao outra
+  // prateleira, com formulario proprio, e misturados aqui so poluiam a
+  // lista de perfumaria.
+  const daSecaoIphone = new Set(filtrarProdutosIphone(todos, camadasCache).map((p) => p.id));
+  produtosCache = todos.filter((p) => !daSecaoIphone.has(p.id));
+
+  if (daSecaoIphone.size > 0 && avisoIphones) {
+    avisoIphones.hidden = false;
+    avisoIphones.innerHTML =
+      `${daSecaoIphone.size} item(ns) da secao de iPhones nao aparecem aqui. ` +
+      `<a href="iphones.html">Gerenciar em iPhones</a>.`;
+  }
+
   renderizarTabela();
 }
 
@@ -220,94 +237,17 @@ async function carregarTabela() {
 // camada e a home. Aqui fica só a UI de múltiplas fotos por produto.
 const MAX_FOTOS = 5;
 
-// Cada "slot" guarda a foto atual (data URI ou URL antiga) em dataset.valor.
-function criarSlotImagem(valor = "", ehPrincipal = false) {
-  const slot = document.createElement("div");
-  slot.className = "img-slot";
-  slot.dataset.valor = valor || "";
-
-  slot.innerHTML = `
-    <div class="img-slot-preview">
-      <img alt="" src="${valor ? urlImagemSegura(valor, '../images/amira-placeholder.svg') : '../images/amira-placeholder.svg'}">
-    </div>
-    <div class="img-slot-acoes">
-      <span class="img-slot-tag">${ehPrincipal ? "Foto principal" : "Foto adicional"}</span>
-      <label class="admin-btn admin-btn-outline admin-btn-sm img-slot-escolher">
-        ${valor ? "Trocar foto" : "Escolher foto"}
-        <input type="file" accept="image/*" hidden>
-      </label>
-      ${!ehPrincipal ? `<button type="button" class="admin-btn admin-btn-danger admin-btn-sm btn-remover-imagem">Remover</button>` : ""}
-    </div>
-    <p class="img-slot-msg" style="display:none;"></p>
-  `;
-
-  const input = slot.querySelector('input[type="file"]');
-  const preview = slot.querySelector("img");
-  const escolher = slot.querySelector(".img-slot-escolher");
-  const msg = slot.querySelector(".img-slot-msg");
-
-  function setRotuloEscolher(texto) {
-    escolher.childNodes[0].nodeValue = `${texto} `;
-  }
-
-  input.addEventListener("change", async () => {
-    const arquivo = input.files && input.files[0];
-    if (!arquivo) return;
-    msg.style.display = "none";
-    escolher.classList.add("processando");
-    setRotuloEscolher("Processando...");
-    try {
-      const dataURI = await comprimirImagem(arquivo);
-      slot.dataset.valor = dataURI;
-      preview.src = dataURI;
-      setRotuloEscolher("Trocar foto");
-    } catch (erro) {
-      console.error(erro);
-      msg.textContent = erro.message || "Não foi possível processar essa imagem.";
-      msg.style.display = "block";
-      setRotuloEscolher(slot.dataset.valor ? "Trocar foto" : "Escolher foto");
-    } finally {
-      input.value = "";
-      escolher.classList.remove("processando");
-    }
-  });
-
-  slot.querySelector(".btn-remover-imagem")?.addEventListener("click", () => slot.remove());
-  return slot;
-}
-
-function slotsAtuais() {
-  return Array.from(listaImagens.querySelectorAll(".img-slot"));
-}
-
-function resetarListaImagens() {
-  listaImagens.innerHTML = "";
-  listaImagens.appendChild(criarSlotImagem("", true));
-}
-
-function preencherListaImagens(produto) {
-  listaImagens.innerHTML = "";
-  listaImagens.appendChild(criarSlotImagem(produto.imagemURL || "", true));
-  (produto.imagensExtras || []).forEach((url) => {
-    listaImagens.appendChild(criarSlotImagem(url, false));
-  });
-}
-
-function coletarImagens() {
-  const valores = slotsAtuais().map((s) => s.dataset.valor || "").filter(Boolean);
-  return {
-    imagemURL: valores[0] || "",
-    imagensExtras: valores.slice(1)
-  };
-}
-
-btnAddImagem.addEventListener("click", () => {
-  if (slotsAtuais().length >= MAX_FOTOS) {
-    toast(`Máximo de ${MAX_FOTOS} fotos por produto.`, "erro");
-    return;
-  }
-  listaImagens.appendChild(criarSlotImagem("", false));
+// A UI dos slots vive em ./fotos-produto.js — a aba de iPhones usa a mesma.
+const galeria = montarGaleriaProduto(listaImagens, {
+  max: MAX_FOTOS,
+  aoExcederMax: (max) => toast(`Máximo de ${max} fotos por produto.`, "erro")
 });
+
+const resetarListaImagens = () => galeria.limpar();
+const preencherListaImagens = (produto) => galeria.carregar(produto);
+const coletarImagens = () => galeria.coletar();
+
+btnAddImagem.addEventListener("click", () => galeria.adicionar());
 
 // ── Modal de criar/editar produto ────────────────────────────────────────
 function limparForm() {
