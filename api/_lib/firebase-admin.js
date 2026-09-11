@@ -85,13 +85,18 @@ function getAuthAdmin() {
   try {
     ({ getAuth } = require("firebase-admin/auth"));
   } catch (erro) {
-    const e = new Error(
-      "O Firebase Auth não carregou nesta função. Quase sempre é a versão do " +
-      "Node na Vercel: jose 6 é ESM e só pode ser carregado no Node 22 " +
-      `(veja engines.node no package.json). Detalhe: ${erro.code || erro.message}`
-    );
+    const texto =
+      "O Firebase Auth não carregou nesta função. É a versão do Node na " +
+      "Vercel: jose 6 é ESM e só carrega no Node 22. Ajuste em Vercel > " +
+      "Settings > General > Node.js Version (o engines.node do package.json " +
+      `não bastou). Detalhe: ${erro.code || erro.message}`;
+    const e = new Error(texto);
     e.status = 500;
     e.code = erro.code;
+    // "publico" é o que as funções mostram na tela. Sem ele, quem trata o
+    // erro lá na frente só vê status 500 e cai na mensagem genérica — foi
+    // o que escondeu esta causa no cadastro de revendedor.
+    e.publico = texto;
     throw e;
   }
   const app = getApps()[0] || initializeApp({ credential: cert(credenciais()) });
