@@ -6,10 +6,20 @@
 // Inicialização PREGUIÇOSA: se a env var faltar ou estiver malformada, o
 // erro estoura DENTRO do handler (vira um 500 com JSON), não no load do
 // módulo (que viraria FUNCTION_INVOCATION_FAILED, difícil de depurar).
+//
+// ⚠️ "firebase-admin/auth" é carregado SÓ quando alguém pede o Auth, e não
+// no topo do arquivo, pelo mesmo motivo. Ele arrasta jwks-rsa → jose, e
+// jose 6 é ESM puro: em Node abaixo de 20.19/22.12 o require() dele
+// derruba o PROCESSO (ERR_REQUIRE_ESM), antes de qualquer try/catch. O
+// resultado era a função morrer sem resposta — 500 sem JSON nenhum.
+//
+// A correção de verdade é o engines.node do package.json (Node 22, que
+// suporta require(ESM)). Este adiamento é a rede de proteção: se voltar a
+// acontecer, quebra dentro do handler, vira JSON com mensagem, e o
+// Firestore continua funcionando mesmo com o Auth quebrado.
 
 const { initializeApp, getApps, cert } = require("firebase-admin/app");
 const { getFirestore } = require("firebase-admin/firestore");
-const { getAuth } = require("firebase-admin/auth");
 
 let _db = null;
 let _auth = null;
@@ -66,6 +76,19 @@ function getDb() {
 /** Retorna o Auth (Admin). Usado para criar usuário e validar ID token. */
 function getAuthAdmin() {
   if (_auth) return _auth;
+  let getAuth;
+  try {
+    ({ getAuth } = require("firebase-admin/auth"));
+  } catch (erro) {
+    const e = new Error(
+      "O Firebase Auth não carregou nesta função. Quase sempre é a versão do " +
+      "Node na Vercel: jose 6 é ESM e só pode ser carregado no Node 22 " +
+      `(veja engines.node no package.json). Detalhe: ${erro.code || erro.message}`
+    );
+    e.status = 500;
+    e.code = erro.code;
+    throw e;
+  }
   const app = getApps()[0] || initializeApp({ credential: cert(credenciais()) });
   _auth = getAuth(app);
   return _auth;
@@ -91,8 +114,13 @@ async function exigirUsuario(idToken) {
     e.status = 401;
     throw e;
   }
+  // getAuthAdmin() FORA do try: falha dele é problema de infraestrutura
+  // (SDK que não carregou, credencial malformada) e não pode ser
+  // confundida com "token inválido" — dizer "sessão expirada" para quem
+  // acabou de entrar manda a pessoa tentar de novo para sempre.
+  const auth = getAuthAdmin();
   try {
-    const d = await getAuthAdmin().verifyIdToken(String(idToken));
+    const d = await auth.verifyIdToken(String(idToken));
     return { uid: d.uid, email: d.email || "" };
   } catch {
     const e = new Error("Sessão expirada. Entre de novo para continuar.");
@@ -113,9 +141,11 @@ async function exigirAdmin(idToken) {
     e.status = 401;
     throw e;
   }
+  // Mesma separação de exigirUsuario: erro de infra não vira 401.
+  const auth = getAuthAdmin();
   let decodificado;
   try {
-    decodificado = await getAuthAdmin().verifyIdToken(String(idToken));
+    decodificado = await auth.verifyIdToken(String(idToken));
   } catch {
     const e = new Error("Credencial inválida ou expirada. Entre de novo no painel.");
     e.status = 401;
