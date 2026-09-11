@@ -184,12 +184,23 @@ campo("btn-criar-usuario").addEventListener("click", async () => {
         razaoSocial
       })
     });
-    const dados = await resp.json().catch(() => ({}));
+    // Guardado como TEXTO primeiro: quando a função quebra antes de rodar
+    // (erro de import, env var faltando), a Vercel devolve uma página de
+    // erro em HTML — e aí .json() estoura e a causa some.
+    const cru = await resp.text();
+    let dados = {};
+    try { dados = JSON.parse(cru); } catch { /* não era JSON */ }
+
     if (!resp.ok) {
       // O _diag diz em QUAL etapa quebrou (verificarAdmin / createUser /
       // gravarPerfil) e o código do Firebase — sem ele um 500 é cego.
-      if (dados._diag) console.error("[/api/admin-usuario]", resp.status, dados._diag);
-      throw new Error(dados.erro || `HTTP ${resp.status}`);
+      console.error("[/api/admin-usuario]", resp.status, dados._diag || cru.slice(0, 400));
+      if (dados.erro) throw new Error(dados.erro);
+      // Sem JSON na resposta: a função nem chegou a rodar.
+      throw new Error(
+        `A função /api/admin-usuario não respondeu (HTTP ${resp.status}). ` +
+        "Isso é erro de deploy, não do cadastro — veja os Logs da função na Vercel."
+      );
     }
 
     fim();
@@ -203,7 +214,9 @@ campo("btn-criar-usuario").addEventListener("click", async () => {
   } catch (erro) {
     fim();
     console.error(erro);
-    toast(erro.message || "Não foi possível criar a conta agora.", "erro");
+    // Mais tempo que o padrão: a mensagem de falha aqui carrega o
+    // diagnóstico (etapa + código do Firebase) e precisa dar para ler.
+    toast(erro.message || "Não foi possível criar a conta agora.", "erro", { duracao: 20000 });
   } finally {
     btn.disabled = false;
     btn.textContent = "Criar conta";
