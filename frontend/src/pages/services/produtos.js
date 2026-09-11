@@ -168,9 +168,9 @@ export async function listarProdutosPaginado({ tamanhoPagina = 24, aposDoc = nul
   };
 }
 
-// Quantos produtos buscar antes de aplicar a ordem manual. A vitrine
-// mostra poucos, mas um produto antigo pode ter sido arrastado para o topo
-// — sem esta folga ele nem entraria na consulta.
+// Quantos produtos buscar antes de aplicar a ordem manual e os cortes de
+// vitrine. A vitrine mostra poucos, mas um produto antigo pode ter sido
+// arrastado para o topo — sem esta folga ele nem entraria na consulta.
 const POOL_VITRINE = 60;
 
 /**
@@ -181,11 +181,19 @@ const POOL_VITRINE = 60;
  * o critério antigo — mais recentes primeiro. A ordenação é feita em
  * memória de propósito: ordenar por "ordem" no Firestore exigiria um
  * índice composto novo para um punhado de documentos.
+ *
+ * @param {number} max
+ * @param {{excluir?: (produto: object) => boolean}} opcoes
+ *   `excluir` tira produtos ANTES do corte em `max` — é assim que a linha
+ *   de iPhones fica fora da vitrine sem deixar buracos (filtrar depois do
+ *   slice devolveria menos produtos do que o pedido). Quem passa o
+ *   predicado é services/home-dinamica.js.
  */
-export async function listarProdutosRecentes(max = 8) {
+export async function listarProdutosRecentes(max = 8, { excluir = null } = {}) {
   const { produtos } = await listarProdutosPaginado({ tamanhoPagina: POOL_VITRINE });
+  const base = excluir ? produtos.filter((p) => !excluir(p)) : produtos;
 
-  const ordenados = produtos.slice().sort((a, b) => {
+  const ordenados = base.slice().sort((a, b) => {
     const oa = Number.isFinite(Number(a.ordem)) ? Number(a.ordem) : Infinity;
     const ob = Number.isFinite(Number(b.ordem)) ? Number(b.ordem) : Infinity;
     return oa - ob; // empate mantém a ordem da consulta (criadoEm desc)
@@ -209,17 +217,23 @@ export async function reordenarProdutos(idsNaOrdem) {
 
 /**
  * Lista produtos marcados como destaque (para a home).
+ *
+ * O `limit` da consulta é o POOL, não o `max`: como `excluir` pode tirar
+ * produtos depois (a linha de iPhones tem o próprio destaque, na seção
+ * dela), cortar já no Firestore devolveria menos destaques do que o
+ * pedido. A lista de destaques é curada pelo admin — o pool sobra.
  */
-export async function listarDestaques(max = 8) {
+export async function listarDestaques(max = 8, { excluir = null } = {}) {
   const colecaoRef = collection(db, COLECAO);
   const q = query(
     colecaoRef,
     where("ativo", "==", true),
     where("destaque", "==", true),
-    limitarQtd(max)
+    limitarQtd(POOL_VITRINE)
   );
   const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  const produtos = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  return (excluir ? produtos.filter((p) => !excluir(p)) : produtos).slice(0, max);
 }
 
 /**

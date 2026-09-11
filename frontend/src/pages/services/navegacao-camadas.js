@@ -14,6 +14,7 @@
 // o próprio catálogo, a página de iPhones). Agora é um arquivo só.
 
 import { listarCamadas, camadaPrincipal } from "./camadas.js";
+import { opcoesSemIphone } from "./iphones.js";
 import { escapeHtml } from "./seguranca.js";
 
 const ALVOS_DROPDOWN = ["dropdown-categorias-home", "dropdown-categorias-lista"];
@@ -60,9 +61,16 @@ async function montar() {
 
   try {
     const principal = camadaPrincipal(await listarCamadas());
-    if (!principal || principal.opcoes.length === 0) return;
-    preencherDropdowns(principal);
-    preencherMobile(principal);
+    if (!principal) return;
+
+    // A seção de iPhones fica FORA destes menus: ela é a outra linha da
+    // loja, tem link próprio na navbar e página própria — e o catálogo
+    // não mostra esses produtos, então o link levaria a uma grade vazia.
+    const camada = { ...principal, opcoes: opcoesSemIphone(principal.opcoes) };
+    if (camada.opcoes.length === 0) return;
+
+    preencherDropdowns(camada);
+    preencherMobile(camada);
   } catch (erro) {
     console.error("Não foi possível montar o menu de camadas:", erro);
   }
