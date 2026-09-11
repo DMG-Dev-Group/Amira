@@ -42,7 +42,9 @@ module.exports = async (req, res) => {
       // ao verificar. Precisa se identificar: é a única etapa que roda
       // ANTES de sabermos que quem chama é admin, então é a única que não
       // pode carregar _diag.
-      if (!erro.status) {
+      // Só inventa mensagem se o erro ainda não trouxe uma pronta: quem
+      // lança lá embaixo costuma saber explicar melhor do que aqui.
+      if (!erro.publico) {
         erro._etapa = "verificarAdmin";
         erro.publico = `Falha ao verificar o administrador (código: ${erro.code || "sem código"}).`;
       }
