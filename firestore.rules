@@ -111,8 +111,29 @@ service cloud.firestore {
     // ── usuarios/{uid}/dados/{docId} ──────────────────────────────────────
     // Subcoleção com dados extras do perfil (ex: endereço salvo). Mesma
     // regra de dono do documento pai: só o próprio usuário ou admin acessam.
+    // ALLOWLIST: sem ela, "write: if ehDono(uid)" deixava qualquer pessoa
+    // logada encher a própria subcoleção com documentos de 1 MB — não é
+    // roubo de dado, é abuso de cota (a conta é da loja). Campo novo aqui
+    // exige atualizar esta lista.
+    function chavesEnderecoPermitidas() {
+      return ['cep', 'endereco', 'bairro', 'cidadeUf', 'complemento', 'atualizadoEm'];
+    }
     match /usuarios/{uid}/dados/{docId} {
-      allow read, write: if ehDono(uid) || ehAdmin();
+      allow read: if ehDono(uid) || ehAdmin();
+      allow write: if ehAdmin() ||
+        (ehDono(uid) &&
+          request.resource.data.keys().hasOnly(chavesEnderecoPermitidas()) &&
+          (!('cep' in request.resource.data) ||
+            (request.resource.data.cep is string && request.resource.data.cep.size() <= 12)) &&
+          (!('endereco' in request.resource.data) ||
+            (request.resource.data.endereco is string && request.resource.data.endereco.size() <= 300)) &&
+          (!('bairro' in request.resource.data) ||
+            (request.resource.data.bairro is string && request.resource.data.bairro.size() <= 120)) &&
+          (!('cidadeUf' in request.resource.data) ||
+            (request.resource.data.cidadeUf is string && request.resource.data.cidadeUf.size() <= 120)) &&
+          (!('complemento' in request.resource.data) ||
+            (request.resource.data.complemento is string && request.resource.data.complemento.size() <= 200)));
+      allow delete: if ehDono(uid) || ehAdmin();
     }
 
     // ── produtos/{produtoId} ─────────────────────────────────────────────
@@ -166,8 +187,18 @@ service cloud.firestore {
     // do carrinho NÃO é fonte de verdade de preço — no checkout, o total é
     // recalculado no cliente a partir da coleção "produtos" (que só o
     // admin escreve) e o pedido gravado não carrega valor monetário.
+    // Mesma preocupação de cota da subcoleção "dados": o documento só
+    // pode ter a chave "itens", e "itens" é uma lista curta. O SHAPE de
+    // cada item não é validável em rules (sem loops) — mesma limitação
+    // conhecida de pedidos.itens —, mas o carrinho não é fonte de verdade
+    // de preço: o checkout recalcula tudo a partir de "produtos".
     match /carrinhos/{uid} {
-      allow read, write: if ehDono(uid);
+      allow read: if ehDono(uid);
+      allow write: if ehDono(uid) &&
+        request.resource.data.keys().hasOnly(['itens']) &&
+        request.resource.data.itens is list &&
+        request.resource.data.itens.size() <= 50;
+      allow delete: if ehDono(uid);
     }
 
     // ── pedidos/{pedidoId} ───────────────────────────────────────────────
@@ -264,6 +295,10 @@ service cloud.firestore {
     }
 
     // ── Bloqueio padrão ──────────────────────────────────────────────────
+    // Cobre também "limites", o contador de requisições das funções
+    // serverless (api/_lib/limite.js): o Admin SDK ignora estas regras, e
+    // do cliente a coleção precisa ficar fechada — senão dava para zerar
+    // o próprio contador.
     // Qualquer coleção não listada acima fica negada por padrão.
     match /{document=**} {
       allow read, write: if false;

@@ -5,14 +5,20 @@
 //  2. Consulta o status REAL na API do MP com o nosso access token —
 //     ESSA é a verificação de verdade: só marcamos "aprovado" se o
 //     próprio MP disser "approved". Um webhook forjado não engana isso.
-//  3. Confere a assinatura x-signature só para LOG (não bloqueia — o
-//     passo 2 já garante a autenticidade).
+//  3. Confere a assinatura x-signature — e RECUSA quando não bate. O
+//     passo 2 já garante que o status é verdadeiro, mas sem a assinatura
+//     qualquer pessoa podia disparar esta função com data.id arbitrário e
+//     usá-la como bomba de chamadas ao MP e de escritas no Firestore.
 //  4. Atualiza pedidos/{id}.pagamento.status via Admin SDK.
+//
+// A reconciliação manual (GET ?pedidoId=) exige token de ADMIN: ela lê o
+// pedido e devolve o status, então na mão de qualquer um era um oráculo
+// de pedidos alheios.
 //
 // Responde 200 rápido — o MP re-tenta se não receber 2xx.
 
 const crypto = require("crypto");
-const { getDb } = require("./_lib/firebase-admin");
+const { getDb, tokenDaRequisicao, exigirAdmin } = require("./_lib/firebase-admin");
 const { buscarPagamento } = require("./_lib/mercadopago");
 const { FieldValue } = require("firebase-admin/firestore");
 
@@ -73,16 +79,28 @@ module.exports = async (req, res) => {
     // Reconciliação manual: GET /api/webhook-mp?pedidoId=XYZ — resolve o
     // id do pagamento a partir do pedido e sincroniza o status. Útil para
     // um pedido que ficou "pendente" porque a notificação se perdeu.
+    // Só admin: esta rota LÊ o pedido e devolve o status dele.
+    let reconciliacaoAdmin = false;
     if (!pagamentoId && req.query && req.query.pedidoId) {
+      await exigirAdmin(tokenDaRequisicao(req));
+      reconciliacaoAdmin = true;
       const snap = await getDb().collection("pedidos").doc(String(req.query.pedidoId)).get();
       pagamentoId = snap.exists ? (snap.data().pagamento || {}).provedorId : null;
       if (!pagamentoId) return res.status(404).json({ erro: "Pedido sem pagamento associado" });
     }
 
-    // Confere a assinatura só para registrar no log.
-    const assinatura = checarAssinatura(req, pagamentoId || "");
-    if (assinatura !== "ok") {
-      console.warn(`[/api/webhook-mp] assinatura: ${assinatura} (seguindo mesmo assim — a consulta à API do MP é a verificação real)`);
+    // Assinatura do Mercado Pago. Com o segredo configurado, ela MANDA:
+    // sem isso a rota é pública e escreve no Firestore. Sem o segredo
+    // (deploy ainda não configurado) só avisa, para não perder pagamento
+    // por causa de uma env var esquecida.
+    if (!reconciliacaoAdmin) {
+      const assinatura = checarAssinatura(req, pagamentoId || "");
+      if (assinatura === "sem-segredo") {
+        console.warn("[/api/webhook-mp] MP_WEBHOOK_SECRET não configurada — notificação aceita SEM validar assinatura. Configure na Vercel.");
+      } else if (assinatura !== "ok") {
+        console.warn(`[/api/webhook-mp] assinatura recusada: ${assinatura}`);
+        return res.status(401).json({ erro: "Assinatura inválida" });
+      }
     }
 
     // Só notificação de pagamento nos interessa.
@@ -136,6 +154,10 @@ module.exports = async (req, res) => {
       statusMP: pagamento.status
     });
   } catch (erro) {
+    // 401/403 da reconciliação são resposta de verdade, não erro do MP.
+    if (erro && (erro.status === 401 || erro.status === 403)) {
+      return res.status(erro.status).json({ erro: erro.message });
+    }
     console.error("[/api/webhook-mp]", erro && erro.message, JSON.stringify(erro && erro.detalhe));
     // 200 mesmo em erro interno: evita o MP floodar de retry. O log
     // registra o problema; a página de confirmação faz polling e o MP

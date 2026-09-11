@@ -4,6 +4,10 @@
 // Gera um pagamento PIX (Pagamentos API do Mercado Pago) e devolve o
 // QR Code + o copia-e-cola — o cliente paga SEM sair do site.
 //
+//  0. Confere o ID token e que o pedido é de quem está chamando — esta
+//     função escreve com o Admin SDK, que ignora as firestore.rules; sem
+//     o token, saber um pedidoId bastava para gerar cobrança no pedido
+//     alheio e ler o total dele na resposta.
 //  1. Lê pedidos/{pedidoId}, RECALCULA o total no servidor.
 //  2. POST /v1/payments { payment_method_id: "pix", ... }.
 //  3. Grava pedidos/{id}.pagamento = { metodo:"pix", provedorId, status, total }.
@@ -11,7 +15,8 @@
 //  5. O STATUS vira "aprovado" pelo webhook (/api/webhook-mp) quando o
 //     cliente paga; a página de confirmação faz polling e atualiza sozinha.
 
-const { getDb } = require("./_lib/firebase-admin");
+const { getDb, tokenDaRequisicao, exigirUsuario } = require("./_lib/firebase-admin");
+const { limitar } = require("./_lib/limite");
 const { criarPagamentoPix } = require("./_lib/mercadopago");
 const { calcularTotalPedido } = require("./_lib/total-pedido");
 const { FieldValue } = require("firebase-admin/firestore");
@@ -37,9 +42,16 @@ module.exports = async (req, res) => {
     if (!pedidoId) return res.status(400).json({ erro: "pedidoId é obrigatório" });
 
     const db = getDb();
+    const { uid } = await exigirUsuario(tokenDaRequisicao(req));
+    await limitar(db, `pix:${uid}`, { max: 10, janelaSegundos: 300 });
+
     const pedidoRef = db.collection("pedidos").doc(String(pedidoId));
     const pedidoSnap = await pedidoRef.get();
-    if (!pedidoSnap.exists) return res.status(404).json({ erro: "Pedido não encontrado" });
+    // 404 (e não 403) para quem não é dono: responder "existe, mas não é
+    // seu" confirmaria pedidoIds para quem chuta.
+    if (!pedidoSnap.exists || pedidoSnap.data().uidComprador !== uid) {
+      return res.status(404).json({ erro: "Pedido não encontrado" });
+    }
 
     const pedido = pedidoSnap.data();
     if (pedido.pagamento && pedido.pagamento.status === "aprovado") {
@@ -115,11 +127,11 @@ module.exports = async (req, res) => {
     });
   } catch (erro) {
     const status = erro && erro.status ? erro.status : 500;
+    // O detalhe do erro fica SÓ no log da Vercel: a resposta do Mercado
+    // Pago costuma citar id de conta e configuração da integração.
     console.error("[/api/pix]", erro && erro.message, JSON.stringify(erro && erro.detalhe));
     return res.status(status).json({
-      erro: status === 500 ? "Não foi possível gerar o PIX agora." : erro.message,
-      // Diagnóstico — remover/proteger antes de abrir a loja ao público.
-      _diag: { message: erro && erro.message, mp: (erro && erro.detalhe) || null }
+      erro: status === 500 ? "Não foi possível gerar o PIX agora." : erro.message
     });
   }
 };

@@ -71,6 +71,36 @@ function getAuthAdmin() {
   return _auth;
 }
 
+/** Lê o ID token do corpo (campo idToken) ou do header Authorization. */
+function tokenDaRequisicao(req) {
+  const doCorpo = req && req.body && req.body.idToken;
+  const doHeader = ((req && req.headers && req.headers.authorization) || "").replace(/^Bearer\s+/i, "");
+  return String(doCorpo || doHeader || "").trim();
+}
+
+/**
+ * Verifica o ID token e devolve QUEM está chamando. É o portão mínimo de
+ * qualquer função que leia ou escreva dado de cliente: sem ele, saber um
+ * pedidoId bastaria para mexer no pedido dos outros — as firestore.rules
+ * não valem aqui dentro, o Admin SDK passa por cima delas.
+ * @returns {Promise<{uid: string, email: string}>}
+ */
+async function exigirUsuario(idToken) {
+  if (!idToken) {
+    const e = new Error("Entre na sua conta para continuar.");
+    e.status = 401;
+    throw e;
+  }
+  try {
+    const d = await getAuthAdmin().verifyIdToken(String(idToken));
+    return { uid: d.uid, email: d.email || "" };
+  } catch {
+    const e = new Error("Sessão expirada. Entre de novo para continuar.");
+    e.status = 401;
+    throw e;
+  }
+}
+
 /**
  * Verifica o ID token de quem chamou e exige que seja ADMIN.
  * O papel não vem do token: é lido de usuarios/{uid}.role, a mesma fonte
@@ -110,4 +140,4 @@ function diagnosticoServiceAccount() {
   }
 }
 
-module.exports = { getDb, getAuthAdmin, exigirAdmin, diagnosticoServiceAccount };
+module.exports = { getDb, getAuthAdmin, tokenDaRequisicao, exigirUsuario, exigirAdmin, diagnosticoServiceAccount };

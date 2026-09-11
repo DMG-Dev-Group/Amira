@@ -3,9 +3,12 @@
 // valores completos). Use para confirmar que as env vars da Vercel foram
 // aplicadas ao ambiente certo (Production/Preview) e que o redeploy pegou.
 //
-// Remover, ou proteger, antes de abrir a loja ao público.
+// SÓ ADMIN. Antes esta rota era pública e entregava o project_id e o
+// client_email da service account, o prefixo e o final do token do
+// Mercado Pago e a URL base — mapa pronto do backend para quem estivesse
+// olhando. Chame com o header Authorization: Bearer <ID token do admin>.
 
-const { diagnosticoServiceAccount } = require("./_lib/firebase-admin");
+const { tokenDaRequisicao, exigirAdmin, diagnosticoServiceAccount } = require("./_lib/firebase-admin");
 
 // Últimos N caracteres de um segredo, para conferir "é o token certo?"
 // sem expor o valor inteiro.
@@ -15,6 +18,12 @@ function final(str, n = 6) {
 }
 
 module.exports = async (req, res) => {
+  try {
+    await exigirAdmin(tokenDaRequisicao(req));
+  } catch (erro) {
+    return res.status(erro.status || 401).json({ erro: erro.message });
+  }
+
   const sa = diagnosticoServiceAccount();
 
   res.status(200).json({

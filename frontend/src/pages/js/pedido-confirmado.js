@@ -20,7 +20,7 @@ import { escapeHtml, urlImagemSegura } from "../services/seguranca.js";
 import { svgCodigoBarras } from "../services/codigo-barras.js";
 import { textoParcelamento } from "../services/parcelamento.js";
 import { toast, confirmar, carregando } from "../services/ui-feedback.js";
-import { db } from "../services/firebase-config.js";
+import { db, auth } from "../services/firebase-config.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
 const WHATSAPP_LOJA = "5598984853656";
@@ -48,6 +48,23 @@ async function buscarConfigPagamento() {
   } catch {
     return null;
   }
+}
+
+// As funções de pagamento exigem o ID token: elas gravam com o Admin SDK,
+// que passa por cima das firestore.rules, então é o token que prova de
+// quem é o pedido. Ver api/pix.js e api/pagamento.js.
+async function chamarPagamento(rota, corpo) {
+  const usuario = auth.currentUser;
+  if (!usuario) throw new Error("Entre na sua conta para pagar.");
+  const idToken = await usuario.getIdToken();
+  return fetch(rota, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${idToken}`
+    },
+    body: JSON.stringify(corpo)
+  });
 }
 
 // ── Fallback: PIX manual + WhatsApp ─────────────────────────────────────
@@ -138,14 +155,10 @@ async function pagarComPix() {
   area.innerHTML = "";
 
   try {
-    const resp = await fetch("/api/pix", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ pedidoId })
-    });
+    const resp = await chamarPagamento("/api/pix", { pedidoId });
     const dados = await resp.json().catch(() => ({}));
     if (!resp.ok) {
-      console.error("[/api/pix]", resp.status, dados._diag || dados);
+      console.error("[/api/pix]", resp.status, dados);
       throw new Error(dados.erro || `HTTP ${resp.status}`);
     }
     if (!dados.copiaECola) throw new Error("Resposta sem código PIX");
@@ -199,18 +212,20 @@ async function pagarComCartao() {
   btnPix.disabled = true;
 
   try {
-    const resp = await fetch("/api/pagamento", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ pedidoId })
-    });
+    const resp = await chamarPagamento("/api/pagamento", { pedidoId });
     const dados = await resp.json().catch(() => ({}));
     if (!resp.ok) {
-      console.error("[/api/pagamento]", resp.status, dados._diag || dados);
+      console.error("[/api/pagamento]", resp.status, dados);
       throw new Error(dados.erro || `HTTP ${resp.status}`);
     }
     const url = dados.init_point || dados.sandbox_init_point;
     if (!url) throw new Error("Resposta sem URL de checkout");
+    // Confere o destino antes de sair do site: a URL vem da resposta do
+    // Mercado Pago, mas quem redireciona é esta página — e um redirect
+    // aberto é phishing pronto se um dia essa resposta for adulterada.
+    if (!/^https:\/\/([a-z0-9-]+\.)*mercadopago\.com(\.[a-z]{2})?\//i.test(url)) {
+      throw new Error("URL de checkout inesperada");
+    }
     window.location.href = url;
   } catch (erro) {
     console.error("Cartão indisponível:", erro);
