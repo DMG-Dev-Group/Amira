@@ -1,6 +1,15 @@
 import { buscarProdutoPorId, infoPreco, estoquePorModo, disponivelNoModo, podeSerEntregue, filtrosDoProduto } from "../services/produtos.js";
 import { listarCamadas, camadaPrincipal } from "../services/camadas.js";
 import { produtosRelacionados } from "../services/relacionados.js";
+import {
+  listarAprovadas,
+  resumo,
+  pedidoQueLiberaAvaliacao,
+  jaAvaliou,
+  enviarAvaliacao,
+  TAMANHO_MAXIMO_TEXTO
+} from "../services/avaliacoes.js";
+import { listarPedidosDoUsuario } from "../services/pedidos.js";
 import { observarAuth } from "../services/auth.js";
 import { adicionarAoCarrinho } from "../services/carrinho.js";
 import { registrarVisita } from "../services/metricas.js";
@@ -224,8 +233,9 @@ async function carregarProduto() {
       </div>
     </div>
 
-    <!-- Preenchido depois, por carregarRelacionados(): a lista exige
-         baixar o catálogo, e isso não pode atrasar o preço e o botão. -->
+    <!-- As duas seções abaixo são preenchidas DEPOIS da página montada:
+         as duas precisam de consulta, e nenhuma pode atrasar preço e botão. -->
+    <section class="produto-avaliacoes" id="produto-avaliacoes" hidden></section>
     <section class="produto-relacionados" id="produto-relacionados" hidden></section>
   `;
 
@@ -234,11 +244,157 @@ async function carregarProduto() {
   }
 
   carregarRelacionados(p);
+  carregarAvaliacoes(p);
 
   if (disponivel) {
     configurarSeletorQtd();
     configurarBotaoCarrinho();
   }
+}
+
+// ── Avaliações ───────────────────────────────────────────────────────────
+// A MODERAÇÃO é o controle de segurança, não um capricho: as
+// firestore.rules exigem um pedido PAGO do próprio autor, mas não
+// conseguem verificar que aquele pedido contém ESTE produto (rules não
+// fazem laço sobre "itens"). Quem fecha a brecha é o admin aprovando.
+// A checagem abaixo é de interface — evita oferecer o formulário a quem
+// não pode usar. Ver services/avaliacoes.js e firestore.rules.
+const IC_ESTRELA = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.4 2.6 5.3 5.8.85-4.2 4.1 1 5.78L12 16.7l-5.2 2.73 1-5.78-4.2-4.1 5.8-.85Z"/></svg>';
+
+function estrelas(nota, rotulo) {
+  const cheias = Math.round(Number(nota) || 0);
+  return `<span class="estrelas" role="img" aria-label="${escapeHtml(rotulo)}">${
+    [1, 2, 3, 4, 5].map((i) => `<span class="estrela ${i <= cheias ? "cheia" : ""}">${IC_ESTRELA}</span>`).join("")
+  }</span>`;
+}
+
+function mesAno(timestamp) {
+  if (!timestamp?.toDate) return "";
+  return timestamp.toDate().toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+}
+
+// Só consulta os pedidos de quem está logado: é a consulta mais cara
+// desta tela e visitante nunca vai poder avaliar.
+async function pedidoQuePermiteAvaliar(produtoId) {
+  if (!usuarioAtual) return null;
+  try {
+    return pedidoQueLiberaAvaliacao(await listarPedidosDoUsuario(usuarioAtual.uid), produtoId);
+  } catch (erro) {
+    console.error("Não foi possível conferir os pedidos:", erro);
+    return null;
+  }
+}
+
+function formularioAvaliacao() {
+  return `
+    <form class="avaliacao-form" id="avaliacao-form">
+      <p class="avaliacao-form__titulo">Você comprou este produto. Como foi?</p>
+      <div class="avaliacao-notas" role="radiogroup" aria-label="Nota de 1 a 5">
+        ${[1, 2, 3, 4, 5].map((i) => `
+          <button type="button" class="avaliacao-nota" data-nota="${i}"
+                  role="radio" aria-checked="false" aria-label="${i} de 5">${IC_ESTRELA}</button>`).join("")}
+      </div>
+      <textarea id="avaliacao-texto" rows="3" maxlength="${TAMANHO_MAXIMO_TEXTO}"
+                placeholder="Conte o que achou — fixação, cheiro, entrega…"></textarea>
+      <div class="avaliacao-form__rodape">
+        <span class="avaliacao-form__aviso">Aparece na loja depois que a Amira confere.</span>
+        <button type="submit" class="btn-primary" id="avaliacao-enviar">Enviar</button>
+      </div>
+    </form>
+  `;
+}
+
+async function carregarAvaliacoes(produto) {
+  const alvo = document.getElementById("produto-avaliacoes");
+  if (!alvo) return;
+
+  let lista = [];
+  try {
+    lista = await listarAprovadas(produto.id);
+  } catch (erro) {
+    console.error("Avaliações indisponíveis:", erro);
+    return;
+  }
+
+  const pedido = await pedidoQuePermiteAvaliar(produto.id);
+  const podeEscrever = Boolean(pedido) && !jaAvaliou(lista, usuarioAtual?.uid);
+
+  // Sem avaliação E sem direito de escrever, a seção NÃO aparece: um
+  // "nenhuma avaliação ainda" em loja nova deixa a página mais vazia,
+  // que é justamente o problema que isto veio resolver.
+  if (lista.length === 0 && !podeEscrever) return;
+
+  const { media, total } = resumo(lista);
+
+  alvo.innerHTML = `
+    <h2 class="produto-relacionados__titulo">Avaliações</h2>
+    ${total > 0 ? `
+      <div class="avaliacao-resumo">
+        ${estrelas(media, `${media} de 5`)}
+        <strong>${String(media).replace(".", ",")}</strong>
+        <span class="avaliacao-resumo__total">${total} ${total === 1 ? "avaliação" : "avaliações"}</span>
+      </div>` : ""}
+    ${podeEscrever ? formularioAvaliacao() : ""}
+    ${total > 0 ? `
+      <ul class="avaliacao-lista">
+        ${lista.map((a) => `
+          <li class="avaliacao-item">
+            <div class="avaliacao-item__topo">
+              ${estrelas(a.nota, `${a.nota} de 5`)}
+              <span class="avaliacao-item__autor">${escapeHtml(a.nomeAutor)}</span>
+              <span class="avaliacao-item__data">${escapeHtml(mesAno(a.criadoEm))}</span>
+            </div>
+            ${a.texto ? `<p class="avaliacao-item__texto">${escapeHtml(a.texto)}</p>` : ""}
+          </li>`).join("")}
+      </ul>` : ""}
+  `;
+  alvo.hidden = false;
+
+  if (podeEscrever) ligarFormularioAvaliacao(produto, pedido);
+}
+
+function ligarFormularioAvaliacao(produto, pedido) {
+  const form = document.getElementById("avaliacao-form");
+  const botoes = [...form.querySelectorAll(".avaliacao-nota")];
+  let nota = 0;
+
+  botoes.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      nota = Number(btn.dataset.nota);
+      botoes.forEach((b) => {
+        b.classList.toggle("marcada", Number(b.dataset.nota) <= nota);
+        b.setAttribute("aria-checked", String(Number(b.dataset.nota) === nota));
+      });
+    });
+  });
+
+  form.addEventListener("submit", async (evento) => {
+    evento.preventDefault();
+    if (nota < 1) {
+      toast("Escolha de 1 a 5 estrelas.", "erro");
+      return;
+    }
+    const botao = document.getElementById("avaliacao-enviar");
+    botao.disabled = true;
+    botao.textContent = "Enviando...";
+    try {
+      await enviarAvaliacao({
+        produtoId: produto.id,
+        pedidoId: pedido.id,
+        uid: usuarioAtual.uid,
+        nome: usuarioAtual.displayName || "Cliente",
+        nota,
+        texto: document.getElementById("avaliacao-texto").value
+      });
+      form.outerHTML = `<p class="avaliacao-enviada">Obrigado! Sua avaliação foi enviada e aparece na loja assim que a Amira conferir.</p>`;
+      toast("Avaliação enviada.", "sucesso");
+    } catch (erro) {
+      console.error(erro);
+      toast("Não foi possível enviar sua avaliação agora.", "erro");
+      botao.disabled = false;
+      botao.textContent = "Enviar";
+    }
+  });
 }
 
 // ── "Você também pode gostar" ────────────────────────────────────────────

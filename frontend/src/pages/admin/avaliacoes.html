@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Avaliações — Painel Admin Amira</title>
+  <link rel="icon" type="image/svg+xml" href="../images/amira-favicon.svg">
+  <link rel="alternate icon" type="image/x-icon" href="../images/amira-favicon.ico">
+  <link rel="apple-touch-icon" href="../images/amira-apple-touch.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<!-- data-admin-verificando: o painel nasce ESCONDIDO e só aparece quando
+     admin-auth.js confirma o acesso. Sem isso o conteúdo pisca na tela
+     antes do redirecionamento — e se o JS não carregar, nada aparece. -->
+<body data-theme="dark" data-admin-verificando>
+
+  <div class="admin-layout">
+    <div id="admin-sidebar-slot"></div>
+
+    <main class="admin-conteudo">
+      <div class="admin-topo">
+        <div>
+          <h1>Avaliações</h1>
+          <p id="contagem-avaliacoes"></p>
+        </div>
+      </div>
+
+      <div class="admin-bloco">
+        <h2>Aguardando publicação</h2>
+        <p class="admin-dica" style="margin-bottom:1rem;">
+          A avaliação só aparece na loja depois que você publica. Isso não é
+          só curadoria: as regras do banco conseguem exigir um pedido pago de
+          quem escreve, mas <strong>não conseguem conferir que aquele pedido
+          continha este produto</strong>. A sua conferência aqui é o que fecha
+          essa brecha.
+        </p>
+        <div id="tabela-pendentes">
+          <p class="admin-vazio">Carregando...</p>
+        </div>
+      </div>
+
+      <div class="admin-bloco">
+        <h2>Publicadas</h2>
+        <div id="tabela-publicadas">
+          <p class="admin-vazio">Carregando...</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script type="module" src="js/admin-sidebar.js"></script>
+  <script src="../services/tema.js"></script>
+  <script type="module" src="js/admin-avaliacoes.js"></script>
+</body>
+</html>
