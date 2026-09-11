@@ -16,7 +16,7 @@ import {
   tomDoStatus
 } from "../services/pedidos.js";
 import { escapeHtml } from "../services/seguranca.js";
-import { svgCodigoBarras } from "../services/codigo-barras.js";
+import { svgQrCode } from "../services/qrcode.js";
 import { toast } from "../services/ui-feedback.js";
 
 const LOJA = {
@@ -73,7 +73,7 @@ function render(pedido, totais) {
         <section class="cp-codigo-bloco">
           <p class="cp-codigo-rotulo">Código de retirada</p>
           <p class="cp-codigo">${escapeHtml(codigoRetirada(pedido.id))}</p>
-          <div class="cp-barras">${svgCodigoBarras(codigoRetirada(pedido.id))}</div>
+          <div class="cp-qr">${svgQrCode(codigoRetirada(pedido.id), `QR Code do pedido ${codigoRetirada(pedido.id)}`)}</div>
           <p class="cp-muted">Mostre este código no balcão — dá para ler pelo leitor ou digitar. Leve um documento com foto.</p>
         </section>
       ` : ""}

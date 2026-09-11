@@ -2659,6 +2659,32 @@ body[data-theme="light"] .social-btn {
   height: auto;
 }
 
+/* QR do comprovante. Mesmo princípio do código de barras — preto sobre
+   branco nos dois temas, porque leitor precisa de contraste real — mas
+   quadrado, e com a "zona quieta" branca já embutida no viewBox
+   (services/qrcode.js), que é o que o leitor usa para achar o símbolo. */
+.cp-qr {
+  margin: 0.9rem auto 0.6rem;
+  width: fit-content;
+  padding: 0.4rem;
+  border-radius: 8px;
+  background: #fff;
+  color: #000;
+}
+
+.cp-qr svg {
+  display: block;
+  width: 168px;
+  height: 168px;
+}
+
+@media (max-width: 520px) {
+  .cp-qr svg { width: 144px; height: 144px; }
+}
+
 @media print {
   .cp-barras { background: none; padding: 0; }
+  /* no papel o leitor costuma estar mais longe: um pouco maior ajuda */
+  .cp-qr { background: none; padding: 0; }
+  .cp-qr svg { width: 150px; height: 150px; }
 }
