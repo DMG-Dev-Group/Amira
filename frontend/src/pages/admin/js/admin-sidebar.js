@@ -12,6 +12,7 @@ const itensMenu = [
   { id: "iphones", href: "iphones.html", label: "iPhones" },
   { id: "pedidos", href: "pedidos.html", label: "Pedidos" },
   { id: "revendedores", href: "revendedores.html", label: "Revendedores" },
+  { id: "avaliacoes", href: "avaliacoes.html", label: "Avaliações" },
   { id: "configuracoes", href: "configuracoes.html", label: "Configurações" }
 ];
 

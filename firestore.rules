@@ -330,6 +330,62 @@ service cloud.firestore {
       allow update, delete: if ehAdmin();
     }
 
+    // ── avaliacoes/{docId} ───────────────────────────────────────────────
+    // Avaliação de produto por quem comprou.
+    //
+    // ⚠️ O QUE ESTA REGRA CONSEGUE E O QUE NÃO CONSEGUE GARANTIR:
+    // ela confere que quem escreve é dono de um pedido PAGO — o cliente
+    // manda o pedidoId e o get() abaixo checa. O que ela NÃO consegue é
+    // conferir que aquele pedido contém ESTE produto: rules não fazem
+    // laço sobre "itens" (mesma limitação já documentada em pedidos).
+    //
+    // Quem fecha essa brecha é a MODERAÇÃO: a avaliação nasce com
+    // aprovada = false e só o admin publica. A loja lê apenas as
+    // aprovadas. Sem isso, alguém com um pedido pago poderia avaliar
+    // qualquer produto do catálogo.
+    //
+    // A checagem "o pedido contém este produto" existe, mas no cliente
+    // (js/produto-detalhe.js) — ela é de INTERFACE, para não oferecer o
+    // formulário a quem não pode usar. Não é o controle de segurança.
+    function chavesAvaliacaoPermitidas() {
+      return ['produtoId', 'pedidoId', 'uidAutor', 'nomeAutor', 'nota', 'texto',
+        'aprovada', 'criadoEm'];
+    }
+    match /avaliacoes/{docId} {
+      // Público vê só o que o admin publicou. O autor vê a própria,
+      // mesmo pendente, para saber que foi enviada.
+      allow read: if ehAdmin() ||
+        resource.data.aprovada == true ||
+        (estaLogado() && resource.data.uidAutor == request.auth.uid);
+
+      allow create: if estaLogado() &&
+        emailVerificado() &&
+        request.resource.data.keys().hasOnly(chavesAvaliacaoPermitidas()) &&
+        request.resource.data.keys().hasAll(['produtoId', 'pedidoId', 'uidAutor',
+          'nomeAutor', 'nota', 'texto', 'aprovada', 'criadoEm']) &&
+        request.resource.data.uidAutor == request.auth.uid &&
+        // nasce SEMPRE pendente — publicar é ato do admin
+        request.resource.data.aprovada == false &&
+        request.resource.data.nota is int &&
+        request.resource.data.nota >= 1 &&
+        request.resource.data.nota <= 5 &&
+        request.resource.data.texto is string &&
+        request.resource.data.texto.size() <= 600 &&
+        request.resource.data.nomeAutor is string &&
+        request.resource.data.nomeAutor.size() <= 120 &&
+        request.resource.data.produtoId is string &&
+        request.resource.data.produtoId.size() <= 60 &&
+        request.resource.data.criadoEm == request.time &&
+        // o pedido citado existe, é de quem está escrevendo, e foi pago
+        exists(/databases/$(database)/documents/pedidos/$(request.resource.data.pedidoId)) &&
+        get(/databases/$(database)/documents/pedidos/$(request.resource.data.pedidoId)).data.uidComprador == request.auth.uid &&
+        get(/databases/$(database)/documents/pedidos/$(request.resource.data.pedidoId)).data.status == 'pago';
+
+      // Só o admin publica, despublica ou apaga. O autor não edita depois
+      // de enviar: senão daria para trocar o texto DEPOIS de aprovado.
+      allow update, delete: if ehAdmin();
+    }
+
     // ── caixa/{docId} e vendas/{docId} — SISTEMA INTERNO ─────────────────
     // A loja não toca nestas duas; elas são do sistema interno
     // (flora-5754a-interno.web.app), onde caixa.js e vendas.js são
