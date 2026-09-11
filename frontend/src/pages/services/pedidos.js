@@ -18,7 +18,11 @@
 //   uidComprador, itens: [{produtoId, quantidade, modo}],
 //   temItemAtacado, modoEntrega: "entrega"|"retirada",
 //   endereco: {cep, endereco, bairro} | null,
-//   status, pagamento: {metodo, status}, criadoEm
+//   status, pagamento: {metodo, status}, criadoEm,
+//   ref, refEm  — OPCIONAIS: código do indicador do link ?ref= do site
+//                 (ver services/indicador.js) e o instante em que o
+//                 pedido foi criado com ele. Sem link, os dois somem do
+//                 documento — não viram "" nem null.
 // }
 
 import { db } from "./firebase-config.js";
@@ -36,6 +40,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 import { buscarProdutoPorId, infoPreco, disponivelNoModo } from "./produtos.js";
 import { calcularFrete } from "./frete.js";
+import { refSalvo } from "./indicador.js";
 
 const COLECAO = "pedidos";
 
@@ -75,7 +80,7 @@ export async function criarPedido({ uidComprador, itens, modoEntrega, endereco }
   }
 
   const colecaoRef = collection(db, COLECAO);
-  return addDoc(colecaoRef, {
+  const corpo = {
     uidComprador,
     itens: itensLimpos,
     temItemAtacado: itensLimpos.some((i) => i.modo === "atacado"),
@@ -84,7 +89,17 @@ export async function criarPedido({ uidComprador, itens, modoEntrega, endereco }
     status: STATUS_PEDIDO.AGUARDANDO_PAGAMENTO,
     pagamento: { metodo: "pix_whatsapp", status: "pendente" },
     criadoEm: serverTimestamp()
-  });
+  };
+
+  // ref/refEm só entram no documento se existir um indicador salvo — as
+  // rules exigem os dois juntos quando presentes (ver firestore.rules).
+  const ref = refSalvo();
+  if (ref) {
+    corpo.ref = ref;
+    corpo.refEm = serverTimestamp();
+  }
+
+  return addDoc(colecaoRef, corpo);
 }
 
 // ── Derivação de totais (fonte de verdade: coleção "produtos") ───────────

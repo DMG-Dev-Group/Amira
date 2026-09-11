@@ -253,7 +253,10 @@ service cloud.firestore {
         (resource.data.uidComprador == request.auth.uid || ehAdmin());
       allow create: if estaLogado() &&
         emailVerificado() &&
-        request.resource.data.keys().hasOnly(['uidComprador', 'itens', 'temItemAtacado', 'modoEntrega', 'endereco', 'status', 'pagamento', 'criadoEm']) &&
+        // "ref" e "refEm" são OPCIONAIS — ver o bloco de validação deles
+        // logo abaixo, perto de criadoEm. Por isso entram no hasOnly mas
+        // não no hasAll.
+        request.resource.data.keys().hasOnly(['uidComprador', 'itens', 'temItemAtacado', 'modoEntrega', 'endereco', 'status', 'pagamento', 'criadoEm', 'ref', 'refEm']) &&
         request.resource.data.keys().hasAll(['uidComprador', 'itens', 'temItemAtacado', 'modoEntrega', 'endereco', 'status', 'pagamento', 'criadoEm']) &&
         request.resource.data.uidComprador == request.auth.uid &&
         request.resource.data.itens is list &&
@@ -289,7 +292,23 @@ service cloud.firestore {
         // serverless via Admin SDK, que ignora estas regras.
         request.resource.data.pagamento.metodo in ['pix_whatsapp', 'mercadopago'] &&
         request.resource.data.pagamento.status == 'pendente' &&
-        request.resource.data.criadoEm == request.time;
+        request.resource.data.criadoEm == request.time &&
+        // ref = código do indicador do link ?ref= do site (capturado em
+        // services/indicador.js, persistido no navegador do cliente até
+        // a compra). Os dois só existem JUNTOS: refEm prova que foi
+        // gravado agora, no mesmo create — não um valor antigo reusado.
+        // Não dá para conferir aqui que o código corresponde a um
+        // indicador cadastrado de verdade (indicadores/{id} é uma
+        // coleção com ID automático, "codigo" é só um campo dentro do
+        // documento — rules não fazem query, só get() por caminho
+        // conhecido). Um código inventado ou de indicador já apagado
+        // simplesmente não aparece na apuração do painel; o próprio
+        // indicadores.js já trata isso ("código sem cadastro").
+        ((!('ref' in request.resource.data) && !('refEm' in request.resource.data)) ||
+          (request.resource.data.ref is string &&
+            request.resource.data.ref.size() >= 1 &&
+            request.resource.data.ref.size() <= 24 &&
+            request.resource.data.refEm == request.time));
 
       // O admin escreve o que precisar. O DONO só pode fazer uma coisa:
       // CANCELAR um pedido que ele mesmo abriu e nunca pagou. A regra é
