@@ -20,6 +20,7 @@
 
 const { initializeApp, getApps, cert } = require("firebase-admin/app");
 const { getFirestore } = require("firebase-admin/firestore");
+const { verificarIdToken } = require("./id-token");
 
 let _db = null;
 let _auth = null;
@@ -73,7 +74,11 @@ function getDb() {
   return _db;
 }
 
-/** Retorna o Auth (Admin). Usado para criar usuário e validar ID token. */
+/**
+ * Retorna o Auth (Admin). Usado SÓ para criar/apagar usuário
+ * (/api/admin-usuario) — a conferência de ID token não passa mais por
+ * aqui, justamente para o pagamento não depender disso.
+ */
 function getAuthAdmin() {
   if (_auth) return _auth;
   let getAuth;
@@ -114,15 +119,21 @@ async function exigirUsuario(idToken) {
     e.status = 401;
     throw e;
   }
-  // getAuthAdmin() FORA do try: falha dele é problema de infraestrutura
-  // (SDK que não carregou, credencial malformada) e não pode ser
-  // confundida com "token inválido" — dizer "sessão expirada" para quem
-  // acabou de entrar manda a pessoa tentar de novo para sempre.
-  const auth = getAuthAdmin();
+  // Conferido por _lib/id-token.js, NÃO pelo firebase-admin/auth: aquele
+  // arrasta jose (ESM) e derrubava a função inteira em Node antigo.
+  const projeto = credenciais().project_id;
   try {
-    const d = await auth.verifyIdToken(String(idToken));
-    return { uid: d.uid, email: d.email || "" };
-  } catch {
+    const { uid, email } = await verificarIdToken(String(idToken), projeto);
+    return { uid, email };
+  } catch (erro) {
+    // Falha de REDE ao buscar as chaves do Google não é token inválido:
+    // dizer "sessão expirada" mandaria a pessoa tentar de novo para
+    // sempre, que foi o que atrasou o diagnóstico do 500 do revendedor.
+    if (/chaves públicas/.test(erro.message)) {
+      const e = new Error("Não foi possível validar sua sessão agora. Tente em instantes.");
+      e.status = 503;
+      throw e;
+    }
     const e = new Error("Sessão expirada. Entre de novo para continuar.");
     e.status = 401;
     throw e;
@@ -142,11 +153,15 @@ async function exigirAdmin(idToken) {
     throw e;
   }
   // Mesma separação de exigirUsuario: erro de infra não vira 401.
-  const auth = getAuthAdmin();
   let decodificado;
   try {
-    decodificado = await auth.verifyIdToken(String(idToken));
-  } catch {
+    decodificado = await verificarIdToken(String(idToken), credenciais().project_id);
+  } catch (erro) {
+    if (/chaves públicas/.test(erro.message)) {
+      const e = new Error("Não foi possível validar a credencial agora. Tente em instantes.");
+      e.status = 503;
+      throw e;
+    }
     const e = new Error("Credencial inválida ou expirada. Entre de novo no painel.");
     e.status = 401;
     throw e;
