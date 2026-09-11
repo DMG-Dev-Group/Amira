@@ -437,6 +437,7 @@ function abrirModalEdicao(id) {
   document.getElementById("p-codigo-barras").value = p.codigoBarras || "";
   marcarFiltrosNoForm(p);
   document.getElementById("p-peso").value = p.peso || "";
+  document.getElementById("p-volume-ml").value = p.volumeMl || "";
   document.getElementById("p-descricao").value = p.descricao || "";
   preencherListaImagens(p);
   document.getElementById("p-preco-varejo").value = p.precoVarejo || "";
@@ -525,6 +526,8 @@ form.addEventListener("submit", async (evento) => {
     filtros,
     categoria: categoriaLegado,
     peso: Number(document.getElementById("p-peso").value) || 0,
+    // Volume do frasco. 0 = não se aplica (o campo some da ficha).
+    volumeMl: Number(document.getElementById("p-volume-ml").value) || 0,
     descricao: document.getElementById("p-descricao").value.trim(),
     imagemURL,
     imagensExtras,

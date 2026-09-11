@@ -5,6 +5,9 @@
 // Cada slot lê o arquivo, comprime num <canvas> e guarda a data URI em
 // slot.dataset.valor (ver services/imagem-upload.js). O primeiro slot é a
 // FOTO PRINCIPAL (produto.imagemURL); os demais viram imagensExtras[].
+//
+// O arquivo entra de dois jeitos, e os dois caem no mesmo usarArquivo():
+// pelo botão (input file) ou ARRASTANDO a imagem para cima do slot.
 
 import { comprimirImagem } from "../../services/imagem-upload.js";
 import { urlImagemSegura } from "../../services/seguranca.js";
@@ -22,6 +25,7 @@ function criarSlotImagem(valor = "", ehPrincipal = false) {
     </div>
     <div class="img-slot-acoes">
       <span class="img-slot-tag">${ehPrincipal ? "Foto principal" : "Foto adicional"}</span>
+      <span class="img-slot-dica">arraste a foto aqui ou</span>
       <label class="admin-btn admin-btn-outline admin-btn-sm img-slot-escolher">
         ${valor ? "Trocar foto" : "Escolher foto"}
         <input type="file" accept="image/*" hidden>
@@ -40,9 +44,13 @@ function criarSlotImagem(valor = "", ehPrincipal = false) {
     escolher.childNodes[0].nodeValue = `${texto} `;
   }
 
-  input.addEventListener("change", async () => {
-    const arquivo = input.files && input.files[0];
+  async function usarArquivo(arquivo) {
     if (!arquivo) return;
+    if (!arquivo.type.startsWith("image/")) {
+      msg.textContent = "Isso não é uma imagem. Aceita JPG, PNG ou WEBP.";
+      msg.style.display = "block";
+      return;
+    }
     msg.style.display = "none";
     escolher.classList.add("processando");
     setRotuloEscolher("Processando...");
@@ -60,6 +68,41 @@ function criarSlotImagem(valor = "", ehPrincipal = false) {
       input.value = "";
       escolher.classList.remove("processando");
     }
+  }
+
+  input.addEventListener("change", () => usarArquivo(input.files && input.files[0]));
+
+  // ── Arrastar a foto para dentro do slot ────────────────────────────
+  // dragenter/dragleave disparam também ao passar por cima dos FILHOS do
+  // slot, o que fazia a moldura piscar. O contador resolve: só apaga o
+  // destaque quando a última entrada correspondente sai.
+  let dentro = 0;
+  const destacar = (ligado) => slot.classList.toggle("img-slot--recebendo", ligado);
+
+  slot.addEventListener("dragenter", (e) => {
+    if (!e.dataTransfer?.types.includes("Files")) return;
+    e.preventDefault();
+    dentro++;
+    destacar(true);
+  });
+
+  slot.addEventListener("dragover", (e) => {
+    if (!e.dataTransfer?.types.includes("Files")) return;
+    e.preventDefault(); // sem isto o navegador recusa o drop
+    e.dataTransfer.dropEffect = "copy";
+  });
+
+  slot.addEventListener("dragleave", () => {
+    dentro = Math.max(0, dentro - 1);
+    if (dentro === 0) destacar(false);
+  });
+
+  slot.addEventListener("drop", (e) => {
+    if (!e.dataTransfer?.files?.length) return;
+    e.preventDefault();
+    dentro = 0;
+    destacar(false);
+    usarArquivo(e.dataTransfer.files[0]);
   });
 
   slot.querySelector(".btn-remover-imagem")?.addEventListener("click", () => slot.remove());

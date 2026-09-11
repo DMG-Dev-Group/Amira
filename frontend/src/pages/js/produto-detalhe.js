@@ -82,6 +82,7 @@ function linhasFicha(produto) {
     })
     .filter(Boolean);
 
+  if (produto.volumeMl) linhas.push(["Volume", `${produto.volumeMl} ml`]);
   if (produto.peso) linhas.push(["Peso", formatarPeso(produto.peso)]);
   if (produto.sku) linhas.push(["SKU", produto.sku]);
   if (produto.codigoBarras) linhas.push(["Código de barras", produto.codigoBarras]);

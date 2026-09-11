@@ -6,7 +6,9 @@
 //   nome: string,
 //   sku: string,                  // código interno do produto
 //   codigoBarras: string,         // EAN/GTIN
-//   peso: number,                 // em gramas
+//   peso: number,                 // em gramas (usado no frete)
+//   volumeMl: number,             // volume do frasco; 0/ausente = nao se
+//                                 //   aplica (acessorio, item nao liquido)
 //   descricao: string,
 //   filtros: { [camadaSlug]: string[] },  // opções marcadas por camada de
 //                                 //   filtro (ver services/camadas.js) — a

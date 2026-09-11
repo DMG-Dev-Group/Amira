@@ -55,6 +55,8 @@
     <div class="admin-modal">
       <h2 id="modal-titulo">Novo produto</h2>
       <form id="form-produto">
+        <div class="admin-secao">
+          <h3>Identificação</h3>
         <div class="admin-campo">
           <label for="p-nome">Nome</label>
           <input type="text" id="p-nome" required>
@@ -65,20 +67,32 @@
           <input type="text" id="p-codigo-barras">
         </div>
 
+        </div>
+
+        <div class="admin-secao">
+          <h3>Classificação e medidas</h3>
         <div class="admin-campo">
           <label>Camadas de filtro</label>
           <div id="p-camadas" class="p-camadas">
             <p style="color:var(--text-muted,#999); font-size:0.8rem;">Carregando camadas...</p>
           </div>
-          <small style="display:block; margin-top:0.4rem; color:var(--text-muted,#999); font-size:0.72rem;">
+          <small class="admin-dica">
             Marque ao menos uma opção na <strong>camada principal</strong> (a primeira). Sem
             marcação nas outras, o produto só não aparece quando alguém filtra por elas.
           </small>
         </div>
 
-        <div class="admin-campo">
-          <label for="p-peso">Peso (gramas)</label>
-          <input type="number" id="p-peso" min="0" required>
+        <div class="admin-campo-grid">
+          <div class="admin-campo">
+            <label for="p-volume-ml">Volume (ml)</label>
+            <input type="number" id="p-volume-ml" min="0" step="1" placeholder="ex: 100">
+            <small class="admin-dica">Aparece na página do produto. Deixe vazio em item que não é líquido.</small>
+          </div>
+          <div class="admin-campo">
+            <label for="p-peso">Peso (gramas)</label>
+            <input type="number" id="p-peso" min="0" required>
+            <small class="admin-dica">Usado no cálculo do frete.</small>
+          </div>
         </div>
 
         <div class="admin-campo">
@@ -86,17 +100,25 @@
           <textarea id="p-descricao" rows="3"></textarea>
         </div>
 
+        </div>
+
+        <div class="admin-secao">
+          <h3>Fotos</h3>
         <div class="admin-campo">
           <label>Fotos do produto</label>
           <div id="lista-imagens-produto"></div>
           <button type="button" class="admin-btn admin-btn-outline admin-btn-sm" id="btn-add-imagem" style="margin-top:0.5rem;">+ Adicionar outra foto</button>
-          <small style="display:block; margin-top:0.4rem; color:var(--text-muted,#999); font-size:0.72rem;">
+          <small class="admin-dica">
             A primeira foto é a principal (aparece no catálogo e na página do produto). As fotos
             são escolhidas do seu computador e ficam salvas junto do produto — sem custo de
             armazenamento. Elas são reduzidas automaticamente; use até 5 fotos por produto.
           </small>
         </div>
 
+        </div>
+
+        <div class="admin-secao">
+          <h3>Preço e estoque</h3>
         <!-- Varejo e atacado são OPCIONAIS (R2 item 6.1): um produto pode
              existir só num dos dois. Deixe o preço vazio/zero para isso. -->
         <div class="admin-campo-grid">
@@ -115,14 +137,18 @@
           <label for="p-estoque">Estoque (unidades)</label>
           <input type="number" id="p-estoque" min="0" value="0">
         </div>
-        <small style="display:block; margin:-0.4rem 0 1rem; color:var(--text-muted,#999); font-size:0.72rem;">
+        <small class="admin-dica" style="margin-top:-0.6rem;">
           O mínimo de atacado agora é por carrinho (não por produto) — configurável
           no documento configuracoes/atacado do Firestore.
         </small>
 
+        </div>
+
+        <div class="admin-secao">
+          <h3>Desconto</h3>
         <!-- Desconto opcional (A2) — funciona como o banner: só aparece
              para preencher se você ligar. -->
-        <div class="admin-campo" style="border-top:1px solid var(--border,rgba(156,102,68,0.15)); padding-top:1rem; margin-top:0.5rem;">
+        <div class="admin-campo">
           <label for="p-desconto-ativo">Produto em desconto?</label>
           <select id="p-desconto-ativo">
             <option value="false">Não</option>
@@ -143,12 +169,16 @@
               <input type="number" id="p-desconto-percentual" min="1" max="90" step="1">
             </div>
           </div>
-          <small style="display:block; margin:-0.4rem 0 1rem; color:var(--text-muted,#999); font-size:0.72rem;">
+          <small class="admin-dica">
             O desconto é aplicado sobre o preço de varejo. O card mostra o preço
             novo em destaque e o antigo riscado — ex.: R$ 180 <s>R$ 200</s>.
           </small>
         </div>
 
+        </div>
+
+        <div class="admin-secao">
+          <h3>Entrega e visibilidade</h3>
         <!-- Frete por produto (R2 item 7): "Não" = o cliente só consegue
              pedir este produto com retirada na loja. -->
         <div class="admin-campo">
@@ -176,7 +206,11 @@
           </div>
         </div>
 
-        <div class="admin-campo" style="border-top:1px solid var(--border,rgba(210, 86, 108,0.15)); padding-top:1rem; margin-top:0.5rem;">
+        </div>
+
+        <div class="admin-secao">
+          <h3>Banner da home</h3>
+        <div class="admin-campo">
           <label for="p-banner-hero">Aparece no banner "Produto da Estação"?</label>
           <select id="p-banner-hero">
             <option value="false">Não</option>
@@ -192,7 +226,7 @@
           <div class="admin-campo">
             <label>Imagem do banner (opcional)</label>
             <div id="p-banner-imagem-upload"></div>
-            <small style="display:block; margin-top:0.35rem; color:var(--text-muted,#999); font-size:0.72rem;">
+            <small class="admin-dica">
               Deixe vazio para usar a foto principal do produto.
             </small>
           </div>
@@ -219,6 +253,8 @@
         </div>
 
         <p class="admin-msg" id="modal-msg" style="display:none;"></p>
+
+        </div>
 
         <div class="admin-modal-acoes">
           <button type="button" class="admin-btn admin-btn-outline" id="btn-cancelar-modal">Cancelar</button>
