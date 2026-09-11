@@ -4,15 +4,20 @@
 // mesma regra usada pelo painel admin — assim loja e dashboard nunca contam
 // coisas diferentes.
 
-import { listarProdutosIphone } from "../services/iphones.js";
+import { listarProdutosIphone, agruparIphones } from "../services/iphones.js";
+import { listarCamadas } from "../services/camadas.js";
 import { infoPreco, estoquePorModo, disponivelNoModo, ordenarProdutos } from "../services/produtos.js";
 import { escapeHtml, urlImagemSegura } from "../services/seguranca.js";
 
 const grid = document.getElementById("iphones-grid");
 const contagem = document.getElementById("iphones-contagem");
 const selectOrdenar = document.getElementById("select-ordenar-iphones");
+const topoAcessorios = document.getElementById("iphones-acessorios-topo");
+const gridAcessorios = document.getElementById("iphones-acessorios-grid");
+const contagemAcessorios = document.getElementById("iphones-acessorios-contagem");
 
-let produtos = [];
+let aparelhos = [];
+let acessorios = [];
 
 function formatarPreco(valor) {
   return (valor || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -45,27 +50,44 @@ function cardProduto(p) {
   `;
 }
 
+// Aparelhos e acessórios são prateleiras diferentes da mesma seção — a
+// mesma divisão que o painel usa para cadastrar. Sem separar, a contagem
+// "N aparelhos disponíveis" contaria capa e cabo junto.
 function renderizar() {
-  if (produtos.length === 0) {
+  if (aparelhos.length === 0) {
     grid.innerHTML = `
       <p class="catalogo-vazio">
         Ainda não temos iPhones publicados aqui. Chame a gente no WhatsApp para
         saber o que está chegando.
       </p>`;
     contagem.textContent = "";
-    return;
+  } else {
+    const lista = ordenarProdutos(aparelhos, selectOrdenar.value);
+    grid.innerHTML = lista.map(cardProduto).join("");
+    contagem.textContent = `${lista.length} ${lista.length === 1 ? "aparelho disponível" : "aparelhos disponíveis"}`;
   }
 
-  const lista = ordenarProdutos(produtos, selectOrdenar.value);
-  grid.innerHTML = lista.map(cardProduto).join("");
-  contagem.textContent = `${lista.length} ${lista.length === 1 ? "aparelho disponível" : "aparelhos disponíveis"}`;
+  // A seção de acessórios só existe quando há acessório cadastrado.
+  const temAcessorios = acessorios.length > 0;
+  if (topoAcessorios) topoAcessorios.hidden = !temAcessorios;
+  if (gridAcessorios) gridAcessorios.hidden = !temAcessorios;
+  if (!temAcessorios) return;
+
+  const lista = ordenarProdutos(acessorios, selectOrdenar.value);
+  gridAcessorios.innerHTML = lista.map(cardProduto).join("");
+  if (contagemAcessorios) {
+    contagemAcessorios.textContent =
+      `${lista.length} ${lista.length === 1 ? "acessório disponível" : "acessórios disponíveis"}`;
+  }
 }
 
 selectOrdenar?.addEventListener("change", renderizar);
 
 async function iniciar() {
   try {
-    produtos = await listarProdutosIphone();
+    const camadas = await listarCamadas();
+    const produtos = await listarProdutosIphone(camadas);
+    ({ aparelhos, acessorios } = agruparIphones(produtos, camadas));
     renderizar();
   } catch (erro) {
     console.error("Erro ao carregar os iPhones:", erro);

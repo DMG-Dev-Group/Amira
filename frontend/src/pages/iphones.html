@@ -198,6 +198,17 @@
     <section class="catalogo-grid" id="iphones-grid">
       <p class="catalogo-loading">Carregando iPhones...</p>
     </section>
+
+    <!-- Acessórios (capa, cabo, película…). Só aparecem quando há algum
+         cadastrado na aba de iPhones do painel — js/iphones.js revela. -->
+    <div class="catalogo-topo" id="iphones-acessorios-topo" hidden>
+      <div class="catalogo-titulo">
+        <h2>Acessórios</h2>
+        <p id="iphones-acessorios-contagem"></p>
+      </div>
+    </div>
+
+    <section class="catalogo-grid" id="iphones-acessorios-grid" hidden></section>
   </main>
 
   <script type="module" src="services/script.js"></script>

@@ -16,6 +16,10 @@
 // filtro é compartilhável e sobrevive ao F5. Links antigos com
 // ?categoria=slug continuam funcionando, traduzidos para a camada
 // principal.
+//
+// ESTE CATÁLOGO É SÓ DA LINHA DE PERFUMARIA. Aparelhos e acessórios da
+// seção de iPhones não entram aqui nem aparecem no painel de filtros —
+// eles têm o carrossel da home e iphones.html (ver services/iphones.js).
 
 import {
   listarProdutos,
@@ -28,6 +32,7 @@ import {
   filtrosDoProduto
 } from "../services/produtos.js";
 import { listarCamadas, camadaPrincipal } from "../services/camadas.js";
+import { filtrarProdutosPerfumaria, opcoesSemIphone, slugEhIphone } from "../services/iphones.js";
 import { escapeHtml, urlImagemSegura } from "../services/seguranca.js";
 import { observarAuth } from "../services/auth.js";
 import { adicionarAoCarrinho } from "../services/carrinho.js";
@@ -94,7 +99,9 @@ function lerSelecaoDaURL() {
   camadas.forEach((camada) => {
     const cru = params.get(camada.slug);
     if (!cru) return;
-    const slugsValidos = new Set(camada.opcoes.map((o) => o.slug));
+    // As opções da seção de iPhones não existem no painel: aceitá-las aqui
+    // criaria um filtro invisível, sem checkbox para desmarcar.
+    const slugsValidos = new Set(opcoesDoFiltro(camada).map((o) => o.slug));
     const escolhidas = cru.split(",").map((s) => s.trim()).filter((s) => slugsValidos.has(s));
     if (escolhidas.length) selecao[camada.slug] = escolhidas;
   });
@@ -103,7 +110,7 @@ function lerSelecaoDaURL() {
   const legado = params.get("categoria");
   if (legado && camadaPrincipalSlug) {
     const principal = camadas.find((c) => c.slug === camadaPrincipalSlug);
-    if (principal && principal.opcoes.some((o) => o.slug === legado)) {
+    if (principal && opcoesDoFiltro(principal).some((o) => o.slug === legado)) {
       const atuais = new Set(marcadas(camadaPrincipalSlug));
       atuais.add(legado);
       selecao[camadaPrincipalSlug] = [...atuais];
@@ -127,14 +134,22 @@ function escreverSelecaoNaURL() {
 }
 
 // ── Monta o painel de filtros (uma seção por camada) ────────────────────
+// As opções da seção de iPhones saem do painel: os produtos delas não
+// estão na grade, então marcá-las só daria "nenhum produto encontrado".
+function opcoesDoFiltro(camada) {
+  return camada.slug === camadaPrincipalSlug ? opcoesSemIphone(camada.opcoes) : camada.opcoes;
+}
+
 function montarPainelCamadas() {
   if (!camadasContainer) return;
 
-  camadasContainer.innerHTML = camadas.map((camada) => `
+  camadasContainer.innerHTML = camadas
+    .filter((camada) => opcoesDoFiltro(camada).length > 0)
+    .map((camada) => `
     <div class="filtro-grupo" data-camada="${escapeHtml(camada.slug)}">
       <h3>${escapeHtml(camada.nome)}</h3>
       <div class="filtro-opcoes">
-        ${camada.opcoes.map((op) => `
+        ${opcoesDoFiltro(camada).map((op) => `
           <label class="filtro-opcao">
             <input type="checkbox" data-camada="${escapeHtml(camada.slug)}" value="${escapeHtml(op.slug)}"
               ${marcadas(camada.slug).includes(op.slug) ? "checked" : ""}>
@@ -143,7 +158,8 @@ function montarPainelCamadas() {
         `).join("")}
       </div>
     </div>
-  `).join("");
+  `)
+    .join("");
 
   camadasContainer.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
     cb.addEventListener("change", () => {
@@ -328,15 +344,26 @@ async function carregarProximaPagina() {
   carregandoPagina = true;
 
   try {
-    const pagina = await listarProdutosPaginado({
-      tamanhoPagina: TAMANHO_PAGINA,
-      aposDoc: ultimoDoc
-    });
-
     const primeiraPagina = produtosCarregados.length === 0;
-    produtosCarregados = produtosCarregados.concat(pagina.produtos);
-    ultimoDoc = pagina.ultimoDoc;
-    temMais = pagina.temMais;
+
+    // Os produtos da linha de iPhones saem daqui. Como eles ocupam lugar
+    // no bloco de 24, um bloco pode chegar inteiro de aparelhos e não
+    // render nenhum card — e aí o IntersectionObserver não dispararia de
+    // novo (a sentinela continua visível, sem "entrar" na tela). Por isso
+    // o laço: busca até render alguma coisa ou acabar o catálogo.
+    let rendeu = 0;
+    do {
+      const pagina = await listarProdutosPaginado({
+        tamanhoPagina: TAMANHO_PAGINA,
+        aposDoc: ultimoDoc
+      });
+      ultimoDoc = pagina.ultimoDoc;
+      temMais = pagina.temMais;
+
+      const daPerfumaria = filtrarProdutosPerfumaria(pagina.produtos, camadas);
+      produtosCarregados = produtosCarregados.concat(daPerfumaria);
+      rendeu += daPerfumaria.length;
+    } while (temMais && rendeu === 0);
 
     const lista = ordenarProdutos(produtosCarregados, selectOrdenar.value);
     renderizarLista(lista, { acrescentar: false });
@@ -358,7 +385,7 @@ async function carregarProximaPagina() {
 async function carregarListaCompletaEFiltrar() {
   grid.innerHTML = `<p class="catalogo-loading">Carregando produtos...</p>`;
   try {
-    produtosCarregados = await listarProdutos();
+    produtosCarregados = filtrarProdutosPerfumaria(await listarProdutos(), camadas);
     temMais = false;
     aplicarFiltrosERenderizar();
   } catch (erro) {
@@ -461,6 +488,17 @@ btnLimparFiltros.addEventListener("click", () => {
 });
 
 // ── Inicialização ──────────────────────────────────────────────────────────
+// Só desvia quando o link pedia EXCLUSIVAMENTE a seção de iPhones; um
+// link misto (?tipo=perfumes,iphones) fica no catálogo e perde só a parte
+// de iPhones — lerSelecaoDaURL() já descarta esses slugs.
+function pediuSecaoIphone() {
+  const slugs = [params.get("categoria"), camadaPrincipalSlug ? params.get(camadaPrincipalSlug) : null]
+    .flatMap((valor) => (valor || "").split(","))
+    .map((slug) => slug.trim())
+    .filter(Boolean);
+  return slugs.length > 0 && slugs.every(slugEhIphone);
+}
+
 async function iniciar() {
   try {
     camadas = await listarCamadas();
@@ -469,6 +507,15 @@ async function iniciar() {
     camadas = [];
   }
   camadaPrincipalSlug = camadaPrincipal(camadas)?.slug || null;
+
+  // Link antigo apontando para a categoria de iPhones (salvo ou
+  // compartilhado antes da separação): a seção virou página própria, e o
+  // catálogo não mostra mais esses produtos. Manda para lá em vez de
+  // exibir "nenhum produto encontrado".
+  if (pediuSecaoIphone()) {
+    window.location.replace("iphones.html");
+    return;
+  }
 
   lerSelecaoDaURL();
   montarPainelCamadas();

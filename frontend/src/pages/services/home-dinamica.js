@@ -4,8 +4,9 @@
 // Estação". Todo texto dinâmico passa por escapeHtml e toda imagem por
 // urlImagemSegura (C4).
 
-import { listarDestaques, listarBannerHero, listarProdutosRecentes, infoPreco, disponivelNoModo } from "./produtos.js";
+import { listarDestaques, listarBannerHero, listarProdutosRecentes, infoPreco, disponivelNoModo, estoquePorModo } from "./produtos.js";
 import { listarCamadas, camadaPrincipal } from "./camadas.js";
+import { produtoEhIphone, opcoesSemIphone, listarProdutosIphone } from "./iphones.js";
 import { observarAuth } from "./auth.js";
 import { adicionarAoCarrinho } from "./carrinho.js";
 import { ativarReveals } from "./script.js";
@@ -17,6 +18,24 @@ let usuarioLogado = null;
 observarAuth(({ usuario }) => {
   usuarioLogado = usuario;
 });
+
+// ── As duas linhas da loja ────────────────────────────────────────────
+// Perfumaria e iPhones são independentes: aparelho e acessório não entram
+// em "Nossos produtos" nem em "Os mais amados" — eles têm o carrossel
+// próprio logo abaixo e a página iphones.html. Ver services/iphones.js.
+//
+// Uma promessa só para a home inteira: cinco seções precisam das camadas
+// e não faz sentido cada uma pagar a própria leitura.
+const camadasDaHome = listarCamadas().catch((erro) => {
+  console.error("Camadas indisponíveis na home:", erro);
+  return [];
+});
+
+/** Predicado pronto para as vitrines de perfumaria (produto => excluir?). */
+async function ehDaLinhaIphone() {
+  const camadas = await camadasDaHome;
+  return (produto) => produtoEhIphone(produto, camadas);
+}
 
 function formatarPreco(valor) {
   return (valor || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -114,37 +133,91 @@ async function iniciarCarrosselAnuncio() {
   }, intervalo);
 }
 
-// ── Galeria de iPhones da home ────────────────────────────────────────────
-// As ilustrações que vêm no HTML são só o padrão. A loja pode publicar as
-// FOTOS REAIS dos aparelhos sem mexer em código, criando o documento
-// configuracoes/homeIphones no Firestore:
-//   { imagens: ["https://...", "https://..."] }
-// Cada foto continua levando para a seção de iPhones (iphones.html).
+// ── Carrossel de iPhones da home ──────────────────────────────────────────
+// Esta é a vitrine da linha de iPhones — a única da home, já que aparelho
+// e acessório não entram nas seções de perfumaria (ver o topo do arquivo).
+// Por isso o carrossel mostra os PRODUTOS de verdade, cada card levando
+// direto para a página do aparelho.
+//
+// Ordem: quem estiver marcado como destaque na aba de iPhones vem antes;
+// o resto segue a ordem da coleção (mais recentes primeiro).
+//
+// Sem nenhum aparelho cadastrado o carrossel não fica vazio: cai nas fotos
+// de configuracoes/homeIphones — { imagens: ["https://...", ...] } — e, na
+// falta delas, nas ilustrações que já vêm no HTML. Nos dois casos o card
+// leva para iphones.html.
+const MIN_CARTOES_CARROSSEL = 6;
+
+function cartaoProdutoIphone(p, duplicata) {
+  const temVarejo = disponivelNoModo(p, "varejo");
+  const preco = infoPreco(p, "varejo");
+  const esgotado = temVarejo && estoquePorModo(p, "varejo") <= 0;
+
+  return `
+    <a class="carousel-card carousel-card--produto" href="produto.html?id=${encodeURIComponent(p.id)}"
+       ${duplicata ? 'aria-hidden="true" tabindex="-1"' : ""}>
+      <img src="${urlImagemSegura(p.imagemURL)}" alt="${duplicata ? "" : escapeHtml(p.nome)}" loading="lazy">
+      ${esgotado ? `<span class="carousel-card-selo">Esgotado</span>` : ""}
+      <div class="carousel-card-info">
+        <span class="carousel-card-nome">${escapeHtml(p.nome)}</span>
+        <span class="carousel-card-preco">
+          ${temVarejo ? formatarPreco(preco.precoFinal) : "Exclusivo atacado"}
+        </span>
+      </div>
+    </a>
+  `;
+}
+
+function cartaoFotoIphone(url, duplicata) {
+  return `
+    <a class="carousel-card" href="iphones.html"
+       ${duplicata ? 'aria-hidden="true" tabindex="-1"' : 'aria-label="Ver os iPhones disponíveis"'}>
+      <img src="${urlImagemSegura(url)}" alt="${duplicata ? "" : "iPhone disponível na Amira"}" loading="lazy">
+    </a>
+  `;
+}
+
 async function carregarGaleriaIphones() {
   const trilho = document.getElementById("carouselTrack");
   if (!trilho) return;
 
-  let imagens = [];
+  // 1) os aparelhos cadastrados
+  let itens = [];
   try {
-    const snap = await getDoc(doc(db, "configuracoes", "homeIphones"));
-    if (snap.exists() && Array.isArray(snap.data().imagens)) {
-      imagens = snap.data().imagens.filter(Boolean);
-    }
+    const produtos = await listarProdutosIphone(await camadasDaHome);
+    itens = produtos
+      .slice()
+      .sort((a, b) => Number(b.destaque === true) - Number(a.destaque === true))
+      .map((p) => (duplicata) => cartaoProdutoIphone(p, duplicata));
   } catch (erro) {
-    console.error("Galeria de iPhones: mantendo as imagens padrão:", erro);
+    console.error("Carrossel de iPhones: não foi possível listar os aparelhos:", erro);
   }
 
-  // Sem configuração, ficam as ilustrações que já estão no HTML.
-  if (imagens.length === 0) return;
+  // 2) sem aparelhos, as fotos publicadas pelo painel
+  if (itens.length === 0) {
+    try {
+      const snap = await getDoc(doc(db, "configuracoes", "homeIphones"));
+      if (snap.exists() && Array.isArray(snap.data().imagens)) {
+        itens = snap.data().imagens
+          .filter(Boolean)
+          .map((url) => (duplicata) => cartaoFotoIphone(url, duplicata));
+      }
+    } catch (erro) {
+      console.error("Carrossel de iPhones: mantendo as imagens padrão:", erro);
+    }
+  }
 
-  // O trilho precisa do conteúdo duplicado: a animação de loop desloca -50%.
-  const cartoes = (duplicata) => imagens.map((url) => `
-    <a class="carousel-card" href="iphones.html"${duplicata ? ' aria-hidden="true" tabindex="-1"' : ' aria-label="Ver os iPhones disponíveis"'}>
-      <img src="${urlImagemSegura(url)}" alt="${duplicata ? "" : "iPhone disponível na Amira"}" loading="lazy">
-    </a>
-  `).join("");
+  // 3) sem nada disso, ficam as ilustrações que já estão no HTML
+  if (itens.length === 0) return;
 
-  trilho.innerHTML = cartoes(false) + cartoes(true);
+  // O loop da animação desloca -50%, então o trilho precisa do conteúdo
+  // duplicado. Com poucos cartões o trilho fica menor que a tela e o
+  // deslocamento aparece como um salto — repetir antes de duplicar resolve.
+  const base = [];
+  while (base.length < MIN_CARTOES_CARROSSEL) base.push(...itens);
+
+  const metade = (duplicata) => base.map((montar) => montar(duplicata)).join("");
+  trilho.innerHTML = metade(false) + metade(true);
 }
 
 // ── "Nossas categorias" ───────────────────────────────────────────────────
@@ -156,14 +229,18 @@ async function carregarCategoriasVisuais() {
   if (!grid) return;
 
   try {
-    const principal = camadaPrincipal(await listarCamadas());
+    const principal = camadaPrincipal(await camadasDaHome);
+    // A seção de iPhones não é uma categoria de perfumaria: ela tem
+    // carrossel e página próprios, e o catálogo não mostra esses produtos
+    // — o card levaria a uma grade vazia.
+    const opcoes = opcoesSemIphone(principal?.opcoes);
 
-    if (!principal || principal.opcoes.length === 0) {
+    if (!principal || opcoes.length === 0) {
       grid.innerHTML = `<p class="catalogo-vazio">Nenhuma categoria cadastrada ainda.</p>`;
       return;
     }
 
-    grid.innerHTML = principal.opcoes.map((op) => `
+    grid.innerHTML = opcoes.map((op) => `
       <a class="cat-card reveal" href="produtos.html?${encodeURIComponent(principal.slug)}=${encodeURIComponent(op.slug)}" style="text-decoration:none; display:block;">
         <div class="cat-imagem-generica">
           <img src="${urlImagemSegura(op.imagemURL)}" alt="${escapeHtml(op.nome)}">
@@ -190,7 +267,7 @@ async function carregarDestaques() {
   if (!grid) return;
 
   try {
-    const produtos = await listarDestaques(8);
+    const produtos = await listarDestaques(8, { excluir: await ehDaLinhaIphone() });
 
     if (produtos.length === 0) {
       grid.innerHTML = `<p class="catalogo-vazio" style="padding:2rem;">Nenhum produto em destaque no momento.</p>`;
@@ -234,7 +311,7 @@ async function carregarProdutosHome() {
   if (!grid) return;
 
   try {
-    const produtos = await listarProdutosRecentes(8);
+    const produtos = await listarProdutosRecentes(8, { excluir: await ehDaLinhaIphone() });
 
     if (produtos.length === 0) {
       grid.innerHTML = `<p class="catalogo-vazio" style="padding:2rem;">Os produtos aparecerão aqui em breve.</p>`;

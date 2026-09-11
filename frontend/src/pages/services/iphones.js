@@ -10,6 +10,13 @@
 // principal e marque essa opção ao cadastrar cada aparelho em
 // Admin > Produtos. O reconhecimento é por PREFIXO — todas essas opções
 // entram na seção.
+//
+// ⚠️ AS DUAS LINHAS SÃO INDEPENDENTES. Perfumaria e iPhones não se
+// misturam em nenhuma vitrine: quem é da seção de iPhones NÃO aparece no
+// catálogo (produtos.html), nem em "Nossos produtos", nem em "Os mais
+// amados", nem nos menus de categoria — só no carrossel da home e em
+// iphones.html. Quem faz esse corte são filtrarProdutosPerfumaria() e
+// opcoesSemIphone(), chamadas em cada vitrine da linha de perfumaria.
 
 import { listarCamadas, camadaPrincipal } from "./camadas.js";
 import { listarProdutos, filtrosDoProduto } from "./produtos.js";
@@ -83,20 +90,53 @@ export async function listarOpcoesIphone(camadas = null) {
 }
 
 /**
+ * O produto pertence à seção de iPhones? (aparelho OU acessório)
+ * Puro — é o predicado que separa as duas linhas da loja, e tanto a
+ * vitrine de iPhones quanto as de perfumaria decidem por ele.
+ */
+export function produtoEhIphone(produto, camadas) {
+  const principalSlug = camadaPrincipal(camadas)?.slug || null;
+  const doProduto = filtrosDoProduto(produto, principalSlug);
+  const naPrincipal = principalSlug ? (doProduto[principalSlug] || []) : [];
+  return naPrincipal.some(slugEhIphone) || slugEhIphone(produto.categoria);
+}
+
+/**
  * Filtra uma lista de produtos já carregada, ficando só com os da seção
  * de iPhones. Puro — o painel admin reaproveita sem refazer a busca.
  */
 export function filtrarProdutosIphone(produtos, camadas) {
-  const principalSlug = camadaPrincipal(camadas)?.slug || null;
-  return produtos.filter((p) => {
-    const doProduto = filtrosDoProduto(p, principalSlug);
-    const naPrincipal = principalSlug ? (doProduto[principalSlug] || []) : [];
-    return naPrincipal.some(slugEhIphone) || slugEhIphone(p.categoria);
-  });
+  return produtos.filter((p) => produtoEhIphone(p, camadas));
 }
 
-/** Todos os produtos ativos da seção de iPhones. */
-export async function listarProdutosIphone() {
-  const [camadas, produtos] = await Promise.all([listarCamadas(), listarProdutos()]);
-  return filtrarProdutosIphone(produtos, camadas);
+/**
+ * O complemento: só a linha de PERFUMARIA. É o que toda vitrine de
+ * perfume (catálogo, "Nossos produtos", destaques) precisa chamar para os
+ * aparelhos não vazarem para o meio dos perfumes.
+ */
+export function filtrarProdutosPerfumaria(produtos, camadas) {
+  return produtos.filter((p) => !produtoEhIphone(p, camadas));
+}
+
+/**
+ * Opções da camada principal que NÃO são da seção de iPhones — os menus
+ * de categoria e o painel de filtros do catálogo montam a partir daqui.
+ * Sem isso, "iPhones" apareceria como categoria de perfumaria e levaria a
+ * um catálogo vazio, já que o catálogo não mostra mais esses produtos.
+ */
+export function opcoesSemIphone(opcoes) {
+  return (opcoes || []).filter((o) => !slugEhIphone(o.slug) && !slugEhIphone(o.nome));
+}
+
+/**
+ * Todos os produtos ativos da seção de iPhones.
+ * @param {Array|null} camadas  passe as camadas já carregadas para
+ *   economizar uma leitura (a home carrega uma vez e reaproveita).
+ */
+export async function listarProdutosIphone(camadas = null) {
+  const [lista, produtos] = await Promise.all([
+    camadas ? Promise.resolve(camadas) : listarCamadas(),
+    listarProdutos()
+  ]);
+  return filtrarProdutosIphone(produtos, lista);
 }

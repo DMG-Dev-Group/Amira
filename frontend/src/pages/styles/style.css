@@ -1625,7 +1625,8 @@ body[data-theme="light"] .social-btn {
   100% { transform: translateX(-50%); }
 }
 .carousel-card {
-  display: block;              /* cada card é um <a> para a seção de iPhones */
+  display: block;              /* cada card é um <a>: o aparelho, ou a seção */
+  position: relative;          /* âncora da legenda e do selo de esgotado */
   text-decoration: none;
   flex-shrink: 0;
   width: 280px;
@@ -1651,6 +1652,61 @@ body[data-theme="light"] .social-btn {
   transition: transform 0.4s ease;
 }
 .carousel-card:hover img { transform: scale(1.05); }
+
+/* Cartão de APARELHO: a mesma moldura, com nome e preço sobre a foto.
+   O gradiente é fixo (e não uma cor de tema) porque ele mora em cima da
+   foto do produto — mesma solução dos cards de categoria. */
+.carousel-card--produto::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(20, 8, 11, 0.88) 0%, rgba(20, 8, 11, 0) 55%);
+  z-index: 1;
+  pointer-events: none;
+}
+.carousel-card-info {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  z-index: 2;
+  padding: 1.1rem 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.carousel-card-nome {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.05rem;
+  font-weight: 400;
+  line-height: 1.25;
+  color: var(--on-brand);
+  /* nome longo de aparelho ("iPhone 13 Pro Max 256GB") não pode empurrar
+     o preço para fora do cartão */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.carousel-card-preco {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-4);
+}
+.carousel-card-selo {
+  position: absolute;
+  top: 0.9rem; left: 0.9rem;
+  z-index: 2;
+  padding: 0.3rem 0.65rem;
+  border-radius: 2px;
+  background: rgba(20, 8, 11, 0.82);
+  color: var(--color-4);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
 .carousel-controls {
   display: flex;
   justify-content: center;
@@ -1698,7 +1754,7 @@ body[data-theme="light"] .social-btn {
   stroke-linecap: round; stroke-linejoin: round;
 }
 
-.carousel-card img { cursor: zoom-in; }
+.carousel-card img { cursor: pointer; }
 
 /* ── MOBILE ──────────────────────────── */
 @media (max-width: 900px) {
