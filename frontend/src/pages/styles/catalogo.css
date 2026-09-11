@@ -1285,6 +1285,186 @@
   text-align: right;
 }
 
+/* ── Avaliações ──────────────────────────────────────────────────────── */
+.produto-avaliacoes {
+  margin-top: 3.5rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border);
+}
+
+.produto-avaliacoes[hidden] { display: none; }
+
+/* Quando as duas seções aparecem juntas, uma linha divisória basta. */
+.produto-avaliacoes + .produto-relacionados {
+  margin-top: 3rem;
+}
+
+.estrelas {
+  display: inline-flex;
+  gap: 0.1rem;
+  flex-shrink: 0;
+}
+
+.estrela svg {
+  width: 15px;
+  height: 15px;
+  display: block;
+  fill: var(--border);
+}
+
+.estrela.cheia svg { fill: var(--gold); }
+
+.avaliacao-resumo {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 1.4rem;
+  font-family: 'Jost', sans-serif;
+}
+
+.avaliacao-resumo strong {
+  font-size: 1.1rem;
+  color: var(--text-main);
+}
+
+.avaliacao-resumo__total {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+/* ── Formulário de quem comprou ──────────────────────────────────────── */
+.avaliacao-form {
+  margin-bottom: 1.8rem;
+  padding: 1.2rem;
+  border: 1px solid color-mix(in srgb, var(--gold) 40%, var(--border));
+  border-left: 3px solid var(--gold);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--gold) 7%, transparent);
+}
+
+.avaliacao-form__titulo {
+  font-family: 'Jost', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 0.8rem;
+}
+
+.avaliacao-notas {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 0.8rem;
+}
+
+.avaliacao-nota {
+  padding: 0.2rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 4px;
+  line-height: 0;
+}
+
+.avaliacao-nota svg {
+  width: 26px;
+  height: 26px;
+  display: block;
+  fill: var(--border);
+  transition: fill 0.15s ease, transform 0.15s ease;
+}
+
+.avaliacao-nota:hover svg { transform: scale(1.12); }
+.avaliacao-nota.marcada svg { fill: var(--gold); }
+
+.avaliacao-form textarea {
+  width: 100%;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text-main);
+  font-family: 'Jost', sans-serif;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  outline: none;
+  resize: vertical;
+}
+
+.avaliacao-form textarea:focus { border-color: var(--gold); }
+
+.avaliacao-form__rodape {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin-top: 0.8rem;
+}
+
+.avaliacao-form__aviso {
+  font-family: 'Jost', sans-serif;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.avaliacao-form__rodape .btn-primary {
+  padding: 0.6rem 1.6rem;
+  border-radius: 8px;
+}
+
+.avaliacao-enviada {
+  margin-bottom: 1.8rem;
+  padding: 1rem 1.2rem;
+  border-radius: 12px;
+  border-left: 3px solid var(--success);
+  background: color-mix(in srgb, var(--success) 8%, transparent);
+  font-family: 'Jost', sans-serif;
+  font-size: 0.86rem;
+  color: var(--text-main);
+}
+
+/* ── Lista ───────────────────────────────────────────────────────────── */
+.avaliacao-lista {
+  list-style: none;
+  display: grid;
+  gap: 1.2rem;
+}
+
+.avaliacao-item {
+  padding-bottom: 1.2rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.avaliacao-item:last-child { border-bottom: none; padding-bottom: 0; }
+
+.avaliacao-item__topo {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-bottom: 0.4rem;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.82rem;
+}
+
+.avaliacao-item__autor {
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.avaliacao-item__data {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+.avaliacao-item__texto {
+  font-family: 'Jost', sans-serif;
+  font-size: 0.88rem;
+  line-height: 1.65;
+  color: var(--text-main);
+  white-space: pre-line;
+}
+
 /* ── "Você também pode gostar" ───────────────────────────────────────
    Fica FORA do .produto-layout, na largura inteira: a coluna da direita
    é curta e a imagem é alta, então sugestão espremida ali do lado só

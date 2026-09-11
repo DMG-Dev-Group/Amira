@@ -550,6 +550,13 @@ body {
   margin-bottom: 0.9rem;
 }
 
+/* Coluna de texto livre numa tabela (comentário de avaliação): sem teto
+   ela empurra as colunas de ação para fora da tela. */
+.admin-col-larga {
+  max-width: 22rem;
+  white-space: normal;
+}
+
 /* Texto de apoio embaixo de um campo. Substitui os <small> com style=""
    espalhados pelo HTML. */
 .admin-dica {
