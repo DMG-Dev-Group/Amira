@@ -25,8 +25,23 @@ async function mpFetch(caminho, { method = "GET", body, idempotencyKey } = {}) {
 
   const dados = await resposta.json().catch(() => ({}));
   if (!resposta.ok) {
-    const erro = new Error(`Mercado Pago ${method} ${caminho} -> HTTP ${resposta.status}`);
+    // Sem isto, QUALQUER recusa do Mercado Pago (token de outra conta,
+    // aplicação sem Checkout Pro habilitado, credencial revogada…) virava
+    // 500 opaco em pagamento.js/pix.js — o "erro.status" não existia,
+    // então status===500 e a mensagem real ficava só no console.error do
+    // servidor. Mesma classe de bug já corrigida para erro de
+    // configuração local em _lib/firebase-admin.js; faltava aqui.
+    //
+    // 502 (Bad Gateway) é a semântica certa: a falha é do NOSSO lado com
+    // o Mercado Pago, não de quem chamou a nossa API. A mensagem do MP
+    // (dados.message) não é segredo — descreve o que está errado com a
+    // integração, é exatamente o que quem estiver trocando de credencial
+    // precisa ler.
+    const mensagemMp = String(dados.message || dados.error || `HTTP ${resposta.status}`);
+    const erro = new Error(`Mercado Pago ${method} ${caminho} -> HTTP ${resposta.status}: ${mensagemMp}`);
     erro.detalhe = dados;
+    erro.status = 502;
+    erro.publico = `O Mercado Pago recusou a requisição: ${mensagemMp}`;
     throw erro;
   }
   return dados;
