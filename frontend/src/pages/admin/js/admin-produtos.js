@@ -224,6 +224,66 @@ function podeReordenar() {
   return !inputBusca.value.trim() && (ordenacao === "" || ordenacao === "recentes" || ordenacao === "manual");
 }
 
+// ── Rolagem automática enquanto arrasta ───────────────────────────────
+// Com o botão do mouse preso, a roda e a barra de rolagem não funcionam —
+// então mover um produto do fim da lista para o topo era impossível sem
+// soltar no meio do caminho. Enquanto o ponteiro estiver perto da borda
+// da janela, a página rola sozinha; quanto mais perto da borda, mais
+// rápido. A velocidade é aplicada quadro a quadro (requestAnimationFrame)
+// para ficar suave em vez de aos saltos.
+const ZONA_ROLAGEM = 110;   // px a partir da borda em que a rolagem começa
+const VELOCIDADE_MAX = 22;  // px por quadro no encostar da borda
+
+let quadroRolagem = null;
+let velocidadeRolagem = 0;
+
+function pararRolagemAuto() {
+  velocidadeRolagem = 0;
+  if (quadroRolagem) {
+    cancelAnimationFrame(quadroRolagem);
+    quadroRolagem = null;
+  }
+}
+
+function rolarQuadro() {
+  if (!velocidadeRolagem) {
+    quadroRolagem = null;
+    return;
+  }
+  window.scrollBy(0, velocidadeRolagem);
+  quadroRolagem = requestAnimationFrame(rolarQuadro);
+}
+
+function ajustarRolagemAuto(clienteY) {
+  const altura = window.innerHeight;
+  let v = 0;
+
+  if (clienteY < ZONA_ROLAGEM) {
+    // proporção: 0 na borda da zona, 1 encostado no topo
+    v = -VELOCIDADE_MAX * ((ZONA_ROLAGEM - clienteY) / ZONA_ROLAGEM);
+  } else if (clienteY > altura - ZONA_ROLAGEM) {
+    v = VELOCIDADE_MAX * ((clienteY - (altura - ZONA_ROLAGEM)) / ZONA_ROLAGEM);
+  }
+
+  velocidadeRolagem = Math.round(v);
+  if (velocidadeRolagem && !quadroRolagem) {
+    quadroRolagem = requestAnimationFrame(rolarQuadro);
+  } else if (!velocidadeRolagem) {
+    pararRolagemAuto();
+  }
+}
+
+// No documento, não na linha: o dragover das linhas só dispara quando o
+// ponteiro está EM CIMA de uma linha, e a borda da tela costuma estar
+// fora da tabela.
+document.addEventListener("dragover", (e) => {
+  if (!linhaArrastada) return;
+  e.preventDefault(); // sem isto o Chrome não emite dragover continuamente
+  ajustarRolagemAuto(e.clientY);
+});
+document.addEventListener("drop", pararRolagemAuto);
+document.addEventListener("dragend", pararRolagemAuto);
+
 function ligarArrastar() {
   const corpo = tabela.querySelector("tbody");
   if (!corpo) return;
@@ -247,6 +307,7 @@ function ligarArrastar() {
       tr.classList.remove("arrastando");
       corpo.querySelectorAll("tr").forEach((l) => l.classList.remove("alvo"));
       linhaArrastada = null;
+      pararRolagemAuto();
     });
 
     tr.addEventListener("dragover", (e) => {

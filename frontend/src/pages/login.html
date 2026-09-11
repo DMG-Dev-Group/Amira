@@ -3,53 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-    <link rel="stylesheet" href="./styles/login.css">
+    <link rel="icon" type="image/svg+xml" href="images/amira-favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="./styles/auth.css">
     <title>Amira — Login</title>
 </head>
-<body>
-    <main class="container">
-        <form id="form-login">
-            <h1>Login Amira</h1>
-            <div class="input-box">
-                <input id="login-email" placeholder="E-mail" type="email" required autocomplete="email">
-                <i class="bx bxs-user"></i>
+<body data-theme="light">
+    <div class="auth-layout">
+
+        <!-- Lado da marca: mesma linguagem da loja (Playfair + gradiente
+             mocha). No mobile vira uma faixa no topo. -->
+        <aside class="auth-marca">
+            <img class="auth-marca__logo" src="images/amira-claro.svg" alt="Amira">
+            <h2 class="auth-marca__titulo">Sua <em>essência</em>, nossa paixão</h2>
+            <p class="auth-marca__texto">
+                Perfumes árabes, decants e miniaturas selecionados — entrega em
+                toda São Luís e retirada no Monumental Shopping.
+            </p>
+            <div class="auth-marca__selos">
+                <span class="auth-marca__selo">Produtos originais</span>
+                <span class="auth-marca__selo">Atacado e varejo</span>
             </div>
-            <div class="input-box">
-                <input id="login-senha" placeholder="Senha" type="password" required autocomplete="current-password">
-                <i class="bx bx-hide" id="toggle-senha" role="button" tabindex="0" aria-label="Mostrar senha"></i>
-            </div>
+        </aside>
 
-            <div class="remember-forgot">
-                <label>
-                    <input type="checkbox" id="login-lembrar">
-                    lembrar e-mail
-                </label>
-                <a href="#" id="link-esqueci">Esqueci a senha</a>
-            </div>
+        <main class="auth-painel">
+            <form id="form-login" class="container">
+                <h1>Que bom <em>te ver</em></h1>
+                <p class="auth-sub">Entre para acompanhar seus pedidos e finalizar a compra.</p>
 
-            <button type="submit" class="login" id="btn-login">Login</button>
-            <p class="form-msg" id="login-msg"></p>
+                <div class="input-box">
+                    <input id="login-email" placeholder="E-mail" type="email" required autocomplete="email">
+                    <span class="input-box__ic" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4.5" width="19" height="15" rx="2.5"/><path d="m3 6.5 9 6 9-6"/></svg>
+                    </span>
+                </div>
 
-            <div class="divisor-ou">ou</div>
+                <div class="input-box">
+                    <input id="login-senha" placeholder="Senha" type="password" required autocomplete="current-password">
+                    <button type="button" class="input-box__olho bx-hide" id="toggle-senha" aria-label="Mostrar senha">
+                        <svg class="olho-fechado" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.9 4.7A9.8 9.8 0 0 1 12 4.5c5 0 9 4.5 10 7.5a13 13 0 0 1-2.4 3.7M6.3 6.7A13.4 13.4 0 0 0 2 12c1 3 5 7.5 10 7.5a9.9 9.9 0 0 0 4.2-.9"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="m3 3 18 18"/></svg>
+                        <svg class="olho-aberto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.8-7.5 10-7.5S22 12 22 12s-3.8 7.5-10 7.5S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
+                </div>
 
-            <button type="button" class="login login-google" id="btn-login-google">
-                <svg width="18" height="18" viewBox="0 0 18 18" style="vertical-align:middle; margin-right:8px;">
-                    <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
-                    <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
-                    <path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/>
-                    <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/>
-                </svg>
-                Entrar com Google
-            </button>
+                <div class="remember-forgot">
+                    <label>
+                        <input type="checkbox" id="login-lembrar">
+                        Lembrar e-mail
+                    </label>
+                    <a href="#" id="link-esqueci">Esqueci a senha</a>
+                </div>
 
-            <div class="register-link">
-                <p>Não tem uma conta? <a href="./cadastro.html">cadastre-se</a></p>
-            </div>
-            <a href="./index.html" class="voltar-link">← Voltar para a loja</a>
-        </form>
-    </main>
+                <button type="submit" class="login" id="btn-login">Entrar</button>
+                <p class="form-msg" id="login-msg"></p>
+
+                <div class="divisor-ou">ou</div>
+
+                <button type="button" class="login login-google" id="btn-login-google">
+                    <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+                        <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
+                        <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
+                        <path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/>
+                        <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/>
+                    </svg>
+                    Entrar com Google
+                </button>
+
+                <div class="register-link">
+                    <p>Não tem uma conta? <a href="./cadastro.html">Cadastre-se</a></p>
+                </div>
+                <a href="./index.html" class="voltar-link">← Voltar para a loja</a>
+            </form>
+        </main>
+    </div>
+
+    <script src="services/tema.js"></script>
     <script type="module" src="./js/login.js"></script>
-  <script type="module" src="services/consentimento-cookies.js"></script>
+    <script type="module" src="services/consentimento-cookies.js"></script>
 </body>
 </html>
