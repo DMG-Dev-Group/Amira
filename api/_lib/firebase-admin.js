@@ -64,10 +64,33 @@ function credenciais() {
   return obj;
 }
 
-/** Retorna o Firestore (Admin). Inicializa na primeira chamada. */
+/**
+ * credenciais(), mas transforma qualquer falha de configuração (env var
+ * ausente/malformada) num erro JÁ MARCADO como 500 com mensagem pública
+ * clara — nunca deixa isso ser confundido com "token inválido" (401) nem
+ * virar 500 genérico sem explicação na resposta.
+ */
+function credenciaisOuFalhaConfig() {
+  try {
+    return credenciais();
+  } catch (erro) {
+    const e = new Error(`Erro de configuração do servidor: ${erro.message}`);
+    e.status = 500;
+    e.publico = e.message;
+    throw e;
+  }
+}
+
+/**
+ * Retorna o Firestore (Admin). Inicializa na primeira chamada.
+ * pagamento.js e pix.js chamam getDb() ANTES de exigirUsuario() — se
+ * usasse credenciais() cru, uma env var quebrada estourava aqui, sem
+ * .status nem .publico, e virava 500 opaco antes mesmo da autenticação
+ * entrar em cena.
+ */
 function getDb() {
   if (_db) return _db;
-  const app = getApps()[0] || initializeApp({ credential: cert(credenciais()) });
+  const app = getApps()[0] || initializeApp({ credential: cert(credenciaisOuFalhaConfig()) });
   _db = getFirestore(app);
   return _db;
 }
@@ -94,7 +117,9 @@ async function exigirUsuario(idToken) {
   }
   // Conferido por _lib/id-token.js, NÃO pelo firebase-admin/auth: aquele
   // arrasta jose (ESM) e derrubava a função inteira em Node antigo.
-  const projeto = credenciais().project_id;
+  // FORA do try: falha de configuração (env var) não pode ser confundida
+  // com "token inválido" pelo catch logo abaixo.
+  const projeto = credenciaisOuFalhaConfig().project_id;
   try {
     const { uid, email } = await verificarIdToken(String(idToken), projeto);
     return { uid, email };
@@ -125,10 +150,14 @@ async function exigirAdmin(idToken) {
     e.status = 401;
     throw e;
   }
-  // Mesma separação de exigirUsuario: erro de infra não vira 401.
+  // Mesma separação de exigirUsuario: erro de infra não vira 401, e a
+  // busca da credencial fica FORA deste try — senão uma FIREBASE_SERVICE_
+  // ACCOUNT quebrada virava "Credencial inválida ou expirada", escondendo
+  // um problema de configuração atrás de uma mensagem de sessão.
+  const projetoAdmin = credenciaisOuFalhaConfig().project_id;
   let decodificado;
   try {
-    decodificado = await verificarIdToken(String(idToken), credenciais().project_id);
+    decodificado = await verificarIdToken(String(idToken), projetoAdmin);
   } catch (erro) {
     if (/chaves públicas/.test(erro.message)) {
       const e = new Error("Não foi possível validar a credencial agora. Tente em instantes.");

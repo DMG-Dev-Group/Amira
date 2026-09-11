@@ -103,7 +103,10 @@ module.exports = async (req, res) => {
     // Pago costuma citar id de conta e configuração da integração.
     console.error("[/api/pagamento]", erro && erro.message, JSON.stringify(erro && erro.detalhe));
     return res.status(status).json({
-      erro: status === 500 ? "Não foi possível iniciar o pagamento agora." : erro.message
+      // erro.publico é usado quando existe (ex.: erro de configuração
+      // do servidor, marcado em credenciaisOuFalhaConfig) — sem isso, um
+      // 500 explicavel virava texto generico igual a qualquer outro.
+      erro: status === 500 ? (erro.publico || "Não foi possível iniciar o pagamento agora.") : erro.message
     });
   }
 };
