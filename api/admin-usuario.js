@@ -3,7 +3,11 @@
 //
 // POR QUE UMA FUNÇÃO E NÃO O CLIENTE: createUserWithEmailAndPassword do
 // SDK web TROCA a sessão atual pela do usuário recém-criado — o admin
-// seria deslogado a cada cadastro. O Admin SDK cria sem mexer em sessão.
+// seria deslogado a cada cadastro. Criar pelo servidor não mexe em sessão.
+//
+// A criação usa _lib/identity-toolkit.js (API REST), NÃO o
+// firebase-admin/auth: aquele arrasta jose, que é ESM e derrubava esta
+// função inteira no Node da Vercel. Ver o cabeçalho de _lib/firebase-admin.js.
 //
 // SEGURANÇA: o endpoint é público (qualquer um alcança a URL), então quem
 // chama precisa provar que é admin. O cliente manda o próprio ID token do
@@ -15,7 +19,8 @@
 // loja, presencialmente ou por combinação direta, então não faz sentido
 // exigir o link de confirmação que o fluxo público exige.
 
-const { getDb, getAuthAdmin, tokenDaRequisicao, exigirAdmin } = require("./_lib/firebase-admin");
+const { getDb, credenciais, tokenDaRequisicao, exigirAdmin } = require("./_lib/firebase-admin");
+const { criarUsuario, apagarUsuario, testarAcesso } = require("./_lib/identity-toolkit");
 const { FieldValue } = require("firebase-admin/firestore");
 
 const VERSAO_POLITICA_PRIVACIDADE = "2026-09-03";
@@ -75,18 +80,10 @@ module.exports = async (req, res) => {
     // 1) conta no Firebase Auth
     let usuario;
     try {
-      usuario = await getAuthAdmin().createUser({
-        email,
-        password: senha,
-        displayName: nome,
-        emailVerified: true
-      });
+      usuario = await criarUsuario(credenciais(), { email, senha, nome });
     } catch (erro) {
-      // Erro que JÁ se explica (o getAuthAdmin diagnostica o ESM/Node)
-      // sobe intacto. Sem isto a sonda abaixo rodava, falhava pelo MESMO
-      // motivo — o módulo não carregou — e concluía "a service account
-      // não tem permissão", mandando quem lê procurar papel de IAM e API
-      // desativada. Diagnóstico errado custa mais que nenhum.
+      // Erro que já vem explicado sobe intacto — quem lança sabe mais do
+      // que a sonda genérica logo abaixo.
       if (erro && erro.publico) throw erro;
 
       const codigo = erro && erro.code;
@@ -115,26 +112,15 @@ module.exports = async (req, res) => {
       //     (papel de IAM faltando, ou a API Identity Toolkit desligada)
       //   • a sonda passa → o problema é este cadastro específico
       // Uma chamada a mais, só no caminho do erro.
-      //
-      // ⚠️ A sonda só pode acusar IAM quando ela CHEGOU a falar com o
-      // Google. Erro de carregamento de módulo (ERR_REQUIRE_*, MODULE_NOT_
-      // FOUND) acontece antes de qualquer rede: culpar permissão nesse
-      // caso manda a pessoa procurar no lugar errado.
-      const ehFalhaDeModulo = (e) =>
-        typeof e?.code === "string" && (e.code.startsWith("ERR_REQUIRE") || e.code === "MODULE_NOT_FOUND");
-
       let sonda;
       try {
-        await getAuthAdmin().listUsers(1);
-        sonda = "o Auth Admin responde — o problema é este cadastro";
+        await testarAcesso(credenciais());
+        sonda = "a credencial fala com o Google normalmente — o problema é este cadastro";
       } catch (erroSonda) {
-        sonda = ehFalhaDeModulo(erroSonda) || ehFalhaDeModulo(erro)
-          ? "o SDK do Firebase Auth nem carregou nesta função — é a versão do " +
-            "Node na Vercel (Settings > General > Node.js Version > 22.x), " +
-            "NÃO é permissão nem API desativada"
-          : "a service account NÃO consegue usar o Firebase Auth " +
-            `(${erroSonda.code || erroSonda.message}). No Google Cloud > IAM, ` +
-            "confira o papel dela; e em APIs e serviços, se a Identity Toolkit API está ativada";
+        sonda =
+          "a service account não conseguiu nem obter um token do Google " +
+          `(${erroSonda.code || erroSonda.message}). Confira a FIREBASE_SERVICE_ACCOUNT ` +
+          "na Vercel e, no Google Cloud > IAM, o papel dela";
       }
       erro._etapa = "createUser";
       // O código do Firebase é identificador ("auth/alguma-coisa"), não
@@ -175,7 +161,7 @@ module.exports = async (req, res) => {
       // A conta no Auth já existe neste ponto; sem o doc do Firestore ela
       // ficaria órfã (login funciona, perfil não). Desfaz para o admin
       // poder tentar de novo com o mesmo e-mail.
-      try { await getAuthAdmin().deleteUser(usuario.uid); } catch { /* nada a fazer */ }
+      try { await apagarUsuario(credenciais(), usuario.uid); } catch { /* nada a fazer */ }
       erro._etapa = "gravarPerfil";
       erro.publico = `A conta foi criada mas o perfil não gravou, então ela foi desfeita. Código: ${erro.code || "sem código"}.`;
       throw erro;

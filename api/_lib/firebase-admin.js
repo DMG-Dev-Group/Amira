@@ -7,23 +7,21 @@
 // erro estoura DENTRO do handler (vira um 500 com JSON), não no load do
 // módulo (que viraria FUNCTION_INVOCATION_FAILED, difícil de depurar).
 //
-// ⚠️ "firebase-admin/auth" é carregado SÓ quando alguém pede o Auth, e não
-// no topo do arquivo, pelo mesmo motivo. Ele arrasta jwks-rsa → jose, e
-// jose 6 é ESM puro: em Node abaixo de 20.19/22.12 o require() dele
-// derruba o PROCESSO (ERR_REQUIRE_ESM), antes de qualquer try/catch. O
-// resultado era a função morrer sem resposta — 500 sem JSON nenhum.
-//
-// A correção de verdade é o engines.node do package.json (Node 22, que
-// suporta require(ESM)). Este adiamento é a rede de proteção: se voltar a
-// acontecer, quebra dentro do handler, vira JSON com mensagem, e o
-// Firestore continua funcionando mesmo com o Auth quebrado.
+// ⚠️ ESTE ARQUIVO NÃO IMPORTA "firebase-admin/auth", e isso é deliberado.
+// Ele arrasta jwks-rsa → jose, e jose 6 é ESM puro: em Node abaixo de
+// 20.19/22.12 o require() dele derruba o PROCESSO (ERR_REQUIRE_ESM),
+// antes de qualquer try/catch — a função morria sem resposta. Trocar o
+// Node no painel da Vercel não pegou neste projeto, então o código
+// deixou de depender disso:
+//   • conferir ID token  → _lib/id-token.js (jsonwebtoken + chaves do Google)
+//   • criar/apagar conta → _lib/identity-toolkit.js (API REST)
+// Só o Firestore vem do firebase-admin, e ele não passa pelo jose.
 
 const { initializeApp, getApps, cert } = require("firebase-admin/app");
 const { getFirestore } = require("firebase-admin/firestore");
 const { verificarIdToken } = require("./id-token");
 
 let _db = null;
-let _auth = null;
 
 function credenciais() {
   let bruto = process.env.FIREBASE_SERVICE_ACCOUNT;
@@ -72,36 +70,6 @@ function getDb() {
   const app = getApps()[0] || initializeApp({ credential: cert(credenciais()) });
   _db = getFirestore(app);
   return _db;
-}
-
-/**
- * Retorna o Auth (Admin). Usado SÓ para criar/apagar usuário
- * (/api/admin-usuario) — a conferência de ID token não passa mais por
- * aqui, justamente para o pagamento não depender disso.
- */
-function getAuthAdmin() {
-  if (_auth) return _auth;
-  let getAuth;
-  try {
-    ({ getAuth } = require("firebase-admin/auth"));
-  } catch (erro) {
-    const texto =
-      "O Firebase Auth não carregou nesta função. É a versão do Node na " +
-      "Vercel: jose 6 é ESM e só carrega no Node 22. Ajuste em Vercel > " +
-      "Settings > General > Node.js Version (o engines.node do package.json " +
-      `não bastou). Detalhe: ${erro.code || erro.message}`;
-    const e = new Error(texto);
-    e.status = 500;
-    e.code = erro.code;
-    // "publico" é o que as funções mostram na tela. Sem ele, quem trata o
-    // erro lá na frente só vê status 500 e cai na mensagem genérica — foi
-    // o que escondeu esta causa no cadastro de revendedor.
-    e.publico = texto;
-    throw e;
-  }
-  const app = getApps()[0] || initializeApp({ credential: cert(credenciais()) });
-  _auth = getAuth(app);
-  return _auth;
 }
 
 /** Lê o ID token do corpo (campo idToken) ou do header Authorization. */
@@ -190,4 +158,4 @@ function diagnosticoServiceAccount() {
   }
 }
 
-module.exports = { getDb, getAuthAdmin, tokenDaRequisicao, exigirUsuario, exigirAdmin, diagnosticoServiceAccount };
+module.exports = { getDb, credenciais, tokenDaRequisicao, exigirUsuario, exigirAdmin, diagnosticoServiceAccount };
