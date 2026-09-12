@@ -33,6 +33,8 @@ import {
   getDoc,
   getDocs,
   updateDoc,
+  writeBatch,
+  increment,
   query,
   where,
   orderBy,
@@ -242,6 +244,53 @@ export async function buscarPedidoPorId(id) {
 export async function cancelarPedido(pedidoId) {
   const ref = doc(db, COLECAO, pedidoId);
   await updateDoc(ref, { status: STATUS_PEDIDO.CANCELADO });
+}
+
+/**
+ * Admin confirma manualmente um pedido pago fora do site (PIX combinado
+ * pelo WhatsApp — pagamento.metodo == "pix_whatsapp"). É a ÚNICA porta
+ * de entrada para "pago" nesse método: o Mercado Pago só confirma pedido
+ * próprio (pagamento.metodo == "mercadopago"), via webhook. Sem esta
+ * função, um PIX manual conferido pelo admin nunca vira "pago" em lugar
+ * nenhum do sistema — e o estoque, que só desconta na transição pra
+ * "pago", nunca desconta.
+ *
+ * Estoque e status saem no MESMO batch: se o commit falhar, nenhum dos
+ * dois muda. O admin já é quem confere o comprovante antes de clicar —
+ * a função não questiona isso, só grava.
+ *
+ * @param {{id: string, itens: Array<{produtoId:string, quantidade:number, modo:string}>}} pedido
+ */
+export async function marcarPixManualComoPago(pedido) {
+  const batch = writeBatch(db);
+
+  batch.update(doc(db, COLECAO, pedido.id), {
+    status: STATUS_PEDIDO.PAGO,
+    pagoEm: serverTimestamp(),
+    pagamento: { metodo: "pix_whatsapp", status: "aprovado" }
+  });
+
+  // Mesma decisão de campo que estoquePorModo() usa pra ler: campo único
+  // quando existe; senão, o legado do MODO comprado. Precisa ler cada
+  // produto primeiro — increment() só soma, não decide EM QUAL campo.
+  for (const item of pedido.itens || []) {
+    const quantidade = Math.max(0, Math.trunc(Number(item?.quantidade) || 0));
+    if (!item?.produtoId || quantidade === 0) continue;
+
+    const refProduto = doc(db, "produtos", item.produtoId);
+    const snap = await getDoc(refProduto);
+    if (!snap.exists()) continue; // produto removido depois da compra
+
+    const dados = snap.data();
+    if (typeof dados.estoque === "number") {
+      batch.update(refProduto, { estoque: increment(-quantidade) });
+    } else {
+      const campo = item.modo === "atacado" ? "estoqueAtacado" : "estoqueVarejo";
+      batch.update(refProduto, { [campo]: increment(-quantidade) });
+    }
+  }
+
+  await batch.commit();
 }
 
 /**
