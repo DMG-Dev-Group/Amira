@@ -10,7 +10,7 @@
 // faz nada (import seguro em toda página mesmo antes de existir o ID).
 import { consentiuAnalytics } from "./consentimento-cookies.js";
 
-const GA_MEASUREMENT_ID = "";
+const GA_MEASUREMENT_ID = "G-8F6QBS4H1L";
 
 let carregado = false;
 
