@@ -256,7 +256,7 @@ service cloud.firestore {
         // "ref" e "refEm" são OPCIONAIS — ver o bloco de validação deles
         // logo abaixo, perto de criadoEm. Por isso entram no hasOnly mas
         // não no hasAll.
-        request.resource.data.keys().hasOnly(['uidComprador', 'itens', 'temItemAtacado', 'modoEntrega', 'endereco', 'status', 'pagamento', 'criadoEm', 'ref', 'refEm']) &&
+        request.resource.data.keys().hasOnly(['uidComprador', 'itens', 'temItemAtacado', 'modoEntrega', 'endereco', 'status', 'pagamento', 'criadoEm', 'ref', 'refEm', 'observacoes']) &&
         request.resource.data.keys().hasAll(['uidComprador', 'itens', 'temItemAtacado', 'modoEntrega', 'endereco', 'status', 'pagamento', 'criadoEm']) &&
         request.resource.data.uidComprador == request.auth.uid &&
         request.resource.data.itens is list &&
@@ -308,7 +308,15 @@ service cloud.firestore {
           (request.resource.data.ref is string &&
             request.resource.data.ref.size() >= 1 &&
             request.resource.data.ref.size() <= 24 &&
-            request.resource.data.refEm == request.time));
+            request.resource.data.refEm == request.time)) &&
+        // observacoes = nota livre do cliente pra loja, opcional. String
+        // curta como as demais — o texto em si não é validado além do
+        // tamanho, é lido por humano (o admin), não interpretado por
+        // código.
+        (!('observacoes' in request.resource.data) ||
+          (request.resource.data.observacoes is string &&
+            request.resource.data.observacoes.size() >= 1 &&
+            request.resource.data.observacoes.size() <= 500));
 
       // O admin escreve o que precisar. O DONO só pode fazer uma coisa:
       // CANCELAR um pedido que ele mesmo abriu e nunca pagou. A regra é

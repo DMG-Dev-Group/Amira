@@ -31,6 +31,11 @@ function formatarPreco(valor) {
 // Com o Mercado Pago ligado, o webhook confirma o pagamento sozinho e já
 // promove o pedido para "pago" — este selo mostra o que o provedor disse,
 // sem depender de conferência manual do comprovante.
+
+// Selo de "tem observação" na lista — mesmo traço fino (stroke-width
+// 1.7) dos outros ícones do painel, em vez de emoji.
+const IC_NOTA = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9Z"/><path d="M14 3v6h6"/><path d="M9 13h6M9 17h4"/></svg>';
+
 const ROTULO_PAGAMENTO = {
   aprovado: "Pago",
   pendente: "Aguardando",
@@ -95,6 +100,7 @@ function renderizarTabela() {
             <td>
               <strong>${escapeHtml(codigoRetirada(p.id))}</strong>
               ${(totaisCache.get(p.id)?.avisos || []).length > 0 ? '<span class="badge badge-pendente" title="Há avisos — abra os detalhes">⚠</span>' : ""}
+              ${p.observacoes ? `<span class="badge" style="background:color-mix(in srgb, var(--gold) 16%, transparent); color:var(--gold); display:inline-flex; align-items:center; padding:0.2rem 0.35rem;" title="${escapeHtml(p.observacoes)}">${IC_NOTA}</span>` : ""}
             </td>
             <td>${formatarData(p.criadoEm)}</td>
             <td>${(p.itens || []).length} item(ns)</td>
@@ -176,6 +182,13 @@ function abrirDetalhe(pedidoId) {
       <p style="font-size:0.85rem;"><strong>Endereço:</strong> ${escapeHtml(p.endereco.endereco)}, ${escapeHtml(p.endereco.bairro)} — CEP ${escapeHtml(p.endereco.cep)}</p>
     ` : ""}
     ${totais.frete ? `<p style="font-size:0.85rem;"><strong>Frete:</strong> ${formatarPreco(totais.frete.valor)} (${escapeHtml(totais.frete.zona?.nome || "zona não identificada — confirmar")})</p>` : ""}
+
+    ${p.observacoes ? `
+      <div style="margin-top:0.8rem; padding:0.7rem 0.9rem; border:1px solid color-mix(in srgb, var(--gold) 40%, var(--border)); border-left:3px solid var(--gold); border-radius:8px; background:color-mix(in srgb, var(--gold) 7%, transparent);">
+        <p style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-muted); margin-bottom:0.3rem;">Observação do cliente</p>
+        <p style="font-size:0.85rem; white-space:pre-line;">${escapeHtml(p.observacoes)}</p>
+      </div>
+    ` : ""}
 
     <p style="font-size:0.95rem; margin-top:1rem;"><strong>Subtotal:</strong> ${formatarPreco(totais.subtotal)}</p>
     <p style="font-size:1.05rem; color:var(--gold);"><strong>Total (preços atuais do catálogo):</strong> ${formatarPreco(totais.total)}</p>

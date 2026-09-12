@@ -56,6 +56,10 @@ let minimoAtacado = null;
 const CHAVE_PEDIDO_PENDENTE = "amira:pedidoPendente";
 const VALIDADE_PENDENTE_MS = 24 * 60 * 60 * 1000;
 
+// Mesmo limite validado em firestore.rules — mudar um lado sem o outro
+// faz o pedido ser aceito aqui e recusado lá (ou o contrário).
+const MAX_OBSERVACOES = 500;
+
 function lerPedidoPendente() {
   try {
     const bruto = localStorage.getItem(CHAVE_PEDIDO_PENDENTE);
@@ -191,6 +195,12 @@ function renderizarCarrinho() {
         ` : ""}
 
         <div id="campos-entrega"></div>
+
+        <div class="checkout-campo">
+          <label for="checkout-observacoes">Observações (opcional)</label>
+          <textarea id="checkout-observacoes" rows="3" maxlength="${MAX_OBSERVACOES}"
+            placeholder="Ex.: embrulhar pra presente, ligar antes de entregar, trocar a cor se não tiver a X…"></textarea>
+        </div>
 
         <h2 class="carrinho-resumo__titulo">Resumo</h2>
         <div class="resumo-linha">
@@ -515,6 +525,8 @@ function configurarBotaoFinalizar() {
 
     if (!(await validarAntesDeFinalizar())) return;
 
+    const observacoes = document.getElementById("checkout-observacoes")?.value.trim().slice(0, MAX_OBSERVACOES) || "";
+
     btn.disabled = true;
     btn.textContent = "Criando pedido...";
     const fimCarregando = carregando("Criando seu pedido…");
@@ -524,7 +536,8 @@ function configurarBotaoFinalizar() {
         uidComprador: usuarioAtual.uid,
         itens: itensAtuais,
         modoEntrega,
-        endereco
+        endereco,
+        observacoes
       });
 
       // O carrinho NÃO é esvaziado aqui: se a pessoa desistir no meio do

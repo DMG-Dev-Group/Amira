@@ -23,6 +23,9 @@
 //                 (ver services/indicador.js) e o instante em que o
 //                 pedido foi criado com ele. Sem link, os dois somem do
 //                 documento — não viram "" nem null.
+//   observacoes — OPCIONAL: nota livre do cliente pra loja ("embrulhar
+//                 pra presente", "ligar antes de entregar"…). Vazia
+//                 some do documento, igual a ref/refEm.
 // }
 
 import { db } from "./firebase-config.js";
@@ -55,6 +58,9 @@ export const STATUS_PEDIDO = {
 
 const MAX_ITENS = 30;
 const MAX_QTD_POR_ITEM = 500;
+// Mesmo limite do <textarea maxlength> em js/carrinho-checkout.js — mudar
+// um lado sem o outro faz o pedido ser aceito ali e recusado aqui.
+const MAX_OBSERVACOES = 500;
 
 /**
  * Cria um pedido no Firestore com APENAS identificadores e quantidades —
@@ -62,10 +68,11 @@ const MAX_QTD_POR_ITEM = 500;
  * @param {{ uidComprador: string,
  *           itens: Array<{produtoId: string, quantidade: number, modo: string}>,
  *           modoEntrega: "entrega"|"retirada",
- *           endereco: {cep, endereco, bairro}|null }} dados
+ *           endereco: {cep, endereco, bairro}|null,
+ *           observacoes?: string }} dados
  * @returns {Promise<{id: string}>}
  */
-export async function criarPedido({ uidComprador, itens, modoEntrega, endereco }) {
+export async function criarPedido({ uidComprador, itens, modoEntrega, endereco, observacoes }) {
   const itensLimpos = (itens || [])
     .slice(0, MAX_ITENS)
     .map((i) => ({
@@ -98,6 +105,12 @@ export async function criarPedido({ uidComprador, itens, modoEntrega, endereco }
     corpo.ref = ref;
     corpo.refEm = serverTimestamp();
   }
+
+  // Nota livre do cliente pra loja. Vazia não entra no documento — o
+  // painel admin já trata "campo ausente" como "sem observação", não
+  // precisa de uma segunda forma de dizer a mesma coisa (string vazia).
+  const notaLimpa = String(observacoes || "").trim().slice(0, MAX_OBSERVACOES);
+  if (notaLimpa) corpo.observacoes = notaLimpa;
 
   return addDoc(colecaoRef, corpo);
 }
