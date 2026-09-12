@@ -36,6 +36,9 @@ const IC_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 const IC_PIX = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6.7" y="6.7" width="10.6" height="10.6" rx="2.4" transform="rotate(45 12 12)"/></svg>';
 const IC_CARTAO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2.5"/><path d="M2 10h20"/><path d="M6 15h4"/></svg>';
 const IC_LOJA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9 4.5 4h15L21 9"/><path d="M4 9v11h16V9"/><path d="M9 20v-6h6v6"/></svg>';
+// Mesmo ícone usado em js/comprovante.js — mantém o traço do WhatsApp
+// consistente entre as duas páginas.
+const IC_ZAP = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.87 9.87 0 0 0 4.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2m0 1.67c2.2 0 4.26.86 5.82 2.41a8.2 8.2 0 0 1 2.41 5.83c0 4.54-3.7 8.23-8.24 8.23a8.2 8.2 0 0 1-4.19-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.2 8.2 0 0 1-1.26-4.38c0-4.54 3.7-8.23 8.25-8.23M8.53 7.33c-.16 0-.43.06-.65.31-.22.25-.87.85-.87 2.07 0 1.22.89 2.39 1 2.56.14.17 1.72 2.63 4.18 3.69.58.25 1.04.4 1.4.51.58.19 1.11.16 1.53.1.47-.07 1.44-.59 1.64-1.16.2-.57.2-1.05.14-1.16-.06-.1-.22-.16-.47-.28-.24-.12-1.44-.71-1.66-.79-.23-.08-.39-.12-.56.12-.16.25-.63.79-.77.95-.14.17-.29.19-.53.07-.25-.13-1.06-.39-2-1.23-.74-.66-1.24-1.47-1.38-1.72-.14-.25-.02-.38.11-.5.11-.12.25-.29.37-.44.12-.14.16-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.77-1.83-.2-.48-.4-.42-.55-.42-.14 0-.3-.02-.46-.02"/></svg>';
 
 function formatarPreco(valor) {
   return (valor || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -94,6 +97,9 @@ function blocoPixManual(pedido, config, total) {
 
 function blocoPago(pedido) {
   const retirada = pedido?.modoEntrega === "retirada";
+  const linkZap = `https://wa.me/${WHATSAPP_LOJA}?text=${encodeURIComponent(
+    `Olá! Fiz o pedido ${codigoRetirada(pedido.id)} e quero combinar a retirada.`
+  )}`;
   return `
     <div class="pc-sucesso">
       <span class="pc-sucesso__icone">${IC_CHECK}</span>
@@ -112,6 +118,9 @@ function blocoPago(pedido) {
     ` : ""}
     <a href="comprovante.html?id=${encodeURIComponent(pedido.id)}" class="btn-primary pc-btn-bloco">
       Ver comprovante do pedido
+    </a>
+    <a href="${linkZap}" target="_blank" rel="noopener" class="pc-btn-zap pc-btn-bloco">
+      <span class="pc-btn-zap__ic">${IC_ZAP}</span> Conversar com loja para combinar retirada
     </a>
   `;
 }

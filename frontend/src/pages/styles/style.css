@@ -2467,6 +2467,39 @@ body[data-theme="light"] .social-btn {
   border-radius: 10px;
 }
 
+/* Botão de WhatsApp na confirmação de pedido — cor própria da marca
+   (não usa --brand) pra se destacar como um canal diferente do resto
+   do fluxo de compra. */
+.pc-btn-zap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #fff;
+  background: #25D366;
+  padding: 0.9rem 1.5rem;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.pc-btn-zap:hover {
+  background: #1ebe5b;
+}
+
+.pc-btn-zap__ic {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.pc-btn-zap__ic svg { width: 100%; height: 100%; display: block; }
+
 /* Código de retirada na confirmação do pedido (retirada na loja) */
 .pc-retirada {
   text-align: center;
