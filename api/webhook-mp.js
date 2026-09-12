@@ -9,7 +9,9 @@
 //     passo 2 já garante que o status é verdadeiro, mas sem a assinatura
 //     qualquer pessoa podia disparar esta função com data.id arbitrário e
 //     usá-la como bomba de chamadas ao MP e de escritas no Firestore.
-//  4. Atualiza pedidos/{id}.pagamento.status via Admin SDK.
+//  4. Atualiza pedidos/{id}.pagamento.status via Admin SDK e, na
+//     PRIMEIRA vez que o pedido vira "pago", desconta o estoque dos
+//     itens comprados (_lib/estoque.js) — os dois no mesmo batch.
 //
 // A reconciliação manual (GET ?pedidoId=) exige token de ADMIN: ela lê o
 // pedido e devolve o status, então na mão de qualquer um era um oráculo
@@ -20,6 +22,7 @@
 const crypto = require("crypto");
 const { getDb, tokenDaRequisicao, exigirAdmin } = require("./_lib/firebase-admin");
 const { buscarPagamento } = require("./_lib/mercadopago");
+const { descontarEstoque } = require("./_lib/estoque");
 const { FieldValue } = require("firebase-admin/firestore");
 
 function traduzStatus(mp) {
@@ -116,7 +119,8 @@ module.exports = async (req, res) => {
     }
 
     const novoStatus = traduzStatus(pagamento.status);
-    const ref = getDb().collection("pedidos").doc(String(pedidoId));
+    const db = getDb();
+    const ref = db.collection("pedidos").doc(String(pedidoId));
 
     const atualizacao = {
       pagamento: {
@@ -132,16 +136,26 @@ module.exports = async (req, res) => {
     // o pedido já entra como "pago" no painel. Só promovemos a partir de
     // "aguardando_pagamento" — se o admin já avançou (preparando, enviado…),
     // o status dele é preservado.
+    //
+    // O desconto de estoque mora NESTE MESMO guard, de propósito: é o que
+    // já garante "só a primeira vez que vira pago" (o MP reenvia a mesma
+    // notificação em retry — sem essa trava, cada reenvio descontaria a
+    // venda de novo). Pedido e estoque saem no MESMO batch: se o commit
+    // falhar, nenhum dos dois muda — não existe estado "pago mas sem
+    // descontar" nem o contrário.
+    const batch = db.batch();
     if (novoStatus === "aprovado") {
       const snap = await ref.get();
-      const statusAtual = snap.exists ? snap.data().status : null;
-      if (!statusAtual || statusAtual === "aguardando_pagamento") {
+      const dadosPedido = snap.exists ? snap.data() : null;
+      if (!dadosPedido || dadosPedido.status === "aguardando_pagamento") {
         atualizacao.status = "pago";
         atualizacao.pagoEm = FieldValue.serverTimestamp();
+        if (dadosPedido) await descontarEstoque(db, batch, dadosPedido.itens);
       }
     }
 
-    await ref.set(atualizacao, { merge: true });
+    batch.set(ref, atualizacao, { merge: true });
+    await batch.commit();
 
     console.log(
       `[/api/webhook-mp] pedido ${pedidoId} -> pagamento ${novoStatus}` +

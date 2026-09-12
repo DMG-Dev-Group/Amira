@@ -1,7 +1,7 @@
 import { protegerPaginaAdmin } from "./admin-auth.js";
 import { confirmar, toast } from "../../services/ui-feedback.js";
 import { escapeHtml } from "../../services/seguranca.js";
-import { derivarTotaisDePedidos, codigoRetirada, tomDoStatus } from "../../services/pedidos.js";
+import { derivarTotaisDePedidos, codigoRetirada, tomDoStatus, marcarPixManualComoPago } from "../../services/pedidos.js";
 import { db } from "../../services/firebase-config.js";
 import {
   collection,
@@ -49,6 +49,12 @@ function badgePagamento(pedido) {
 // depois disso vira caso de estorno, não de cancelamento.
 function podeCancelar(pedido) {
   return pedido.status !== "cancelado" && pedido.pagamento?.status !== "aprovado";
+}
+
+// Só existe para PIX combinado pelo WhatsApp — Mercado Pago (cartão ou
+// PIX pelo site) confirma sozinho, pelo webhook, nunca na mão do admin.
+function podeConfirmarPixManual(pedido) {
+  return pedido.status === "aguardando_pagamento" && pedido.pagamento?.metodo === "pix_whatsapp";
 }
 
 function formatarData(timestamp) {
@@ -189,6 +195,11 @@ function abrirDetalhe(pedidoId) {
          href="../comprovante.html?id=${encodeURIComponent(p.id)}" target="_blank" rel="noopener">
         Abrir comprovante
       </a>
+      ${podeConfirmarPixManual(p) ? `
+        <button type="button" class="admin-btn admin-btn-primary admin-btn-sm" id="btn-confirmar-pix-manual" data-id="${escapeHtml(p.id)}">
+          Confirmar pagamento recebido
+        </button>
+      ` : ""}
       ${podeCancelar(p) ? `
         <button type="button" class="admin-btn admin-btn-danger admin-btn-sm" id="btn-cancelar-pedido" data-id="${escapeHtml(p.id)}">
           Cancelar pedido
@@ -209,6 +220,37 @@ function abrirDetalhe(pedidoId) {
     if (!ok) return;
     await atualizarStatus(p.id, "cancelado");
     modal.style.display = "none";
+  });
+
+  // Só existe para PIX combinado pelo WhatsApp — o Mercado Pago confirma
+  // o próprio sozinho, pelo webhook. Sem este botão, um PIX manual
+  // conferido pelo admin nunca virava "pago" em lugar nenhum do sistema,
+  // e o estoque (que só desconta nessa transição) nunca descontava.
+  const btnConfirmarPix = modalConteudo.querySelector("#btn-confirmar-pix-manual");
+  btnConfirmarPix?.addEventListener("click", async () => {
+    const ok = await confirmar({
+      titulo: "Confirmar pagamento deste pedido?",
+      descricao: `Marca o pedido ${codigoRetirada(p.id)} como pago e desconta o estoque dos itens agora. Só clique depois de conferir o PIX recebido.`,
+      confirmar: "Confirmar pagamento"
+    });
+    if (!ok) return;
+    btnConfirmarPix.disabled = true;
+    btnConfirmarPix.textContent = "Confirmando...";
+    try {
+      await marcarPixManualComoPago(p);
+      p.status = "pago";
+      p.pagamento = { ...p.pagamento, status: "aprovado" };
+      const cache = pedidosCache.find((x) => x.id === p.id);
+      if (cache) { cache.status = "pago"; cache.pagamento = p.pagamento; }
+      renderizarTabela();
+      toast("Pagamento confirmado e estoque descontado.", "sucesso");
+      modal.style.display = "none";
+    } catch (erro) {
+      console.error(erro);
+      toast("Não foi possível confirmar agora. Tente de novo.", "erro");
+      btnConfirmarPix.disabled = false;
+      btnConfirmarPix.textContent = "Confirmar pagamento recebido";
+    }
   });
 
   modal.style.display = "flex";
