@@ -263,7 +263,8 @@
   margin-bottom: 0.4rem;
 }
 
-.checkout-campo input {
+.checkout-campo input,
+.checkout-campo textarea {
   width: 100%;
   padding: 0.65rem 0.8rem;
   font-family: 'Jost', sans-serif;
@@ -275,7 +276,14 @@
   outline: none;
 }
 
-.checkout-campo input:focus {
+.checkout-campo textarea {
+  resize: vertical;
+  min-height: 4.2rem;
+  line-height: 1.5;
+}
+
+.checkout-campo input:focus,
+.checkout-campo textarea:focus {
   border-color: var(--gold);
 }
 
