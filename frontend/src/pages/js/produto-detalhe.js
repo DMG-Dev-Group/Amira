@@ -27,6 +27,54 @@ const produtoId = params.get("id");
 const conteudo = document.getElementById("produto-conteudo");
 const trilhaNome = document.getElementById("trilha-nome");
 
+const BASE_URL = "https://amirabeauty.com.br";
+const IMAGEM_PADRAO = `${BASE_URL}/images/amiraL.png`;
+
+// SEO: título, descrição, canonical, Open Graph e o schema.org Product só
+// existem de verdade DEPOIS que o produto carrega (a página é montada em
+// JS puro, sem servidor). Os placeholders do <head> cobrem quem não
+// executa JS (ex.: alguns crawlers de prévia de link); isto aqui refina
+// para quem executa — inclusive o Googlebot, que roda JS normalmente.
+function atualizarSeo(p) {
+  const descricao = String(p.descricao || "").trim().slice(0, 160) ||
+    `${p.nome} na Amira — retirada no Monumental Shopping, São Luís/MA.`;
+  // Foto de produto pode ser um data: URI (upload local, sem Storage) —
+  // isso não serve como og:image/JSON-LD (crawler externo não decodifica
+  // data: URI), então só usa a foto real se for uma URL http(s) mesmo.
+  const imagem = /^https?:\/\//i.test(p.imagemURL || "") ? p.imagemURL : IMAGEM_PADRAO;
+  const url = `${BASE_URL}/produto.html?id=${encodeURIComponent(p.id)}`;
+
+  document.getElementById("meta-descricao")?.setAttribute("content", descricao);
+  document.getElementById("link-canonical")?.setAttribute("href", url);
+  document.getElementById("og-titulo")?.setAttribute("content", `${p.nome} — Amira`);
+  document.getElementById("og-descricao")?.setAttribute("content", descricao);
+  document.getElementById("og-url")?.setAttribute("content", url);
+  document.getElementById("og-imagem")?.setAttribute("content", imagem);
+
+  const disponivel = disponivelNoModo(p, "varejo") && estoquePorModo(p) > 0;
+  const preco = infoPreco(p, "varejo");
+  const script = document.createElement("script");
+  script.type = "application/ld+json";
+  script.id = "produto-jsonld";
+  script.textContent = JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: p.nome,
+    description: descricao,
+    image: imagem,
+    sku: p.sku || p.id,
+    offers: {
+      "@type": "Offer",
+      url,
+      priceCurrency: "BRL",
+      price: preco.precoFinal,
+      availability: disponivel ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
+    }
+  });
+  document.getElementById("produto-jsonld")?.remove();
+  document.head.appendChild(script);
+}
+
 let usuarioAtual = null;
 let produtoAtual = null;
 let camadasCache = [];
@@ -128,6 +176,7 @@ async function carregarProduto() {
   const p = produtoAtual;
   trilhaNome.textContent = p.nome;
   document.title = `${p.nome} — Amira`;
+  atualizarSeo(p);
 
   if (consentiuAnalytics()) registrarVisita(`produto:${p.id}`, "produto");
 
