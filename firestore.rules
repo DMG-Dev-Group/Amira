@@ -1,5 +1,38 @@
 rules_version = '2';
 
+// =============================================================================
+//  REGRAS CANONICAS DO PROJETO  flora-5754a
+//  Este arquivo cobre O SITE (Flora/Amira) E O SISTEMA INTERNO (PDV/caixa/
+//  comissoes). Os dois compartilham o mesmo Firestore.
+//
+//  >>> ESTA E A UNICA COPIA QUE PODE SER PUBLICADA <<<
+//  Deploy sempre a partir deste repo:
+//      firebase deploy --only firestore:rules,firestore:indexes
+//
+//  HISTORICO: em 2026-09-10 e de novo em 2026-09-12 um deploy feito a partir
+//  do repo do SITE (~/Documentos/Amira) publicou uma versao SEM a secao do
+//  sistema interno -> `contadores/caixa/vendas/comissoes/indicadores` e o
+//  acesso de VENDEDOR a `pedidos`/`usuarios` cairam no bloqueio padrao
+//  (paginas do sistema interno carregavam mas ficavam vazias/permission-
+//  denied pra quem loga como vendedor). Cada vez que o site evolui as
+//  proprias regras, alguem precisa reaplicar as mudancas AQUI, na secao do
+//  sistema interno, antes de publicar — nunca publicar direto do repo do
+//  site sem antes conferir contra este arquivo.
+//
+//  2026-09-12 (2): remesclado de novo — a copia que estava no repo do site
+//  tinha voltado a divergir desta (via PRs que mexeram nas rules sem
+//  conferir aqui primeiro: faltavam `contadores`, a validacao mais estrita
+//  de `caixa`/`vendas`, `ehVendedor()`/`ehStaff()`, o acesso de vendedor a
+//  `produtos` (baixa de estoque no PDV), a `pedidos`/`usuarios` (mesmo bug
+//  do historico acima) e `integracoes`). Esta versao reaplica tudo isso
+//  sobre a base ATUAL do site — e soma DUAS coisas que so existem no repo
+//  do site e não podem ser perdidas de novo: `metricas/{docId}` (contagem
+//  de visitas, usada por services/metricas.js e services/
+//  registrar-visita-auto.js em toda pagina publica) e `avaliacoesLoja/
+//  {docId}` (avaliacao da LOJA via QR code do balcao fisico, sem login —
+//  ver admin/avaliacoes-loja.html).
+// =============================================================================
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -16,37 +49,36 @@ service cloud.firestore {
       return estaLogado() && request.auth.token.email_verified == true;
     }
 
-    function ehAdmin() {
+    function temPerfil() {
       return estaLogado() &&
-        exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.role == "admin";
+        exists(/databases/$(database)/documents/usuarios/$(request.auth.uid));
     }
 
-    // ── EQUIPE DA LOJA (sistema interno) ─────────────────────────────
-    // O MESMO banco atende dois sistemas: a loja (amira-phi.vercel.app) e
-    // o sistema interno (flora-5754a-interno.web.app), que usa o mesmo
-    // projeto e o mesmo usuarios/{uid}. Lá o papel "vendedor" existe e é
-    // tão válido quanto "admin" — só com menos alcance.
-    //
-    // ⚠️ Estas rules são a UNIÃO dos dois sistemas. Tirar uma coleção
-    // daqui porque "a loja não usa" derruba o sistema interno, e foi
-    // exatamente isso que aconteceu com "caixa" e "vendas": elas não
-    // estavam listadas e caíam no bloqueio padrão lá embaixo.
-    function ehEquipe() {
-      return estaLogado() &&
-        exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
-        (get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.role == "admin" ||
-         get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.role == "vendedor") &&
-        // o sistema interno barra quem está inativo; a regra faz o mesmo,
-        // senão desativar alguém lá não tira o acesso ao banco
-        get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.get("ativo", true) != false;
+    function perfilData() {
+      return get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data;
+    }
+
+    function ehAdmin() {
+      return temPerfil() && perfilData().role == "admin";
+    }
+
+    // Vendedor do SISTEMA interno (loja fisica). Precisa estar ativo.
+    function ehVendedor() {
+      return temPerfil() &&
+        perfilData().role == "vendedor" &&
+        perfilData().get("ativo", false) == true;
+    }
+
+    // Funcionario da loja: admin (sempre) ou vendedor ativo.
+    function ehStaff() {
+      return ehAdmin() || ehVendedor();
     }
 
     function ehRevendedorAprovado() {
       return estaLogado() &&
         exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
-        (get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.get("statusRevendedor", "") == "aprovado" ||
-         get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.role == "admin");
+        (perfilData().get("statusRevendedor", "") == "aprovado" ||
+         perfilData().role == "admin");
     }
 
     // Modo atacado ligado? Sem o campo (ou sem o documento), o padrão é
@@ -79,16 +111,23 @@ service cloud.firestore {
     // campos arbitrários / blobs gigantes no próprio perfil (abuso de
     // cota) ou de forjar dados que o painel admin exibe (ex.: selo MEI).
     // O tamanho das strings livres também é limitado.
+    //
+    // "ativo"/"comissao" sao campos do SISTEMA INTERNO — entram na
+    // allowlist porque o documento e o mesmo: sem eles, um vendedor que
+    // tambem e cliente nao conseguia salvar o proprio perfil na loja (o
+    // hasOnly() reprovava so por ter esses campos ja gravados no doc,
+    // mesmo sem o dono estar mexendo neles). Quem PODE mudar o VALOR deles
+    // e so o admin — o update do dono trava isso abaixo (compara valor
+    // antigo == novo).
+    //
+    // O SISTEMA interno cria contas de equipe (role "vendedor"/"admin")
+    // pela instância primária já logada como admin — coberto pelo branch
+    // `allow create: if ehAdmin()`.
     function chavesUsuarioPermitidas() {
       return ['nome', 'email', 'role', 'tipoConta', 'telefone', 'dataNascimento',
         'fotoURL', 'aceiteTermos', 'aceiteMarketing', 'consentimentoEm',
         'consentimentoVersao', 'criadoEm', 'atualizadoEm',
         'cnpj', 'razaoSocial', 'provavelMEI', 'porteEmpresa', 'statusRevendedor',
-        // Campos do SISTEMA INTERNO. Entram na allowlist porque o
-        // documento é o mesmo: sem eles, um vendedor que também é cliente
-        // não conseguia salvar o próprio perfil na loja — o hasOnly()
-        // reprovava por causa de campos que ele nem editou.
-        // Quem PODE mudá-los é só o admin (ver o update do dono abaixo).
         'ativo', 'comissao'];
     }
     function stringsUsuarioNoLimite(d) {
@@ -101,7 +140,12 @@ service cloud.firestore {
         (!('consentimentoVersao' in d) || (d.consentimentoVersao is string && d.consentimentoVersao.size() <= 20));
     }
     match /usuarios/{uid} {
-      allow read: if ehDono(uid) || ehAdmin();
+      // Vendedor le perfil de clientes pra conferir nome/telefone na tela de
+      // Pedidos (confirmacao de retirada/entrega) — mesmo nivel de confianca
+      // ja dado a ele em produtos/pedidos.
+      allow read: if ehDono(uid) || ehAdmin() || ehVendedor();
+
+      // Cliente do site cria o próprio perfil.
       allow create: if ehDono(uid) &&
         emailVerificado() &&
         request.resource.data.keys().hasOnly(chavesUsuarioPermitidas()) &&
@@ -115,12 +159,20 @@ service cloud.firestore {
         stringsUsuarioNoLimite(request.resource.data) &&
         (!("statusRevendedor" in request.resource.data) ||
           request.resource.data.statusRevendedor == "pendente");
+
+      // Admin cria conta de equipe do SISTEMA (vendedor/admin). O uid é o
+      // do Auth recém-criado (instância secundária), gravado pelo admin
+      // logado.
+      allow create: if ehAdmin() &&
+        request.resource.data.role in ['vendedor', 'admin'];
+
+      // Cliente do site edita o próprio perfil (allowlist, não mexe em role
+      // nem se auto-aprova como revendedor). "ativo"/"comissao" (sistema
+      // interno) so podem ser CARREGADOS, nunca mudados por aqui — senao um
+      // vendedor se reativaria sozinho ou inventaria a propria comissao.
       allow update: if ehDono(uid) &&
         request.resource.data.keys().hasOnly(chavesUsuarioPermitidas()) &&
         request.resource.data.role == resource.data.role &&
-        // "ativo" e "comissao" são do sistema interno: o dono pode
-        // CARREGAR os campos, nunca mudá-los. Senão um vendedor se
-        // reativaria sozinho ou inventaria a própria comissão.
         request.resource.data.get('ativo', true) == resource.data.get('ativo', true) &&
         request.resource.data.get('comissao', {}) == resource.data.get('comissao', {}) &&
         request.resource.data.get("aceiteTermos", true) == true &&
@@ -135,11 +187,9 @@ service cloud.firestore {
           (request.resource.data.get("statusRevendedor", "") == "pendente" &&
             resource.data.get("statusRevendedor", "") != "aprovado")
         );
-      // O sistema interno cria a conta do vendedor e grava o perfil dele
-      // logo em seguida, com o admin logado — ou seja, um CREATE num uid
-      // que não é o do próprio admin. Sem esta linha, cadastrar vendedor
-      // quebra (as regras acima só deixam a pessoa criar o PRÓPRIO perfil).
-      allow create: if ehAdmin();
+
+      // Admin edita/gerencia qualquer perfil (inclui ativo/comissao/role de
+      // equipe do sistema).
       allow update: if ehAdmin();
       allow delete: if ehAdmin();
     }
@@ -174,11 +224,16 @@ service cloud.firestore {
 
     // ── produtos/{produtoId} ─────────────────────────────────────────────
     // Qualquer pessoa (logada ou não) pode VER o catálogo.
-    // Só admin pode criar, editar ou remover produtos. Editar preço/
-    // desconto/estoque por aqui é o fluxo autorizado da loja.
+    // Só admin cria/edita/remove — MENOS a baixa de estoque no PDV: um
+    // vendedor ativo pode alterar SOMENTE os campos de estoque (a venda em
+    // si vai para a coleção `vendas`).
     match /produtos/{produtoId} {
       allow read: if true;
-      allow write: if ehAdmin();
+      allow create, delete: if ehAdmin();
+      allow update: if ehAdmin()
+        || (ehVendedor()
+            && request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['estoqueVarejo', 'estoqueAtacado', 'atualizadoEm']));
     }
 
     // ── camadas/{camadaId} ──────────────────────────────────────────────
@@ -211,7 +266,8 @@ service cloud.firestore {
 
     // ── configuracoes/{docId} ────────────────────────────────────────────
     // Textos e ajustes globais da loja (ex: mínimo de atacado por
-    // carrinho, dados de pagamento PIX, imagens do carrossel da home).
+    // carrinho, dados de pagamento PIX, imagens do carrossel da home) E
+    // config do sistema interno (configuracoes/sistema, /indicadores).
     // Públicos para leitura, só admin edita.
     match /configuracoes/{docId} {
       allow read: if true;
@@ -248,14 +304,21 @@ service cloud.firestore {
     // shape de cada elemento de "itens" não é validável em rules (sem
     // loops). A função /api/pagamento recalcula o total no servidor antes
     // de cobrar; no PIX manual, a conferência humana barra adulteração.
+    //
+    // `ref`/`refEm` (opcionais) = código do indicador do link ?ref= do
+    // site, capturado no navegador do cliente ate a compra, para a
+    // apuração de comissão de indicação (feita depois derivando totais de
+    // `produtos`). Tamanho <=24 porque indicadores.js trunca o codigo
+    // nesse tamanho antes de gerar o link.
+    //
+    // `observacoes` (opcional) = nota livre do cliente pra loja. String
+    // curta como as demais — o texto em si não é validado além do
+    // tamanho, é lido por humano (o admin), não interpretado por código.
     match /pedidos/{pedidoId} {
       allow read: if estaLogado() &&
-        (resource.data.uidComprador == request.auth.uid || ehAdmin());
+        (resource.data.uidComprador == request.auth.uid || ehAdmin() || ehVendedor());
       allow create: if estaLogado() &&
         emailVerificado() &&
-        // "ref" e "refEm" são OPCIONAIS — ver o bloco de validação deles
-        // logo abaixo, perto de criadoEm. Por isso entram no hasOnly mas
-        // não no hasAll.
         request.resource.data.keys().hasOnly(['uidComprador', 'itens', 'temItemAtacado', 'modoEntrega', 'endereco', 'status', 'pagamento', 'criadoEm', 'ref', 'refEm', 'observacoes']) &&
         request.resource.data.keys().hasAll(['uidComprador', 'itens', 'temItemAtacado', 'modoEntrega', 'endereco', 'status', 'pagamento', 'criadoEm']) &&
         request.resource.data.uidComprador == request.auth.uid &&
@@ -293,38 +356,37 @@ service cloud.firestore {
         request.resource.data.pagamento.metodo in ['pix_whatsapp', 'mercadopago'] &&
         request.resource.data.pagamento.status == 'pendente' &&
         request.resource.data.criadoEm == request.time &&
-        // ref = código do indicador do link ?ref= do site (capturado em
-        // services/indicador.js, persistido no navegador do cliente até
-        // a compra). Os dois só existem JUNTOS: refEm prova que foi
-        // gravado agora, no mesmo create — não um valor antigo reusado.
-        // Não dá para conferir aqui que o código corresponde a um
-        // indicador cadastrado de verdade (indicadores/{id} é uma
-        // coleção com ID automático, "codigo" é só um campo dentro do
-        // documento — rules não fazem query, só get() por caminho
-        // conhecido). Um código inventado ou de indicador já apagado
-        // simplesmente não aparece na apuração do painel; o próprio
-        // indicadores.js já trata isso ("código sem cadastro").
+        // ref/refEm só existem JUNTOS: refEm prova que foi gravado agora,
+        // no mesmo create — não um valor antigo reusado.
         ((!('ref' in request.resource.data) && !('refEm' in request.resource.data)) ||
           (request.resource.data.ref is string &&
             request.resource.data.ref.size() >= 1 &&
             request.resource.data.ref.size() <= 24 &&
             request.resource.data.refEm == request.time)) &&
-        // observacoes = nota livre do cliente pra loja, opcional. String
-        // curta como as demais — o texto em si não é validado além do
-        // tamanho, é lido por humano (o admin), não interpretado por
-        // código.
         (!('observacoes' in request.resource.data) ||
           (request.resource.data.observacoes is string &&
             request.resource.data.observacoes.size() >= 1 &&
             request.resource.data.observacoes.size() <= 500));
 
-      // O admin escreve o que precisar. O DONO só pode fazer uma coisa:
+      // O admin escreve o que precisar. O VENDEDOR (painel interno, tela
+      // Pedidos) só pode mexer no status e nos campos de controle de estoque
+      // que a propria tela escreve — nao pode tocar em itens, endereco,
+      // pagamento, etc. Tambem nao pode desfazer uma entrega ja confirmada
+      // (entregue -> cancelado): isso vira estorno de uma venda ja espelhada
+      // em `vendas` (canal 'site'), e so admin desfaz venda concluida — mesmo
+      // criterio ja usado em `vendas`. O DONO só pode fazer uma coisa:
       // CANCELAR um pedido que ele mesmo abriu e nunca pagou. A regra é
       // deliberadamente estreita — só a chave "status" pode mudar, só para
       // 'cancelado', só saindo de 'aguardando_pagamento' e só enquanto o
       // provedor não aprovou. Depois de pago vira caso de estorno, não de
       // cancelamento, e aí é o admin quem resolve.
       allow update: if ehAdmin() ||
+        (ehVendedor() &&
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['status', 'atualizadoEm', 'estoqueBaixado', 'estoqueBaixadoEm', 'estoqueDevolvidoEm']) &&
+          request.resource.data.status in
+            ['aguardando_pagamento', 'pago', 'preparando', 'enviado', 'entregue', 'cancelado'] &&
+          !(resource.data.status == 'entregue' && request.resource.data.status == 'cancelado')) ||
         (estaLogado() &&
           resource.data.uidComprador == request.auth.uid &&
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']) &&
@@ -453,53 +515,91 @@ service cloud.firestore {
       allow update, delete: if ehAdmin();
     }
 
-    // ── indicadores/{docId} — SISTEMA INTERNO ────────────────────────────
-    // Cadastro de "indicadores" (afiliados/parceiros com link ?ref=). A
-    // página é 100% admin no sistema interno (requireAuth({roles:["admin"]})),
-    // então a regra espelha isso: nada aqui é lido nem escrito por vendedor.
-    //
-    // ⚠️ Igual a "caixa"/"vendas" (ver bloco abaixo): não estava listada e
-    // caía no bloqueio padrão, quebrando a página inteira. Só passou batido
-    // no levantamento anterior porque indicadores.js e comissoes.js não são
-    // importadas por nenhum outro arquivo do sistema interno — só linkadas
-    // pelo menu, então o rastreamento por import nunca chegou nelas.
-    match /indicadores/{docId} {
-      allow read, write: if ehAdmin();
+    // =========================================================================
+    //  SISTEMA INTERNO (PDV / caixa / comissoes / indicadores)
+    //  Colecoes usadas SO pelo app interno (sistema-amira). A loja NAO toca
+    //  nestas — ver comentario em cada bloco. NUNCA remover esta secao num
+    //  deploy feito a partir do repo do site: ver aviso no topo do arquivo.
+    // =========================================================================
+
+    // ── contadores/{doc} ────────────────────────────────────────────────
+    // Numeracao sequencial das vendas da loja fisica.
+    match /contadores/{doc} {
+      allow read: if ehStaff();
+      allow write: if ehStaff();
     }
 
-    // ── comissoes/{periodo} e comissoes/{periodo}/vendedores/{vendedorUid} ──
-    // Fechamento de comissão por período, mesmo sistema interno, mesmo bug.
-    // O vendedor só pode ler o PRÓPRIO fechamento — é dado de renda, não
-    // dá para um vendedor ver a comissão do colega. Fechar ("Fechar") e
-    // marcar como pago ("Pago") são ações exclusivas do admin na UI, e a
-    // regra faz valer isso independente da UI: um vendedor chamando
-    // setDoc/updateDoc direto no console não consegue mexer no próprio
-    // fechamento nem no de ninguém.
+    // ── caixa/{id} ──────────────────────────────────────────────────────
+    // Caixa e UNICO/compartilhado pra loja toda, independente de qual conta
+    // acessa — nao e "o caixa do vendedor X". Antes a regra so deixava um
+    // vendedor ler/mexer no caixa que ELE MESMO abriu, entao dava pra duas
+    // pessoas abrirem caixas "paralelos" sem perceber (a UI ja bloqueia via
+    // caixaAberto() sem filtro de uid, mas a regra precisa acompanhar: sem
+    // isso, um vendedor nao consegue nem VER o caixa que outra pessoa
+    // abriu, e caia tudo em permission-denied). Qualquer staff ativo pode
+    // ler, abrir (se nao houver nenhum aberto — a UI confere antes), lancar
+    // movimento e fechar; so nao pode reescrever quem abriu originalmente
+    // (aberto_por_uid nao muda depois de criado).
+    match /caixa/{id} {
+      allow read: if ehStaff();
+      allow create: if ehStaff()
+        && request.resource.data.aberto_por_uid == request.auth.uid
+        && request.resource.data.status == 'aberto';
+      allow update: if ehStaff()
+        && request.resource.data.aberto_por_uid == resource.data.aberto_por_uid;
+      allow delete: if false;
+    }
+
+    // ── vendas/{id} ────────────────────────────────────────────────────
+    // Vendas da LOJA FISICA (canal 'loja') sao criadas pelo PDV, com
+    // vendedor_uid == autor (entra na comissao, ver `comissoes`; a leitura
+    // e liberada pra qualquer staff — nao so o autor — porque o caixa e
+    // compartilhado: conferir o caixa exige somar as vendas de TODA a
+    // equipe que vendeu enquanto ele esteve aberto, nao so as de quem esta
+    // olhando agora). Vendas do canal 'site' sao um ESPELHO somente-leitura
+    // de pedido do site confirmado como entregue (id determinístico
+    // `site_{pedidoId}`, gravado pela tela Pedidos) — sem vendedor_uid (nao
+    // gera comissao; `comissoes` so soma canal 'loja' de qualquer forma) e
+    // sem numeracao sequencial propria (fica so no historico, identificado
+    // pelo codigo do pedido). So admin desfaz uma venda concluida (ambos os
+    // canais).
+    match /vendas/{id} {
+      allow read: if ehStaff();
+      allow create: if ehAdmin()
+        || (ehVendedor()
+            && request.resource.data.canal == 'loja'
+            && request.resource.data.vendedor_uid == request.auth.uid
+            && request.resource.data.status == 'concluida')
+        || (ehStaff()
+            && request.resource.data.canal == 'site'
+            && request.resource.data.vendedor_uid == null
+            && request.resource.data.status == 'concluida');
+      allow update: if ehAdmin();
+      allow delete: if false;
+    }
+
+    // ── comissoes/{periodo}/vendedores/{uid} ───────────────────────────
     match /comissoes/{periodo} {
-      allow read: if ehEquipe();
+      allow read: if ehStaff();
       allow write: if ehAdmin();
-    }
-    match /comissoes/{periodo}/vendedores/{vendedorUid} {
-      allow read: if ehAdmin() || (ehEquipe() && vendedorUid == request.auth.uid);
-      allow write: if ehAdmin();
+      match /vendedores/{uid} {
+        allow read: if ehAdmin() || (ehVendedor() && request.auth.uid == uid);
+        allow write: if ehAdmin();
+      }
     }
 
-    // ── caixa/{docId} e vendas/{docId} — SISTEMA INTERNO ─────────────────
-    // A loja não toca nestas duas; elas são do sistema interno
-    // (flora-5754a-interno.web.app), onde caixa.js e vendas.js são
-    // liberados para toda a equipe (admin e vendedor). Antes elas não
-    // estavam listadas e caíam no bloqueio padrão — era o que quebrava a
-    // cada deploy de rules feito a partir deste repositório.
-    //
-    // Sem allowlist de campos por enquanto: o shape desses documentos é
-    // definido pelo outro sistema, e chutar uma allowlist aqui quebraria
-    // ele de novo, de um jeito diferente. O portão é o papel.
-    match /caixa/{docId} {
-      allow read, write: if ehEquipe();
+    // ── indicadores/{id} ──────────────────────────────────────────────
+    // Divulgadores/indicadores do site (sem login proprio). `codigo` = valor
+    // do link ?ref=. So o admin cadastra; a equipe pode consultar.
+    match /indicadores/{id} {
+      allow read: if ehStaff();
+      allow create, update, delete: if ehAdmin();
     }
 
-    match /vendas/{docId} {
-      allow read, write: if ehEquipe();
+    // ── integracoes/{doc=**} ─────────────────────────────────────────
+    // Tokens/segredos de marketplace (fase futura) — so backend Admin SDK.
+    match /integracoes/{doc=**} {
+      allow read, write: if false;
     }
 
     // ── Bloqueio padrão ──────────────────────────────────────────────────
