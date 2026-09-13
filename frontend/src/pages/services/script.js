@@ -86,7 +86,7 @@ function handleNewsletter() {
   const msg = encodeURIComponent(
     'Olá! Gostaria de receber novidades da Amira. Meu e-mail é: ' + email
   );
-  window.open('https://wa.me/5598984853656?text=' + msg, '_blank');
+  window.open('https://wa.me/559884421875?text=' + msg, '_blank');
 }
 window.handleNewsletter = handleNewsletter;
 

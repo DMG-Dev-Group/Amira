@@ -22,7 +22,7 @@ import { toast } from "../services/ui-feedback.js";
 const LOJA = {
   nome: "Amira",
   endereco: "Monumental Shopping, 2º piso — São Luís/MA",
-  whatsapp: "5598984853656"
+  whatsapp: "559884421875"
 };
 
 const params = new URLSearchParams(window.location.search);
