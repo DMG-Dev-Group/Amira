@@ -109,18 +109,32 @@ function abaAtiva() {
   return document.querySelector(".perfil-tab-btn.active") || tabs[0];
 }
 
+function ativarAba(tab) {
+  if (!tab) return;
+  tabs.forEach((t) => t.classList.remove("active"));
+  paineis.forEach((p) => p.classList.remove("active"));
+  tab.classList.add("active");
+  document.getElementById(`painel-${tab.dataset.tab}`).classList.add("active");
+}
+
 tabs.forEach((tab) => {
   tab.addEventListener("click", () => {
-    tabs.forEach((t) => t.classList.remove("active"));
-    paineis.forEach((p) => p.classList.remove("active"));
-    tab.classList.add("active");
-    document.getElementById(`painel-${tab.dataset.tab}`).classList.add("active");
-
+    ativarAba(tab);
     moverPill(tab);
     // no mobile as abas rolam na horizontal: traz a escolhida para a vista
     tab.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
   });
 });
+
+// Um link de fora (ex.: "perfil.html#revendedor" no aviso de atacado) já
+// abre direto na aba certa, em vez de sempre cair em "Dados pessoais".
+// Regex antes do seletor: um hash com aspas/colchetes quebraria o
+// querySelector — não é risco de segurança (não vira HTML), só robustez.
+const hashAba = window.location.hash.slice(1);
+const abaPeloHash = /^[a-z]+$/.test(hashAba)
+  ? document.querySelector(`.perfil-tab-btn[data-tab="${hashAba}"]`)
+  : null;
+if (abaPeloHash) ativarAba(abaPeloHash);
 
 // Posição inicial. As larguras mudam quando a Jost termina de carregar,
 // então reposicionamos também depois das fontes e em cada resize.
