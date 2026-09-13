@@ -1,0 +1,148 @@
+/* ── Página "Avalie a Amira" ──────────────────────────────────────────────
+   Landing simples pro QR code do balcão físico: card único, centralizado,
+   sem a navbar cheia da loja — é pra ser rápido (escaneou, avaliou, saiu).
+   O formulário reaproveita .avaliacao-form/.avaliacao-notas/.avaliacao-nota
+   de styles/catalogo.css (mesmo seletor de estrelas da avaliação de
+   produto); aqui só ajustamos o que muda no contexto de página cheia. */
+
+.avl-main {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1.2rem;
+  background: var(--bg);
+}
+
+.avl-card {
+  width: 100%;
+  max-width: 460px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 2.2rem 1.7rem;
+}
+
+.avl-logo {
+  display: block;
+  height: 44px;
+  width: auto;
+  margin: 0 auto 1.4rem;
+}
+
+.avl-titulo {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.4rem;
+  font-weight: 500;
+  text-align: center;
+  color: var(--text-main);
+  margin-bottom: 0.4rem;
+}
+
+.avl-subtitulo {
+  font-family: 'Jost', sans-serif;
+  font-size: 0.86rem;
+  text-align: center;
+  color: var(--text-muted);
+  line-height: 1.55;
+  margin-bottom: 1.8rem;
+}
+
+/* Dentro desta página o formulário já mora num card próprio — o realce
+   dourado que ele tem no contexto da página de produto ficaria redundante
+   aqui. */
+.avl-form.avaliacao-form {
+  border: none;
+  background: none;
+  padding: 0;
+  margin-bottom: 0;
+}
+
+.avl-form .avaliacao-notas {
+  justify-content: center;
+}
+
+.avl-campo {
+  margin-bottom: 1.1rem;
+}
+
+.avl-campo label {
+  display: block;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.74rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.4rem;
+}
+
+.avl-campo input[type="text"] {
+  width: 100%;
+  padding: 0.7rem 0.85rem;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text-main);
+  outline: none;
+}
+
+.avl-campo input[type="text"]:focus { border-color: var(--gold); }
+
+.avl-form .avaliacao-form__rodape {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.avl-form .avaliacao-form__aviso {
+  text-align: center;
+}
+
+.avl-form #avl-enviar {
+  width: 100%;
+  border-radius: 10px;
+  padding: 0.9rem;
+}
+
+/* ── Confirmação pós-envio ─────────────────────────────────────────────── */
+.avl-pos {
+  text-align: center;
+}
+
+.avl-pos .avl-pos__icone {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 1.1rem;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--success) 16%, transparent);
+  color: var(--success);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avl-pos__icone svg {
+  width: 26px;
+  height: 26px;
+}
+
+.avl-pos p {
+  font-family: 'Jost', sans-serif;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 1.6rem;
+}
+
+.avl-pos .btn-primary,
+.avl-pos .btn-outline {
+  display: block;
+  width: 100%;
+  text-align: center;
+  border-radius: 10px;
+  padding: 0.9rem;
+  margin-bottom: 0.7rem;
+}
+
+.avl-pos .btn-outline:last-child { margin-bottom: 0; }
