@@ -1193,6 +1193,36 @@ body[data-theme="light"] .theme-toggle:hover {
   color: var(--text-muted);
 }
 
+/* Sem cidade nas avaliações da loja (só nome) — reaproveitamos esta
+   mesma classe pra mostrar a DATA no lugar, mesmo tratamento visual. */
+
+.testimonials-eyebrow {
+  display: block;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.testimonials-titulo {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.8rem, 3vw, 2.5rem);
+  font-weight: 400;
+  color: var(--cream);
+  margin: 0.6rem 0 0;
+}
+
+.testimonials-titulo em {
+  font-style: italic;
+  color: var(--gold);
+}
+
+.testimonials-cta {
+  margin-top: 2.2rem;
+}
+
 /* ── NEWSLETTER ──────────────────────── */
 .newsletter {
   padding: 6rem 4rem;

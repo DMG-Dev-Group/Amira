@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Avalie a Amira</title>
+  <meta name="description" content="Deixe sua avaliação sobre a Amira — perfumes, maquiagem e acessórios em São Luís/MA.">
+  <link rel="icon" type="image/svg+xml" href="images/amira-favicon.svg">
+  <link rel="alternate icon" type="image/x-icon" href="images/amira-favicon.ico">
+  <link rel="apple-touch-icon" href="images/amira-apple-touch.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles/style.css">
+  <link rel="stylesheet" href="styles/catalogo.css">
+  <link rel="stylesheet" href="styles/avaliacao-loja.css">
+</head>
+<body>
+
+  <main class="avl-main">
+    <div class="avl-card" id="avl-conteudo">
+      <img class="avl-logo logo-amira logo-amira--claro" src="images/amira-claro.svg" alt="Amira">
+      <img class="avl-logo logo-amira logo-amira--escuro" src="images/amira-escuro.svg" alt="Amira">
+
+      <h1 class="avl-titulo">Como foi sua experiência?</h1>
+      <p class="avl-subtitulo">Sua avaliação ajuda outras pessoas a conhecer a Amira — leva menos de um minuto.</p>
+
+      <form class="avaliacao-form avl-form" id="form-avaliacao-loja">
+        <div class="avl-campo">
+          <label for="avl-nome">Seu nome</label>
+          <input type="text" id="avl-nome" name="nome" maxlength="120" required autocomplete="name" placeholder="Como podemos te chamar?">
+        </div>
+
+        <div class="avl-campo">
+          <label>Sua nota</label>
+          <div class="avaliacao-notas" role="radiogroup" aria-label="Nota de 1 a 5" id="avl-notas"></div>
+        </div>
+
+        <div class="avl-campo">
+          <label for="avl-texto">Comentário (opcional)</label>
+          <textarea id="avl-texto" rows="3" maxlength="600" placeholder="Conte o que achou da loja, do atendimento, dos produtos…"></textarea>
+        </div>
+
+        <div class="avaliacao-form__rodape">
+          <span class="avaliacao-form__aviso">Aparece no site depois que a Amira confere.</span>
+          <button type="submit" class="btn-primary" id="avl-enviar">Enviar avaliação</button>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <script src="services/tema.js"></script>
+  <script type="module" src="js/avaliar-loja.js"></script>
+</body>
+</html>
