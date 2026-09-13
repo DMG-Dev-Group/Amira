@@ -45,7 +45,7 @@ const msgDados = document.getElementById("msg-dados");
 const btnBaixarDados = document.getElementById("btn-baixar-dados");
 const btnExcluirConta = document.getElementById("btn-excluir-conta");
 
-const WHATSAPP_LOJA = "5598984853656";
+const WHATSAPP_LOJA = "559884421875";
 
 // Data de nascimento: nunca no futuro.
 if (campoNascimento) campoNascimento.max = new Date().toISOString().slice(0, 10);

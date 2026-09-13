@@ -23,7 +23,7 @@ import { toast, confirmar, carregando } from "../services/ui-feedback.js";
 import { db, auth } from "../services/firebase-config.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
-const WHATSAPP_LOJA = "5598984853656";
+const WHATSAPP_LOJA = "559884421875";
 const POLL_MS = 6000;
 const POLL_MAX = 10 * 60 * 1000;
 
