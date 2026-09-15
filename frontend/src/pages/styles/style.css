@@ -1146,7 +1146,7 @@ body[data-theme="light"] .theme-toggle:hover {
 }
 .review-card {
   background: var(--charcoal);
-  border: 0.5px solid rgba(236, 193, 160,0.1);
+  border: 0.5px solid rgba(114, 55, 31, 0.925);
   padding: 2rem;
   text-align: left;
 }
@@ -1162,7 +1162,7 @@ body[data-theme="light"] .theme-toggle:hover {
   font-size: 1rem;
   font-weight: 400;
   line-height: 1.7;
-  color: rgba(246,232,234,0.8);
+  color: rgba(155, 68, 81, 0.8);
   margin-bottom: 1.5rem;
 }
 .reviewer {

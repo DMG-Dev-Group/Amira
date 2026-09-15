@@ -1,0 +1,538 @@
+{
+  "info": {
+    "_postman_id": "a1e6c1a0-0a2e-4b8a-9f0a-amira0000001",
+    "name": "Amira — API",
+    "description": "Cobre as 5 funcoes serverless de api/*.js. Cada pasta tem o caminho feliz e os caminhos de erro documentados em docs/ENDPOINTS_E_VALIDACAO.md, com pm.test() checando o status code esperado.\n\nANTES DE RODAR:\n1. Importe este arquivo E o Amira-API.postman_environment.json.\n2. Selecione o Environment 'Amira — Local/Prod' no canto superior direito do Postman.\n3. Preencha cliente_email, cliente_senha, admin_email, admin_senha, pedido_id e pedido_id_alheio no Environment (aba Environments, nao aqui na collection).\n4. Rode a pasta '0. Setup' primeiro (os dois logins) — sem isso, id_token e id_token_admin ficam vazios e tudo abaixo devolve 401.\n5. Rode o resto pasta por pasta, ou a collection inteira pelo Collection Runner.\n\nISSO CHAMA A API DE VERDADE (producao ou o que estiver em base_url) — nao ha mock. O teste de sucesso de /api/admin-usuario cria uma conta REAL a cada execucao (e-mail aleatorio); os de /api/pagamento e /api/pix criam preferencia/cobranca REAIS no Mercado Pago (sandbox, se MP_ACCESS_TOKEN ainda for TEST-). Ninguem e cobrado de verdade, mas fica rastro — nao rode em loop sem necessidade.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "https://amira-phi.vercel.app", "type": "string" },
+    { "key": "firebase_api_key", "value": "AIzaSyACUAYAfglk9tMu3RpbBbEgQSjTC8eLXYU", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "0. Setup (login)",
+      "description": "Nao existe endpoint nosso para 'obter um token' — quem emite o ID token e o proprio Firebase Auth. Estas duas requisicoes chamam a API REST publica do Firebase (accounts:signInWithPassword) com email+senha reais de uma conta do site, e guardam o idToken devolvido numa variavel de Environment. Todo o resto da collection usa essa variavel no header Authorization.",
+      "item": [
+        {
+          "name": "Login cliente (obtem id_token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('login respondeu 200', function () { pm.response.to.have.status(200); });",
+                  "if (pm.response.code === 200) {",
+                  "  const j = pm.response.json();",
+                  "  pm.environment.set('id_token', j.idToken);",
+                  "  pm.environment.set('uid', j.localId);",
+                  "  console.log('uid do cliente:', j.localId);",
+                  "} else {",
+                  "  console.error('Login falhou — confira cliente_email/cliente_senha no Environment.', pm.response.text());",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{cliente_email}}\",\n  \"password\": \"{{cliente_senha}}\",\n  \"returnSecureToken\": true\n}"
+            },
+            "url": "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={{firebase_api_key}}",
+            "description": "Conta comum (role: cliente). O uid dela precisa ser dono do pedido em {{pedido_id}}."
+          }
+        },
+        {
+          "name": "Login admin (obtem id_token_admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('login respondeu 200', function () { pm.response.to.have.status(200); });",
+                  "if (pm.response.code === 200) {",
+                  "  const j = pm.response.json();",
+                  "  pm.environment.set('id_token_admin', j.idToken);",
+                  "  pm.environment.set('uid_admin', j.localId);",
+                  "  console.log('uid do admin:', j.localId);",
+                  "} else {",
+                  "  console.error('Login falhou — confira admin_email/admin_senha no Environment.', pm.response.text());",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"{{admin_senha}}\",\n  \"returnSecureToken\": true\n}"
+            },
+            "url": "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={{firebase_api_key}}",
+            "description": "Precisa ser uma conta cujo usuarios/{uid}.role == 'admin' no Firestore."
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. POST /api/pagamento",
+      "item": [
+        {
+          "name": "Sucesso — 200 (pedido meu, nao pago)",
+          "event": [
+            {
+              "listen": "test",
+              "script": { "type": "text/javascript", "exec": [
+                "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                "if (pm.response.code === 200) {",
+                "  const j = pm.response.json();",
+                "  pm.test('devolveu init_point', function () { pm.expect(j.init_point).to.be.a('string'); });",
+                "  pm.test('devolveu total recalculado', function () { pm.expect(j.total).to.be.a('number'); });",
+                "}"
+              ]}
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{id_token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"pedidoId\": \"{{pedido_id}}\"\n}" },
+            "url": "{{base_url}}/api/pagamento",
+            "description": "{{pedido_id}} precisa ser um pedido de verdade, criado pelo site, pertencente a conta logada em 'Login cliente', ainda em status aguardando_pagamento."
+          }
+        },
+        {
+          "name": "Sem token — 401",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('401 sem autenticacao', function () { pm.response.to.have.status(401); });"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"pedidoId\": \"{{pedido_id}}\"\n}" },
+            "url": "{{base_url}}/api/pagamento"
+          }
+        },
+        {
+          "name": "Pedido de outra pessoa — 404 (nao 403 de proposito)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('404, nao 403', function () { pm.response.to.have.status(404); });"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{id_token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"pedidoId\": \"{{pedido_id_alheio}}\"\n}" },
+            "url": "{{base_url}}/api/pagamento",
+            "description": "{{pedido_id_alheio}} precisa ser um pedido que existe mas NAO pertence a conta logada em id_token."
+          }
+        },
+        {
+          "name": "Sem pedidoId — 400",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('400 corpo invalido', function () { pm.response.to.have.status(400); });"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{id_token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{}" },
+            "url": "{{base_url}}/api/pagamento"
+          }
+        },
+        {
+          "name": "Pedido ja pago — 409 (rode depois de pagar {{pedido_id}} de verdade)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('409 ja pago (so passa se pedido_id JA estiver pago)', function () { pm.response.to.have.status(409); });"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{id_token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"pedidoId\": \"{{pedido_id}}\"\n}" },
+            "url": "{{base_url}}/api/pagamento",
+            "description": "So faz sentido depois que {{pedido_id}} ja tiver pagamento.status == 'aprovado' — pulе este teste ate ter um pedido pago para usar."
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. POST /api/pix",
+      "item": [
+        {
+          "name": "Sucesso — 200 (pedido meu, nao pago)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+            "if (pm.response.code === 200) {",
+            "  const j = pm.response.json();",
+            "  pm.test('devolveu copia-e-cola', function () { pm.expect(j.copiaECola).to.be.a('string'); });",
+            "  pm.environment.set('mp_payment_id_teste', String(j.pagamentoId));",
+            "  console.log('pagamentoId (use no teste opcional do webhook):', j.pagamentoId);",
+            "}"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{id_token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"pedidoId\": \"{{pedido_id}}\"\n}" },
+            "url": "{{base_url}}/api/pix",
+            "description": "A conta logada em 'Login cliente' precisa ter e-mail salvo em usuarios/{uid}.email (o cadastro normal do site ja grava isso). Guarda o pagamentoId numa variavel para o teste opcional do webhook."
+          }
+        },
+        {
+          "name": "Sem token — 401",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('401 sem autenticacao', function () { pm.response.to.have.status(401); });"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"pedidoId\": \"{{pedido_id}}\"\n}" },
+            "url": "{{base_url}}/api/pix"
+          }
+        },
+        {
+          "name": "Pedido de outra pessoa — 404",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('404, nao 403', function () { pm.response.to.have.status(404); });"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{id_token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"pedidoId\": \"{{pedido_id_alheio}}\"\n}" },
+            "url": "{{base_url}}/api/pix"
+          }
+        },
+        {
+          "name": "Sem pedidoId — 400",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('400 corpo invalido', function () { pm.response.to.have.status(400); });"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{id_token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{}" },
+            "url": "{{base_url}}/api/pix"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. POST /api/webhook-mp",
+      "item": [
+        {
+          "name": "Sem assinatura — 401 (se MP_WEBHOOK_SECRET estiver configurado na Vercel)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "// Se MP_WEBHOOK_SECRET NAO estiver configurado na Vercel, o codigo aceita",
+            "// mesmo assim (so avisa no log) e aqui vai vir 200, nao 401. Os dois sao",
+            "// 'corretos' dependendo do estado da env var — o importante e SABER qual.",
+            "pm.test('401 (segredo configurado) ou 200 (segredo ausente)', function () {",
+            "  pm.expect([401, 200]).to.include(pm.response.code);",
+            "});",
+            "if (pm.response.code === 200) console.warn('MP_WEBHOOK_SECRET pode nao estar configurado na Vercel — confira /api/status.');"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"type\": \"payment\",\n  \"data\": { \"id\": \"123456789\" }\n}" },
+            "url": "{{base_url}}/api/webhook-mp"
+          }
+        },
+        {
+          "name": "Reconciliacao sem token — 401",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('401 sem autenticacao', function () { pm.response.to.have.status(401); });"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/api/webhook-mp?pedidoId={{pedido_id}}"
+          }
+        },
+        {
+          "name": "Reconciliacao cliente comum — 403",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('403 nao-admin', function () { pm.response.to.have.status(403); });"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{id_token}}" }],
+            "url": "{{base_url}}/api/webhook-mp?pedidoId={{pedido_id}}",
+            "description": "Usa o token do CLIENTE (nao-admin) de proposito."
+          }
+        },
+        {
+          "name": "Reconciliacao com admin — 200 ou 404",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 (achou pagamento) ou 404 (pedido sem pagamento associado)', function () {",
+            "  pm.expect([200, 404]).to.include(pm.response.code);",
+            "});"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{id_token_admin}}" }],
+            "url": "{{base_url}}/api/webhook-mp?pedidoId={{pedido_id}}"
+          }
+        },
+        {
+          "name": "[Opcional] Assinatura valida — precisa de mp_webhook_secret",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Reproduz EXATAMENTE o checarAssinatura() de api/webhook-mp.js.",
+                  "// mp_webhook_secret e o MESMO valor de MP_WEBHOOK_SECRET na Vercel —",
+                  "// so preencha no Environment se quiser este teste; NUNCA versione com valor real.",
+                  "const secret = pm.environment.get('mp_webhook_secret');",
+                  "if (!secret) { console.warn('mp_webhook_secret vazio — esta chamada vai dar 401.'); }",
+                  "const dataId = pm.environment.get('mp_payment_id_teste') || '123456789';",
+                  "const ts = Date.now().toString();",
+                  "const idNormalizado = /[a-zA-Z]/.test(dataId) ? dataId.toLowerCase() : dataId;",
+                  "const manifest = `id:${idNormalizado};ts:${ts};`;",
+                  "const hash = CryptoJS.HmacSHA256(manifest, secret || '').toString(CryptoJS.enc.Hex);",
+                  "pm.environment.set('_mp_signature', `ts=${ts},v1=${hash}`);",
+                  "pm.environment.set('_mp_data_id', dataId);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": { "type": "text/javascript", "exec": [
+                "pm.test('200 (assinatura aceita)', function () { pm.response.to.have.status(200); });",
+                "console.log('Depois disso, confira no Firebase Console se pedidos/{{pedido_id}}.pagamento mudou.');"
+              ]}
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-signature", "value": "{{_mp_signature}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"type\": \"payment\",\n  \"data\": { \"id\": \"{{_mp_data_id}}\" }\n}" },
+            "url": "{{base_url}}/api/webhook-mp",
+            "description": "Teste de ponta a ponta de verdade: rode 'POST /api/pix > Sucesso' primeiro (ele guarda mp_payment_id_teste sozinho), DEPOIS este. Assim o webhook consulta um pagamento PIX real no Mercado Pago em vez de um id inventado."
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. POST /api/admin-usuario",
+      "item": [
+        {
+          "name": "Sucesso — 201 (cria conta real, e-mail aleatorio)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('201 criado', function () { pm.response.to.have.status(201); });",
+            "if (pm.response.code === 201) {",
+            "  console.log('Conta criada:', pm.response.json());",
+            "  console.warn('Isto e uma conta REAL no Firebase Auth + Firestore. Apague depois pelo Console se nao for usar.');",
+            "}"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{id_token_admin}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"nome\": \"Teste Postman\",\n  \"email\": \"{{$randomEmail}}\",\n  \"senha\": \"senha123\",\n  \"telefone\": \"98999999999\",\n  \"comoRevendedor\": false\n}" },
+            "url": "{{base_url}}/api/admin-usuario",
+            "description": "{{$randomEmail}} e uma variavel dinamica do Postman — gera um e-mail novo a cada execucao, entao nunca colide com auth/email-already-exists."
+          }
+        },
+        {
+          "name": "Sem token — 401",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('401 sem autenticacao', function () { pm.response.to.have.status(401); });"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"nome\": \"X\",\n  \"email\": \"x@x.com\",\n  \"senha\": \"senha123\"\n}" },
+            "url": "{{base_url}}/api/admin-usuario"
+          }
+        },
+        {
+          "name": "Cliente comum (nao-admin) — 403",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('403 nao-admin', function () { pm.response.to.have.status(403); });"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{id_token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"nome\": \"X\",\n  \"email\": \"{{$randomEmail}}\",\n  \"senha\": \"senha123\"\n}" },
+            "url": "{{base_url}}/api/admin-usuario",
+            "description": "Usa id_token do CLIENTE (nao-admin) de proposito."
+          }
+        },
+        {
+          "name": "E-mail invalido — 400",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('400 e-mail invalido', function () { pm.response.to.have.status(400); });"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{id_token_admin}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"nome\": \"X\",\n  \"email\": \"nao-e-email\",\n  \"senha\": \"senha123\"\n}" },
+            "url": "{{base_url}}/api/admin-usuario"
+          }
+        },
+        {
+          "name": "Senha curta — 400",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('400 senha curta', function () { pm.response.to.have.status(400); });"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{id_token_admin}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"nome\": \"X\",\n  \"email\": \"{{$randomEmail}}\",\n  \"senha\": \"123\"\n}" },
+            "url": "{{base_url}}/api/admin-usuario"
+          }
+        },
+        {
+          "name": "Revendedor sem CNPJ — 400",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('400 falta cnpj/razao social', function () { pm.response.to.have.status(400); });"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{id_token_admin}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"nome\": \"X\",\n  \"email\": \"{{$randomEmail}}\",\n  \"senha\": \"senha123\",\n  \"comoRevendedor\": true\n}" },
+            "url": "{{base_url}}/api/admin-usuario"
+          }
+        },
+        {
+          "name": "E-mail duplicado — 409 (rode 'Sucesso' com este email antes)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('409 email ja existe', function () { pm.response.to.have.status(409); });"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{id_token_admin}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"nome\": \"X\",\n  \"email\": \"{{email_duplicado_teste}}\",\n  \"senha\": \"senha123\"\n}" },
+            "url": "{{base_url}}/api/admin-usuario",
+            "description": "Preencha email_duplicado_teste no Environment com um e-mail que JA existe (ex.: o da sua propria conta admin) para forcar o 409."
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. GET /api/status",
+      "item": [
+        {
+          "name": "Com admin — 200",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+            "if (pm.response.code === 200) {",
+            "  const j = pm.response.json();",
+            "  pm.test('node reportado', function () { pm.expect(j.node).to.be.a('string'); });",
+            "  pm.test('MP_ACCESS_TOKEN configurado', function () { pm.expect(j.env.MP_ACCESS_TOKEN).to.eql(true); });",
+            "  pm.test('MP_WEBHOOK_SECRET configurado', function () { pm.expect(j.env.MP_WEBHOOK_SECRET).to.eql(true); });",
+            "  pm.test('FIREBASE_SERVICE_ACCOUNT configurado', function () { pm.expect(j.env.FIREBASE_SERVICE_ACCOUNT).to.eql(true); });",
+            "  console.log('Node na Vercel:', j.node, '| prefixo do token MP:', j.env.MP_ACCESS_TOKEN_prefixo);",
+            "}"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{id_token_admin}}" }],
+            "url": "{{base_url}}/api/status"
+          }
+        },
+        {
+          "name": "Sem token — 401",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('401 sem autenticacao', function () { pm.response.to.have.status(401); });"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/api/status"
+          }
+        },
+        {
+          "name": "Cliente comum — 403",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('403 nao-admin', function () { pm.response.to.have.status(403); });"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{id_token}}" }],
+            "url": "{{base_url}}/api/status"
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Rate limit (opcional — consome a cota real)",
+      "item": [
+        {
+          "name": "Estourar limite de /api/pagamento (rode 11x pelo Runner)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "// Rode esta requisicao 11 vezes seguidas (Collection Runner, 11 iteracoes,",
+            "// 0ms de delay) dentro da MESMA janela de 5 minutos. As 10 primeiras devem",
+            "// dar 200 (ou 409 se o pedido ja tiver sido pago no meio do caminho —",
+            "// tambem conta como 'nao foi limitado'); a 11a tem que dar 429.",
+            "pm.test('200, 409 ou 429 — nunca outra coisa', function () {",
+            "  pm.expect([200, 409, 429]).to.include(pm.response.code);",
+            "});",
+            "if (pm.response.code === 429) {",
+            "  console.log('Rate limit funcionou. retryApos:', pm.response.json().erro);",
+            "}"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{id_token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"pedidoId\": \"{{pedido_id}}\"\n}" },
+            "url": "{{base_url}}/api/pagamento",
+            "description": "Limite documentado: 10 chamadas / 5 min por uid. So teste isso se souber que vai usar de proposito — cria ate 10 preferencias reais no Mercado Pago."
+          }
+        }
+      ]
+    }
+  ]
+}
