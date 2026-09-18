@@ -122,6 +122,15 @@ module.exports = async (req, res) => {
     const db = getDb();
     const ref = db.collection("pedidos").doc(String(pedidoId));
 
+    // ⚠️ PENDENTE (não implementado ainda, de propósito — ver conversa de
+    // 2026-09-17): no cartão parcelado, quem escolhe o número de parcelas
+    // é a própria página do Checkout Pro do MP, fora do nosso controle. O
+    // número de parcelas ESCOLHIDO vem de volta aqui em
+    // `pagamento.installments` (campo padrão da API de pagamentos do MP),
+    // mas hoje não é lido nem gravado no pedido — só os campos abaixo.
+    // Quando o sistema for tratar parcelamento (comissão diferente por
+    // parcela, relatório, etc.), é aqui que entra: adicionar
+    // `parcelas: pagamento.installments` neste objeto.
     const atualizacao = {
       pagamento: {
         provedorPagamentoId: String(pagamentoId),
