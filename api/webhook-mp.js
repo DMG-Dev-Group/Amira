@@ -122,20 +122,22 @@ module.exports = async (req, res) => {
     const db = getDb();
     const ref = db.collection("pedidos").doc(String(pedidoId));
 
-    // ⚠️ PENDENTE (não implementado ainda, de propósito — ver conversa de
-    // 2026-09-17): no cartão parcelado, quem escolhe o número de parcelas
-    // é a própria página do Checkout Pro do MP, fora do nosso controle. O
-    // número de parcelas ESCOLHIDO vem de volta aqui em
-    // `pagamento.installments` (campo padrão da API de pagamentos do MP),
-    // mas hoje não é lido nem gravado no pedido — só os campos abaixo.
-    // Quando o sistema for tratar parcelamento (comissão diferente por
-    // parcela, relatório, etc.), é aqui que entra: adicionar
-    // `parcelas: pagamento.installments` neste objeto.
+    // Número de parcelas ESCOLHIDO pelo cliente na página do Checkout Pro
+    // do MP (fora do nosso controle) — vem pronto na resposta do
+    // pagamento. PIX/pix_whatsapp não tem parcela, mas o MP já devolve 1
+    // nesses casos; o `|| 1` é só uma rede de segurança caso o campo
+    // venha ausente/zerado por algum motivo. O sistema interno lê este
+    // mesmo campo direto de pedidos/{id}.pagamento.parcelas — mesmo banco,
+    // sem precisar de nenhuma mudança em firestore.rules (é o Admin SDK
+    // escrevendo, que ignora as rules do cliente).
+    const parcelas = Number(pagamento.installments) || 1;
+
     const atualizacao = {
       pagamento: {
         provedorPagamentoId: String(pagamentoId),
         status: novoStatus,
         statusMP: pagamento.status,
+        parcelas,
         atualizadoEm: FieldValue.serverTimestamp()
       }
     };
