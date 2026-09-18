@@ -171,6 +171,11 @@ function abrirDetalhe(pedidoId) {
       ${p.pagamento?.parcelas > 1 ? `<span style="font-size:0.72rem; color:var(--text-muted);"> · ${escapeHtml(String(p.pagamento.parcelas))}x</span>` : ""}
       ${p.pagamento?.provedorPagamentoId ? `<span style="font-size:0.72rem; color:var(--text-muted);"> · MP ${escapeHtml(String(p.pagamento.provedorPagamentoId))}</span>` : ""}
     </p>
+    ${typeof p.pagamento?.valorLiquido === "number" ? `
+      <p style="font-size:0.78rem; color:var(--text-muted); margin-bottom:1rem;">
+        Líquido após taxa do MP: <strong style="color:var(--text-main);">${formatarPreco(p.pagamento.valorLiquido)}</strong>
+      </p>
+    ` : ""}
 
 
     ${totais.avisos.length > 0 ? `

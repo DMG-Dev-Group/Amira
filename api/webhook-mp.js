@@ -132,12 +132,24 @@ module.exports = async (req, res) => {
     // escrevendo, que ignora as rules do cliente).
     const parcelas = Number(pagamento.installments) || 1;
 
+    // Valor que a loja recebe de VERDADE, já descontada a taxa do MP (e o
+    // juro do parcelamento, quando é a loja quem absorve — ver
+    // parcelamento.js/painel do MP). O próprio MP calcula isso e devolve
+    // em transaction_details.net_received_amount — não precisamos (nem
+    // deveríamos) recalcular a taxa na mão, a tabela muda por conta/prazo.
+    // Ausente-quando-indisponível (mesmo padrão de ref/refEm, observacoes,
+    // parcelas): só existe depois que o MP processa o pagamento, então um
+    // pagamento ainda "pendente" não tem esse número — não é bug, é cedo
+    // demais pra existir.
+    const valorLiquido = Number(pagamento.transaction_details?.net_received_amount);
+
     const atualizacao = {
       pagamento: {
         provedorPagamentoId: String(pagamentoId),
         status: novoStatus,
         statusMP: pagamento.status,
         parcelas,
+        ...(Number.isFinite(valorLiquido) ? { valorLiquido } : {}),
         atualizadoEm: FieldValue.serverTimestamp()
       }
     };
