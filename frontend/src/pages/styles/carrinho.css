@@ -29,13 +29,45 @@
 
 .carrinho-item {
   display: grid;
-  grid-template-columns: 80px 1fr auto;
+  grid-template-columns: auto 80px 1fr auto;
   gap: 1rem;
   align-items: center;
   padding: 1rem;
   border: 1px solid var(--border);
   border-radius: 6px;
   background: var(--surface);
+}
+
+.carrinho-item-check {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.carrinho-item-check input {
+  width: 19px;
+  height: 19px;
+  accent-color: var(--gold);
+  cursor: pointer;
+}
+
+.carrinho-selecionar-todos {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.8rem;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+}
+
+.carrinho-selecionar-todos input {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--gold);
+  cursor: pointer;
 }
 
 .carrinho-item-img {
@@ -380,8 +412,8 @@
     position: static;
   }
   .carrinho-item {
-    grid-template-columns: 64px 1fr;
-    gap: 0.85rem;
+    grid-template-columns: auto 64px 1fr;
+    gap: 0.6rem;
     /* sem centralizar: a imagem é baixa e o centro deixava um vão grande
        entre os controles e a linha de preço */
     align-items: start;

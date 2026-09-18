@@ -82,10 +82,26 @@ export async function removerDoCarrinho(uid, produtoId, modo) {
 }
 
 /**
- * Esvazia o carrinho (usado após finalizar a compra).
+ * Esvazia o carrinho inteiro (usado quando o pedido comprou TODOS os
+ * itens que estavam nele).
  */
 export async function esvaziarCarrinho(uid) {
   await setDoc(refCarrinho(uid), { itens: [] });
+}
+
+/**
+ * Remove do carrinho só os itens de um pedido específico — usado quando a
+ * pessoa seleciona uma PARTE do carrinho pra comprar (ver carrinho.html):
+ * o que não foi comprado tem que continuar lá, esvaziar tudo apagaria
+ * itens que ela nem chegou a pagar.
+ * @param {Array<{produtoId: string, modo: string}>} itensComprados
+ */
+export async function removerItensDoCarrinho(uid, itensComprados) {
+  const itens = await obterCarrinho(uid);
+  const comprados = new Set(itensComprados.map((i) => `${i.produtoId}|${i.modo}`));
+  const restantes = itens.filter((i) => !comprados.has(`${i.produtoId}|${i.modo}`));
+  await setDoc(refCarrinho(uid), { itens: restantes });
+  return restantes;
 }
 
 /**

@@ -15,7 +15,7 @@ import {
   cancelarPedido,
   podeCancelar
 } from "../services/pedidos.js";
-import { esvaziarCarrinho } from "../services/carrinho.js";
+import { removerItensDoCarrinho } from "../services/carrinho.js";
 import { escapeHtml, urlImagemSegura } from "../services/seguranca.js";
 import { svgQrCode } from "../services/qrcode.js";
 import { textoParcelamento } from "../services/parcelamento.js";
@@ -282,9 +282,13 @@ async function limparCarrinhoAposPagamento() {
     /* storage bloqueado — sem problema */
   }
   try {
-    await esvaziarCarrinho(uidAtual);
+    // Só os itens DESTE pedido saem do carrinho — desde que o checkout
+    // passou a deixar selecionar uma parte do carrinho (ver
+    // carrinho-checkout.js), esvaziar tudo apagaria itens que a pessoa
+    // nem chegou a comprar ainda.
+    await removerItensDoCarrinho(uidAtual, pedidoAtual?.itens || []);
   } catch (erro) {
-    console.error("Não foi possível esvaziar o carrinho:", erro);
+    console.error("Não foi possível atualizar o carrinho:", erro);
   }
 }
 

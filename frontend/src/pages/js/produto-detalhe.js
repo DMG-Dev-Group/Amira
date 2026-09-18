@@ -273,6 +273,7 @@ async function carregarProduto() {
               <button type="button" id="qtd-mais" aria-label="Aumentar quantidade">+</button>
             </div>
             <button class="btn-primary" id="btn-add-carrinho">Adicionar ao carrinho</button>
+            <button class="btn-outline" id="btn-comprar-agora">Comprar agora</button>
           </div>
         ` : ""}
 
@@ -298,6 +299,7 @@ async function carregarProduto() {
   if (disponivel) {
     configurarSeletorQtd();
     configurarBotaoCarrinho();
+    configurarBotaoComprarAgora();
   }
 }
 
@@ -588,6 +590,22 @@ function configurarSeletorQtd() {
   });
 }
 
+// Mesmo item nos dois botões (Adicionar ao carrinho / Comprar agora) — só
+// muda o que acontece DEPOIS de gravar no carrinho.
+async function adicionarProdutoAoCarrinho(quantidade) {
+  return adicionarAoCarrinho(usuarioAtual.uid, {
+    produtoId: produtoAtual.id,
+    nome: produtoAtual.nome,
+    imagemURL: produtoAtual.imagemURL || "",
+    // Preço de EXIBIÇÃO no carrinho (já com desconto). O valor cobrado
+    // é recalculado no servidor pela Cloud Function criarPedido.
+    precoUnitario: infoPreco(produtoAtual, "varejo").precoFinal,
+    pesoUnitario: produtoAtual.peso || 0,
+    quantidade,
+    modo: "varejo"
+  });
+}
+
 function configurarBotaoCarrinho() {
   const btn = document.getElementById("btn-add-carrinho");
 
@@ -603,17 +621,7 @@ function configurarBotaoCarrinho() {
     btn.textContent = "Adicionando...";
 
     try {
-      await adicionarAoCarrinho(usuarioAtual.uid, {
-        produtoId: produtoAtual.id,
-        nome: produtoAtual.nome,
-        imagemURL: produtoAtual.imagemURL || "",
-        // Preço de EXIBIÇÃO no carrinho (já com desconto). O valor cobrado
-        // é recalculado no servidor pela Cloud Function criarPedido.
-        precoUnitario: infoPreco(produtoAtual, "varejo").precoFinal,
-        pesoUnitario: produtoAtual.peso || 0,
-        quantidade,
-        modo: "varejo"
-      });
+      await adicionarProdutoAoCarrinho(quantidade);
       toast(`${quantidade}× "${produtoAtual.nome}" no carrinho.`, "sucesso", { titulo: "Adicionado" });
     } catch (erro) {
       console.error(erro);
@@ -621,6 +629,38 @@ function configurarBotaoCarrinho() {
     } finally {
       btn.disabled = false;
       btn.textContent = "Adicionar ao carrinho";
+    }
+  });
+}
+
+// "Comprar agora" pula a etapa de navegar até o carrinho: adiciona o item
+// e já leva pra lá com SÓ ele selecionado (mesmo se já tinha outra coisa
+// no carrinho) — quem quiser levar o resto junto, desmarca a caixinha de
+// "selecionar todos" ou marca os outros itens à mão (ver
+// js/carrinho-checkout.js).
+function configurarBotaoComprarAgora() {
+  const btn = document.getElementById("btn-comprar-agora");
+  if (!btn) return;
+
+  btn.addEventListener("click", async () => {
+    if (!usuarioAtual) {
+      window.location.href = "login.html";
+      return;
+    }
+
+    const quantidade = Number(document.getElementById("qtd-input").value) || 1;
+
+    btn.disabled = true;
+    btn.textContent = "Preparando...";
+
+    try {
+      await adicionarProdutoAoCarrinho(quantidade);
+      window.location.href = `carrinho.html?comprarAgora=${encodeURIComponent(produtoAtual.id)}&modo=varejo`;
+    } catch (erro) {
+      console.error(erro);
+      toast("Não foi possível continuar a compra agora. Tente novamente.", "erro");
+      btn.disabled = false;
+      btn.textContent = "Comprar agora";
     }
   });
 }
