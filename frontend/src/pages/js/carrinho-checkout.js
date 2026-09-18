@@ -50,6 +50,22 @@ let modoEntrega = ENTREGA_HABILITADA ? "entrega" : "retirada"; // "entrega" | "r
 let freteAtual = { valor: 0, zona: null, encontrado: true };
 let minimoAtacado = null;
 
+// Quais itens do carrinho entram NESTA compra — a pessoa pode ter coisa no
+// carrinho que ainda não quer comprar agora (ver R2: seleção de itens).
+// Chave "produtoId|modo" porque é assim que o carrinho distingue linhas
+// (mesmo produto em varejo E atacado vira duas linhas, ver services/
+// carrinho.js). Começa com tudo marcado — é o comportamento que já existia
+// antes de dar pra escolher.
+let itensSelecionados = new Set();
+
+function chaveItem(item) {
+  return `${item.produtoId}|${item.modo}`;
+}
+
+function itensMarcados() {
+  return itensAtuais.filter((item) => itensSelecionados.has(chaveItem(item)));
+}
+
 // Como o carrinho não é mais esvaziado ao criar o pedido, a pessoa pode
 // voltar aqui com um pedido aberto e criar outro sem querer. Guardamos o
 // último pedido não pago para oferecer "continuar o pagamento".
@@ -108,9 +124,11 @@ function pesoTotalCarrinho(itens) {
   }, 0);
 }
 
-// Itens que NÃO podem ser entregues (freteDisponivel === false no produto).
+// Itens SELECIONADOS que não podem ser entregues (freteDisponivel === false
+// no produto) — um item só-retirada que a pessoa nem marcou pra comprar
+// agora não deve travar o modo de entrega dos outros.
 function itensSomenteRetirada() {
-  return itensAtuais.filter((item) => {
+  return itensMarcados().filter((item) => {
     const produto = produtosCache.get(item.produtoId);
     return produto && !podeSerEntregue(produto);
   });
@@ -137,8 +155,10 @@ function renderizarCarrinho() {
     return;
   }
 
-  const subtotal = subtotalReal(itensAtuais);
+  const itensSel = itensMarcados();
+  const subtotal = subtotalReal(itensSel);
   const somenteRetirada = itensSomenteRetirada();
+  const todosMarcados = itensAtuais.length > 0 && itensSel.length === itensAtuais.length;
 
   // Se algum item é só-retirada, a entrega fica indisponível (R2 item 7).
   if (somenteRetirada.length > 0) {
@@ -158,7 +178,13 @@ function renderizarCarrinho() {
       </div>
     ` : ""}
     <div class="carrinho-layout">
-      <div class="carrinho-itens" id="lista-itens"></div>
+      <div>
+        <label class="carrinho-selecionar-todos">
+          <input type="checkbox" id="check-selecionar-todos" ${todosMarcados ? "checked" : ""}>
+          <span>${itensSel.length} de ${itensAtuais.length} selecionado(s)</span>
+        </label>
+        <div class="carrinho-itens" id="lista-itens"></div>
+      </div>
 
       <aside class="carrinho-resumo">
         <h2>${ENTREGA_HABILITADA ? "Como você quer receber" : "Retirada"}</h2>
@@ -220,8 +246,9 @@ function renderizarCarrinho() {
           confirmado pela loja no pagamento via PIX/WhatsApp.
         </p>
         <p class="carrinho-aviso" id="aviso-atacado" hidden></p>
+        ${itensSel.length === 0 ? `<p class="carrinho-aviso">Selecione ao menos um item da lista para continuar.</p>` : ""}
 
-        <button class="btn-finalizar" id="btn-finalizar">
+        <button class="btn-finalizar" id="btn-finalizar" ${itensSel.length === 0 ? "disabled" : ""}>
           <span class="btn-finalizar__ic">${IC_CADEADO}</span>
           <span>Finalizar compra</span>
         </button>
@@ -234,6 +261,13 @@ function renderizarCarrinho() {
   renderizarCamposEntrega();
   configurarBotaoFinalizar();
   atualizarAvisoAtacado();
+
+  document.getElementById("check-selecionar-todos")?.addEventListener("change", (evento) => {
+    itensSelecionados = evento.target.checked
+      ? new Set(itensAtuais.map(chaveItem))
+      : new Set();
+    renderizarCarrinho();
+  });
 
   document.querySelectorAll(".modo-entrega-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -253,7 +287,7 @@ async function atualizarAvisoAtacado() {
   const aviso = document.getElementById("aviso-atacado");
   if (!aviso) return;
 
-  const unidadesAtacado = contarUnidadesAtacado(itensAtuais);
+  const unidadesAtacado = contarUnidadesAtacado(itensMarcados());
   if (unidadesAtacado === 0) {
     aviso.hidden = true;
     return;
@@ -284,6 +318,9 @@ function renderizarItens() {
 
     return `
     <div class="carrinho-item" data-produto-id="${escapeHtml(item.produtoId)}" data-modo="${escapeHtml(item.modo)}">
+      <label class="carrinho-item-check">
+        <input type="checkbox" class="check-item-carrinho" ${itensSelecionados.has(chaveItem(item)) ? "checked" : ""} aria-label="Selecionar ${escapeHtml(item.nome)} para comprar">
+      </label>
       <div class="carrinho-item-img">
         <img src="${urlImagemSegura((produto && produto.imagemURL) || item.imagemURL)}" alt="${escapeHtml(item.nome)}">
       </div>
@@ -316,6 +353,12 @@ function renderizarItens() {
     const modo = el.dataset.modo;
     const item = itensAtuais.find((i) => i.produtoId === produtoId && i.modo === modo);
 
+    el.querySelector(".check-item-carrinho").addEventListener("change", (evento) => {
+      const chave = chaveItem(item);
+      if (evento.target.checked) itensSelecionados.add(chave);
+      else itensSelecionados.delete(chave);
+      renderizarCarrinho();
+    });
     el.querySelector(".btn-qtd-mais").addEventListener("click", async () => {
       await mudarQuantidade(produtoId, modo, item.quantidade + 1);
     });
@@ -323,6 +366,7 @@ function renderizarItens() {
       await mudarQuantidade(produtoId, modo, item.quantidade - 1);
     });
     el.querySelector(".carrinho-item-remover").addEventListener("click", async () => {
+      itensSelecionados.delete(chaveItem(item));
       itensAtuais = await removerDoCarrinho(usuarioAtual.uid, produtoId, modo);
       renderizarCarrinho();
       toast(`"${item.nome}" saiu do carrinho.`, "info", { titulo: "Item removido" });
@@ -426,7 +470,7 @@ async function carregarEnderecoSalvo() {
 }
 
 function atualizarResumoFrete() {
-  const subtotal = subtotalReal(itensAtuais);
+  const subtotal = subtotalReal(itensMarcados());
   const valorFreteEl = document.getElementById("valor-frete");
   const valorTotalEl = document.getElementById("valor-total");
   const zonaInfoEl = document.getElementById("frete-zona-info");
@@ -447,7 +491,7 @@ function atualizarResumoFrete() {
     return;
   }
 
-  const peso = pesoTotalCarrinho(itensAtuais);
+  const peso = pesoTotalCarrinho(itensMarcados());
   freteAtual = calcularFrete(bairro, peso);
 
   valorFreteEl.textContent = formatarPreco(freteAtual.valor);
@@ -468,15 +512,24 @@ function atualizarResumoFrete() {
 // (as garantias de permissão/shape são das firestore.rules; aqui é para o
 // cliente não criar um pedido que a loja teria que recusar depois)
 async function validarAntesDeFinalizar() {
-  // Produtos removidos do catálogo
-  const removidos = itensAtuais.filter((i) => !produtosCache.get(i.produtoId));
+  const itensSel = itensMarcados();
+
+  if (itensSel.length === 0) {
+    toast("Selecione ao menos um item para continuar.", "erro");
+    return false;
+  }
+
+  // Produtos removidos do catálogo (só entre os SELECIONADOS — um item
+  // indisponível que a pessoa nem marcou não deve travar a compra dos
+  // outros)
+  const removidos = itensSel.filter((i) => !produtosCache.get(i.produtoId));
   if (removidos.length > 0) {
-    toast("Há itens indisponíveis no carrinho — remova-os para continuar.", "erro");
+    toast("Há itens selecionados indisponíveis — remova-os para continuar.", "erro");
     return false;
   }
 
   // Estoque atual (informativo — a loja confirma na conferência)
-  const semEstoque = itensAtuais.filter((i) => {
+  const semEstoque = itensSel.filter((i) => {
     const produto = produtosCache.get(i.produtoId);
     return i.quantidade > estoquePorModo(produto, i.modo);
   });
@@ -492,7 +545,7 @@ async function validarAntesDeFinalizar() {
   }
 
   // Mínimo de atacado por carrinho (A3)
-  const unidadesAtacado = contarUnidadesAtacado(itensAtuais);
+  const unidadesAtacado = contarUnidadesAtacado(itensMarcados());
   if (unidadesAtacado > 0) {
     if (minimoAtacado === null) minimoAtacado = await obterMinimoAtacadoCarrinho();
     if (unidadesAtacado < minimoAtacado) {
@@ -534,7 +587,7 @@ function configurarBotaoFinalizar() {
     try {
       const pedidoRef = await criarPedido({
         uidComprador: usuarioAtual.uid,
-        itens: itensAtuais,
+        itens: itensMarcados(),
         modoEntrega,
         endereco,
         observacoes
@@ -566,9 +619,27 @@ function configurarBotaoFinalizar() {
 }
 
 // ── Inicialização ──────────────────────────────────────────────────────────
+// "Comprar agora" (js/produto-detalhe.js) manda pra cá com
+// ?comprarAgora=produtoId&modo=X depois de adicionar o item ao carrinho —
+// aqui a gente marca SÓ esse item, deixando o resto do carrinho (se houver)
+// desmarcado, pra "Finalizar compra" seguir só com a intenção da pessoa.
 exigirLogin(async ({ usuario }) => {
   usuarioAtual = usuario;
   itensAtuais = await obterCarrinho(usuario.uid);
   await carregarProdutosDoCarrinho();
+
+  const params = new URLSearchParams(window.location.search);
+  const comprarAgoraId = params.get("comprarAgora");
+  const comprarAgoraModo = params.get("modo") || "varejo";
+
+  if (comprarAgoraId && itensAtuais.some((i) => i.produtoId === comprarAgoraId && i.modo === comprarAgoraModo)) {
+    itensSelecionados = new Set([`${comprarAgoraId}|${comprarAgoraModo}`]);
+    // Limpa os parâmetros da URL: um F5 depois não deve voltar a
+    // desmarcar o resto do carrinho sem a pessoa pedir de novo.
+    window.history.replaceState({}, "", window.location.pathname);
+  } else {
+    itensSelecionados = new Set(itensAtuais.map(chaveItem));
+  }
+
   renderizarCarrinho();
 });

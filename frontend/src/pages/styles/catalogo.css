@@ -1167,14 +1167,15 @@
 .produto-compra .produto-qtd-controle button,
 .produto-compra .produto-qtd-controle input { height: 100%; }
 
-.produto-compra .btn-primary {
+.produto-compra .btn-primary,
+.produto-compra .btn-outline {
   flex: 1;
   min-width: 0;
   height: 50px;
   padding: 0 1.5rem;
   border-radius: 6px;
-  /* .btn-primary e inline-block; sem isto o texto encosta no topo da
-     altura fixa em vez de centralizar */
+  /* .btn-primary/.btn-outline são inline-block; sem isto o texto encosta
+     no topo da altura fixa em vez de centralizar */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1526,7 +1527,8 @@
   }
   /* empilhado, o eixo principal vira a ALTURA: o flex:1 do botão passaria
      a valer como base 0 e ele achataria para a altura do texto */
-  .produto-compra .btn-primary {
+  .produto-compra .btn-primary,
+  .produto-compra .btn-outline {
     flex: none;
     width: 100%;
   }
