@@ -168,6 +168,7 @@ function abrirDetalhe(pedidoId) {
     <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:1rem;">id ${escapeHtml(p.id)}</p>
     <p style="font-size:0.85rem; margin-bottom:0.4rem;"><strong>Data:</strong> ${formatarData(p.criadoEm)}</p>
     <p style="font-size:0.85rem; margin-bottom:1rem;"><strong>Pagamento:</strong> ${badgePagamento(p)}
+      ${p.pagamento?.parcelas > 1 ? `<span style="font-size:0.72rem; color:var(--text-muted);"> · ${escapeHtml(String(p.pagamento.parcelas))}x</span>` : ""}
       ${p.pagamento?.provedorPagamentoId ? `<span style="font-size:0.72rem; color:var(--text-muted);"> · MP ${escapeHtml(String(p.pagamento.provedorPagamentoId))}</span>` : ""}
     </p>
 
