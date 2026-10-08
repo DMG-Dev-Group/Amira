@@ -133,13 +133,25 @@
   flex: 0 0 clamp(235px, 20vw, 350px); height: clamp(440px, 50vw, 730px);
   grid-column: auto; grid-row: auto; scroll-snap-align: start;
 }
-.categories-grid .cat-card:first-child { flex-basis: clamp(340px, 35vw, 560px); }
 .categories-grid .cat-imagem-generica img { filter: saturate(.76) contrast(1.03); }
 .categories-grid .cat-overlay { background: linear-gradient(0deg, rgba(18,13,11,.68), transparent 46%); }
 .categories-grid .cat-label { left: 1.7rem; bottom: 2rem; }
 .categories-grid .cat-name { font-size: clamp(2.1rem, 3vw, 3.8rem); letter-spacing: -.04em; }
 .categories-grid .cat-arrow { right: 1.4rem; bottom: 2rem; border: none; width: 28px; font-size: 1.5rem; }
-@media (hover:hover) { .categories-grid .cat-card:hover img { transform: scale(1.035); filter: saturate(.92); } }
+@media (hover: hover) and (pointer: fine) and (min-width: 701px) {
+  .categories-grid .cat-card {
+    transition: flex-basis .7s cubic-bezier(.22, 1, .36, 1), filter .55s ease;
+  }
+  .categories-grid .cat-card:is(:hover, :focus-visible) {
+    flex-basis: clamp(340px, 35vw, 560px);
+  }
+  .categories-grid:has(.cat-card:is(:hover, :focus-visible)) .cat-card:not(:is(:hover, :focus-visible)) {
+    filter: brightness(.78);
+  }
+  .categories-grid .cat-card:is(:hover, :focus-visible) img {
+    transform: scale(1.035); filter: saturate(.92);
+  }
+}
 
 /* Destaques com retrato vertical e linha de compra lateral. */
 .featured { background: #e9d9ca; padding-bottom: 0; }
@@ -235,7 +247,7 @@
   .campaign-intro__texto h2 { font-size: clamp(4rem, 12vw, 6rem); }
   .campaign-intro__janela { min-height: 0; height: 78svh; max-height: 700px; }
   .categories-grid { margin-right: calc(-1 * var(--margem)); padding-right: var(--margem); }
-  .categories-grid .cat-card, .categories-grid .cat-card:nth-child(n), .categories-grid .cat-card:first-child { flex: 0 0 75vw; height: min(108vw, 600px); }
+  .categories-grid .cat-card, .categories-grid .cat-card:nth-child(n) { flex: 0 0 75vw; height: min(108vw, 600px); }
   .featured-layout { display: block; min-height: 0; }
   .featured-editorial { height: 115vw; max-height: 690px; }
   .featured .trilho { grid-auto-columns: 68vw; padding: 2.5rem var(--margem) 3.5rem; scroll-padding-inline: var(--margem); }
@@ -257,6 +269,7 @@
 @media (prefers-reduced-motion: reduce) {
   .campaign-hero__painel img { animation: none; transform: none; }
   .campaign-intro__foto { transition: none; }
+  .categories-grid .cat-card { transition: none; }
 }
 
 /* Linha secundária preservada, em escala de capítulo breve. */
