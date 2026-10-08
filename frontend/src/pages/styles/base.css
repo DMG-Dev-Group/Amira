@@ -318,8 +318,10 @@ main { display: block; }
 }
 
 /* ── 6. Campos ─────────────────────────────────────────────────────────── */
-input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
-select, textarea {
+/* :where() zera a especificidade: qualquer ajuste de página (.campo input…)
+   vence esta base sem precisar de !important. */
+:where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+select, textarea) {
   width: 100%;
   min-height: 50px;
   padding: var(--s-3) var(--s-4);
@@ -341,9 +343,9 @@ select {
   background-size: 16px;
   cursor: pointer;
 }
-input::placeholder, textarea::placeholder { color: var(--tinta-3); }
-input:hover, select:hover, textarea:hover { border-color: var(--tinta-3); }
-input:focus, select:focus, textarea:focus {
+:where(input, textarea)::placeholder { color: var(--tinta-3); }
+:where(input, select, textarea):hover { border-color: var(--tinta-3); }
+:where(input, select, textarea):focus {
   outline: none;
   border-color: var(--tinta);
   box-shadow: 0 1px 0 0 var(--tinta);

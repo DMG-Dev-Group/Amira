@@ -70,9 +70,10 @@ function card(pedido, totais) {
 
 function vazio() {
   return `
-    <div class="mp-vazio">
-      <p>Você ainda não fez nenhum pedido.</p>
-      <a href="produtos.html" class="btn-primary">Ver produtos</a>
+    <div class="mp-vazio carrinho-vazio">
+      <h2 class="titulo-3">Nenhum pedido por aqui</h2>
+      <p>Quando você comprar, o pedido, o comprovante e o código de retirada aparecem aqui.</p>
+      <a href="produtos.html" class="btn">Explorar a coleção</a>
     </div>
   `;
 }

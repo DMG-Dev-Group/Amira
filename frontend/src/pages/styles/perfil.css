@@ -1,430 +1,147 @@
-/* ── PERFIL / CONFIGURAÇÕES ──────────────────────────────────────────────
-   Mesma linguagem visual das telas de pedido e pagamento: cartões com
-   canto arredondado, borda 1px, respiro generoso e um título por bloco. */
+/* ════════════════════════════════════════════════════════════════════════
+   AMIRA — minha conta  (tokens em base.css)
+   Modo "Operar". As abas reaproveitam o "pill" que o js/perfil.js já
+   posiciona (left/width): aqui ele vira a linha dourada do horizonte
+   correndo por baixo da aba ativa.
+   ════════════════════════════════════════════════════════════════════════ */
 
 .perfil-main {
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 7.5rem 1.5rem 5rem;
+  width: 100%;
+  max-width: 880px;
+  margin-inline: auto;
+  padding: var(--s-7) var(--margem) var(--secao);
 }
 
 /* ── Cabeçalho ─────────────────────────────────────────────────────────── */
-.perfil-header {
-  display: flex;
-  align-items: center;
-  gap: 1.3rem;
-  margin-bottom: 2rem;
-}
-
-.perfil-avatar-wrap {
-  position: relative;
-  flex-shrink: 0;
-}
-
-.perfil-avatar,
-.perfil-avatar-iniciais {
-  width: 84px;
-  height: 84px;
-  border-radius: 50%;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  box-shadow: 0 6px 18px -8px rgba(0, 0, 0, 0.35);
-}
-
-.perfil-avatar {
+.perfil-header { display: flex; align-items: center; gap: var(--s-5); margin-bottom: var(--s-7); }
+.perfil-avatar-wrap { position: relative; flex: none; width: 88px; height: 88px; }
+.perfil-avatar, .perfil-avatar-iniciais {
+  width: 100%; height: 100%;
+  border-radius: var(--raio-pilula);
   object-fit: cover;
 }
-
 .perfil-avatar-iniciais {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: 'Playfair Display', serif;
-  font-size: 1.9rem;
-  color: var(--gold);
+  display: flex; align-items: center; justify-content: center;   /* o JS alterna display:flex/none */
+  background: var(--pedestal);
+  border: 1px solid var(--ouro);
+  font-family: var(--f-display);
+  font-size: 2rem;
+  color: var(--tinta);
 }
+.perfil-titulo { display: flex; flex-direction: column; gap: var(--s-1); min-width: 0; }
+.perfil-titulo h1 { font-size: var(--t-2); overflow-wrap: anywhere; }
+.perfil-titulo p { font-size: var(--t-p); color: var(--tinta-3); overflow-wrap: anywhere; }
 
-.perfil-titulo h1 {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.6rem;
-  font-weight: 500;
-  color: var(--text-main);
-  margin-bottom: 0.2rem;
-}
-
-.perfil-titulo p {
-  font-family: 'Jost', sans-serif;
-  font-size: 0.85rem;
-  color: var(--text-muted);
-}
-
-/* ── Abas ─────────────────────────────────────────────────────────────── */
+/* ── Abas ──────────────────────────────────────────────────────────────── */
 .perfil-tabs {
   position: relative;
-  display: flex;
-  gap: 0.25rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 0.3rem;
-  margin-bottom: 1.6rem;
+  display: flex; gap: var(--s-6);
+  margin-bottom: var(--s-7);
+  border-bottom: 1px solid var(--linha);
   overflow-x: auto;
   scrollbar-width: none;
 }
 .perfil-tabs::-webkit-scrollbar { display: none; }
-
-/* O pill segue a aba ativa. O JS copia offsetLeft/offsetWidth do botão
-   para left/width — por isso a transição é só nessas duas propriedades
-   (transform daria distorção na largura). */
 .perfil-tabs__pill {
-  position: absolute;
-  top: 0.3rem;
-  bottom: 0.3rem;
-  left: 0;
-  width: 0;
-  z-index: 0;
-  border-radius: 8px;
-  background: var(--brand);
-  pointer-events: none;
-  transition: left 0.4s cubic-bezier(0.65, 0, 0.35, 1),
-              width 0.4s cubic-bezier(0.65, 0, 0.35, 1);
+  position: absolute; bottom: -1px; left: 0;
+  height: 1px; width: 0;
+  background: var(--ouro);
+  transition: left 560ms var(--ease), width 560ms var(--ease);
 }
-
 .perfil-tab-btn {
-  position: relative;
-  z-index: 1;
-  flex: 1 0 auto;
+  flex: none;
+  padding: var(--s-4) 0;
+  font-size: var(--t-micro); font-weight: 500;
+  letter-spacing: var(--track-micro); text-transform: uppercase;
+  color: var(--tinta-3);
   white-space: nowrap;
-  font-family: 'Jost', sans-serif;
-  font-size: 0.8rem;
-  font-weight: 500;
-  letter-spacing: 0.03em;
-  color: var(--text-muted);
-  background: none;
-  border: none;
-  padding: 0.6rem 0.9rem;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: color 0.3s cubic-bezier(0.65, 0, 0.35, 1);
+  transition: color var(--t-rapido);
 }
+.perfil-tab-btn.active { color: var(--tinta); }
+@media (hover: hover) { .perfil-tab-btn:hover { color: var(--tinta); } }
 
-.perfil-tab-btn:hover {
-  color: var(--text-main);
+.perfil-painel { display: none; flex-direction: column; gap: var(--s-6); }
+.perfil-painel.active { display: flex; animation: painel-entra 600ms var(--ease) both; }
+@keyframes painel-entra { from { opacity: 0; transform: translateY(10px); } }
+
+/* ── Cartões e campos ──────────────────────────────────────────────────── */
+.perfil-card { display: flex; flex-direction: column; gap: var(--s-5); padding: var(--s-6); border: 1px solid var(--linha); }
+.perfil-card__titulo { font-size: var(--t-3); }
+.perfil-card__ajuda, .perfil-card p { font-size: var(--t-p); line-height: 1.65; color: var(--tinta-2); }
+.perfil-card p a { color: var(--tinta); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+
+.perfil-campo { display: flex; flex-direction: column; gap: var(--s-2); }
+.perfil-campo > label {
+  font-size: var(--t-micro); letter-spacing: var(--track-micro); text-transform: uppercase; color: var(--tinta-3);
 }
+.perfil-campo small { font-size: var(--t-pp); color: var(--tinta-3); }
+.perfil-campo input:disabled { background: var(--pedestal); color: var(--tinta-2); cursor: not-allowed; border-color: transparent; }
+.perfil-campo p strong { font-weight: 500; color: var(--tinta); }
+.perfil-check { display: flex; align-items: flex-start; gap: var(--s-3); font-size: var(--t-p) !important; letter-spacing: 0 !important; text-transform: none !important; color: var(--tinta-2) !important; cursor: pointer; line-height: 1.55; }
+.perfil-check input { margin-top: 3px; flex: none; }
 
-.perfil-tab-btn.active {
-  color: var(--on-brand);
-}
+.perfil-acoes { display: flex; align-items: center; flex-wrap: wrap; gap: var(--s-4); }
+.perfil-msg { font-size: var(--t-pp); color: var(--tinta-2); }
+.perfil-msg.sucesso, .perfil-msg--sucesso { color: var(--sucesso); }
+.perfil-msg.erro, .perfil-msg--erro { color: var(--perigo); }
 
-.perfil-tab-btn:focus-visible {
-  outline: 2px solid var(--gold);
-  outline-offset: 2px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .perfil-tabs__pill { transition: none; }
-}
-
-/* ── Painéis + cartões ────────────────────────────────────────────────── */
-.perfil-painel {
-  display: none;
-}
-
-.perfil-painel.active {
-  display: flex;
-  flex-direction: column;
-  gap: 1.2rem;
-  animation: perfilFadeIn 0.25s ease;
-}
-
-@keyframes perfilFadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.perfil-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 1.6rem;
-}
-
-/* Atalho para o histórico de pedidos (cartão clicável) */
+/* Atalho para os pedidos */
 .perfil-atalho {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1.1rem 1.3rem;
-  text-decoration: none;
-  transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+  flex-direction: row; align-items: center; gap: var(--s-4);
+  padding: var(--s-5) var(--s-6);
+  background: var(--pedestal);
+  border-color: transparent;
+  border-top: 1px solid var(--ouro);
+  color: var(--tinta);
+  transition: background-color var(--t-ui);
 }
+.perfil-atalho__ic { color: var(--ouro); flex: none; }
+.perfil-atalho__ic svg { width: 26px; height: 26px; stroke-width: 1.4; }
+.perfil-atalho__txt { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.perfil-atalho__txt strong { font-family: var(--f-display); font-size: var(--t-4); font-weight: 400; }
+.perfil-atalho__txt small { font-size: var(--t-pp); color: var(--tinta-2); }
+.perfil-atalho__seta { font-size: 1.2rem; transition: transform var(--t-ui) var(--ease); }
+@media (hover: hover) { .perfil-atalho:hover .perfil-atalho__seta { transform: translateX(4px); } }
 
-.perfil-atalho:hover {
-  border-color: color-mix(in srgb, var(--gold) 45%, var(--border));
-  transform: translateY(-2px);
-  box-shadow: 0 14px 30px -18px rgba(0, 0, 0, 0.35);
-}
+.perfil-privacidade-acoes { display: flex; flex-wrap: wrap; gap: var(--s-3); }
+.btn-outline--danger { --btn-texto: var(--perigo); --btn-borda: color-mix(in srgb, var(--perigo) 45%, transparent); }
+.btn-outline--danger::before { background: var(--perigo); }
 
-.perfil-atalho__ic {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  flex-shrink: 0;
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--gold) 14%, transparent);
-  color: var(--gold);
-}
-.perfil-atalho__ic svg { width: 20px; height: 20px; }
-
-.perfil-atalho__txt {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  flex: 1;
-  min-width: 0;
-}
-
-.perfil-atalho__txt strong {
-  font-family: 'Jost', sans-serif;
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--text-main);
-}
-
-.perfil-atalho__txt small {
-  font-family: 'Jost', sans-serif;
-  font-size: 0.78rem;
-  color: var(--text-muted);
-}
-
-.perfil-atalho__seta {
-  flex-shrink: 0;
-  font-size: 1.1rem;
-  color: var(--text-muted);
-  transition: transform 0.18s ease, color 0.18s ease;
-}
-.perfil-atalho:hover .perfil-atalho__seta {
-  color: var(--gold);
-  transform: translateX(3px);
-}
-
-.perfil-card__titulo {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.12rem;
-  font-weight: 500;
-  color: var(--text-main);
-  margin-bottom: 1.2rem;
-}
-
-.perfil-card__ajuda {
-  font-family: 'Jost', sans-serif;
-  font-size: 0.85rem;
-  line-height: 1.55;
-  color: var(--text-muted);
-  margin: -0.5rem 0 1.2rem;
-}
-
-/* Bloco de status do revendedor (montado pelo JS) vira cartão quando tem
-   conteúdo. */
-#revendedor-status:not(:empty) {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 1.6rem;
-}
-#revendedor-status .perfil-campo { margin-bottom: 0; }
-#revendedor-status p + p { margin-top: 0.3rem; }
-
-/* ── Campos ───────────────────────────────────────────────────────────── */
-.perfil-campo {
-  margin-bottom: 1.1rem;
-}
-.perfil-campo:last-child {
-  margin-bottom: 0;
-}
-
-.perfil-campo label {
-  display: block;
-  font-family: 'Jost', sans-serif;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  margin-bottom: 0.45rem;
-}
-
-.perfil-campo input {
-  width: 100%;
-  padding: 0.8rem 0.95rem;
-  font-family: 'Jost', sans-serif;
-  font-size: 0.92rem;
-  color: var(--text-main);
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  outline: none;
-  transition: border-color 0.18s ease, box-shadow 0.18s ease;
-}
-
-.perfil-campo input:focus {
-  border-color: var(--gold);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--gold) 18%, transparent);
-}
-
-.perfil-campo input:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-.perfil-campo small {
-  display: block;
-  margin-top: 0.4rem;
-  font-size: 0.75rem;
-  color: var(--text-muted);
-}
-
-/* ── Ações do cartão ──────────────────────────────────────────────────── */
-.perfil-acoes {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-top: 1.4rem;
-  padding-top: 1.3rem;
-  border-top: 1px solid var(--border);
-}
-
-/* Botões dentro dos cartões do perfil: cantos arredondados e proporções
-   mais contidas, igual às telas de pedido e pagamento. */
-.perfil-painel .btn-primary,
-.perfil-painel .btn-outline {
-  font-size: 0.76rem;
-  letter-spacing: 0.06em;
-  padding: 0.7rem 1.4rem;
-  border-radius: 9px;
-}
-
-.perfil-painel .btn-primary {
-  background: var(--brand);
-  color: var(--on-brand);
-}
-.perfil-painel .btn-primary:hover {
-  background: var(--brand-strong);
-}
-
-.perfil-painel .btn-outline {
-  background: transparent;
-  color: var(--text-main);
-  border: 1px solid var(--border);
-}
-.perfil-painel .btn-outline:hover {
-  background: var(--bg);
-  border-color: var(--gold);
-  color: var(--gold);
-  transform: none;
-}
-
-.perfil-msg {
-  font-family: 'Jost', sans-serif;
-  font-size: 0.83rem;
-  color: var(--danger);
-}
-.perfil-msg.sucesso {
-  color: var(--success);
-}
-
-/* ── Consentimento de marketing ───────────────────────────────────────── */
-.perfil-check {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.6rem;
-  font-family: 'Jost', sans-serif;
-  font-size: 0.86rem;
-  line-height: 1.5;
-  color: var(--text-main);
-  cursor: pointer;
-  text-transform: none;
-  letter-spacing: 0;
-}
-
-.perfil-check input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  margin-top: 2px;
-  flex-shrink: 0;
-  accent-color: var(--gold);
-  cursor: pointer;
-}
-
-/* ── LGPD ─────────────────────────────────────────────────────────────── */
-.perfil-privacidade p {
-  font-family: 'Jost', sans-serif;
-  font-size: 0.86rem;
-  color: var(--text-muted);
-  line-height: 1.6;
-  margin-bottom: 1.1rem;
-}
-
-.perfil-privacidade p a { color: var(--gold); }
-
-.perfil-privacidade-acoes {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.7rem;
-}
-
-.perfil-painel .btn-outline--danger {
-  border-color: color-mix(in srgb, var(--danger) 45%, transparent);
-  color: var(--danger);
-}
-.perfil-painel .btn-outline--danger:hover {
-  background: var(--danger);
-  color: #fff;
-  border-color: var(--danger);
-}
-
-/* ── Zona sensível (sair / voltar para cliente) ───────────────────────── */
-.perfil-zona-perigo {
-  border-color: color-mix(in srgb, var(--danger) 30%, var(--border));
-  background: color-mix(in srgb, var(--danger) 4%, var(--surface));
-}
-
-.perfil-zona-perigo p {
-  font-family: 'Jost', sans-serif;
-  font-size: 0.83rem;
-  color: var(--text-muted);
-  margin-bottom: 1rem;
-}
-
+.perfil-zona-perigo { border-color: var(--linha); }
 .btn-sair-conta {
-  font-family: 'Jost', sans-serif;
-  font-size: 0.76rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--danger);
-  background: transparent;
-  border: 1px solid var(--danger);
-  padding: 0.65rem 1.4rem;
-  border-radius: 8px;
+  align-self: flex-start;
+  min-height: 48px;
+  padding: 0 var(--s-5);
+  border: 1px solid color-mix(in srgb, var(--perigo) 45%, transparent);
+  border-radius: var(--raio);
+  font-size: var(--t-micro); font-weight: 500; letter-spacing: var(--track-micro); text-transform: uppercase;
+  color: var(--perigo);
+  transition: background-color var(--t-ui), color var(--t-ui);
+}
+@media (hover: hover) { .btn-sair-conta:hover { background: var(--perigo); color: #fff; } }
+
+/* Foto de perfil (services/imagem-upload.js → montarUploadFoto) */
+.foto-upload { display: flex; align-items: center; gap: var(--s-4); flex-wrap: wrap; }
+.foto-upload-preview { width: 72px; height: 72px; border-radius: var(--raio-pilula); overflow: hidden; background: var(--pedestal); flex: none; }
+.foto-upload-preview img { width: 100%; height: 100%; object-fit: cover; }
+.foto-upload-acoes { display: flex; gap: var(--s-2); flex-wrap: wrap; }
+.foto-upload-btn {
+  display: inline-flex; align-items: center; min-height: 42px; padding: 0 var(--s-4);
+  border: 1px solid var(--linha-forte); border-radius: var(--raio);
+  font-size: var(--t-micro); font-weight: 500; letter-spacing: var(--track-micro); text-transform: uppercase;
   cursor: pointer;
-  transition: background 0.18s ease, color 0.18s ease;
+  transition: border-color var(--t-rapido);
 }
+@media (hover: hover) { .foto-upload-btn:hover { border-color: var(--tinta); } }
+.foto-upload-btn--danger { color: var(--perigo); }
+.foto-upload-escolher.processando { opacity: 0.6; pointer-events: none; }
+.foto-upload-msg { width: 100%; font-size: var(--t-pp); color: var(--perigo); }
 
-.btn-sair-conta:hover {
-  background: var(--danger);
-  color: #fff;
-}
-
+/* ── Responsivo ────────────────────────────────────────────────────────── */
 @media (max-width: 600px) {
-  .perfil-main { padding: 6.5rem 1.1rem 4rem; }
-  .perfil-header { gap: 1rem; margin-bottom: 1.6rem; }
-  .perfil-avatar,
-  .perfil-avatar-iniciais { width: 68px; height: 68px; }
-  .perfil-avatar-iniciais { font-size: 1.5rem; }
-  .perfil-titulo h1 { font-size: 1.35rem; }
-  .perfil-card { padding: 1.25rem; }
-  .perfil-acoes { flex-wrap: wrap; gap: 0.7rem; }
+  .perfil-header { gap: var(--s-4); }
+  .perfil-avatar-wrap { width: 64px; height: 64px; }
+  .perfil-card { padding: var(--s-5); }
+  .perfil-tabs { gap: var(--s-5); margin-inline: calc(var(--margem) * -1); padding-inline: var(--margem); }
+  .perfil-acoes .btn, .perfil-acoes .btn-primary { width: 100%; }
 }

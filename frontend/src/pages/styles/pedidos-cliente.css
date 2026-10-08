@@ -1,450 +1,194 @@
-/* ── Comprovante + histórico de pedidos (lado cliente) ─────────────────
-   Mesma linguagem das telas de pedido/pagamento: cartões arredondados,
-   borda 1px, título em Playfair. O comprovante tem um bloco @media print
-   para sair limpo no papel / PDF. */
+/* ════════════════════════════════════════════════════════════════════════
+   AMIRA — meus pedidos e comprovante  (tokens em base.css)
+   O comprovante é um documento: lê-se como um recibo de boutique (papel
+   claro, fios, valores alinhados em Bodoni) e imprime limpo (@media print).
+   ════════════════════════════════════════════════════════════════════════ */
 
-.cp-main,
-.mp-main {
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 7.5rem 1.5rem 5rem;
-  text-align: left;
-}
-
-/* ── Comprovante ─────────────────────────────────────────────────────── */
-.cp {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 2rem;
-}
-
-.cp-topo {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-  padding-bottom: 1.4rem;
-  border-bottom: 1px solid var(--border);
-}
-
-.cp-eyebrow {
-  font-family: 'Jost', sans-serif;
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  margin-bottom: 0.3rem;
-}
-
-.cp-titulo {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.5rem;
-  font-weight: 500;
-  color: var(--text-main);
-  line-height: 1.1;
-}
-
-.cp-muted {
-  font-family: 'Jost', sans-serif;
-  font-size: 0.82rem;
-  line-height: 1.55;
-  color: var(--text-muted);
-}
-
-/* Selo de status ------------------------------------------------------ */
-.cp-selo,
-.mp-selo {
-  flex-shrink: 0;
-  font-family: 'Jost', sans-serif;
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  border-radius: 999px;
-  padding: 0.3rem 0.8rem;
-  white-space: nowrap;
-}
-
-.cp-selo--pago,
-.mp-selo--pago {
-  color: var(--success);
-  background: color-mix(in srgb, var(--success) 12%, transparent);
-}
-.cp-selo--pendente,
-.mp-selo--pendente {
-  color: var(--warning);
-  background: color-mix(in srgb, var(--warning) 14%, transparent);
-}
-.cp-selo--recusado,
-.cp-selo--cancelado,
-.mp-selo--recusado,
-.mp-selo--cancelado {
-  color: var(--danger);
-  background: color-mix(in srgb, var(--danger) 12%, transparent);
-}
-
-/* Código de retirada -------------------------------------------------- */
-.cp-codigo-bloco {
-  margin-top: 1.4rem;
-  text-align: center;
-  border: 1px dashed color-mix(in srgb, var(--gold) 55%, var(--border));
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--gold) 8%, transparent);
-  padding: 1.3rem 1rem;
-}
-
-.cp-codigo-rotulo {
-  font-family: 'Jost', sans-serif;
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-
-.cp-codigo {
-  font-family: 'Jost', sans-serif;
-  font-size: 1.9rem;
-  font-weight: 600;
-  letter-spacing: 0.18em;
-  color: var(--gold);
-  margin: 0.35rem 0 0.4rem;
-}
-
-/* Metadados ----------------------------------------------------------- */
-.cp-meta {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.9rem 1.4rem;
-  margin-top: 1.5rem;
-}
-
-.cp-meta div {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  font-family: 'Jost', sans-serif;
-}
-
-.cp-meta span {
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-
-.cp-meta strong {
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: var(--text-main);
-}
-
-/* Itens --------------------------------------------------------------- */
-.cp-itens {
-  margin-top: 1.8rem;
-  overflow-x: auto;
-}
-
-.cp-tabela {
+.cp-main, .mp-main {
   width: 100%;
-  border-collapse: collapse;
-  font-family: 'Jost', sans-serif;
-  font-size: 0.86rem;
+  max-width: 820px;
+  margin-inline: auto;
+  padding: var(--s-7) var(--margem) var(--secao);
 }
 
-/* Larguras fixas nas colunas de número; o nome do item fica com o resto.
-   Sem isto a tabela se moldava ao tamanho do nome e as colunas mudavam
-   de lugar a cada pedido. */
-.cp-col-qtd { width: 4.5rem; }
-.cp-col-valor { width: 7.5rem; }
-
-.cp-tabela th {
-  text-align: left;
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  padding: 0 0 0.6rem;
-  border-bottom: 1px solid var(--border);
-}
-
-.cp-tabela th:not(:first-child),
-.cp-tabela td:not(:first-child) {
-  text-align: right;
+/* ── Selo de status (pedidos e comprovante) ────────────────────────────── */
+.cp-selo, .mp-selo {
+  flex: none;
+  display: inline-flex; align-items: center; gap: var(--s-2);
+  padding: 4px var(--s-3);
+  border: 1px solid currentColor;
+  border-radius: var(--raio-pilula);
+  font-size: var(--t-micro); font-weight: 500;
+  letter-spacing: 0.12em; text-transform: uppercase;
   white-space: nowrap;
 }
+.cp-selo::before, .mp-selo::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.cp-selo--pago, .mp-selo--pago { color: var(--sucesso); }
+.cp-selo--pendente, .mp-selo--pendente { color: var(--aviso); }
+.cp-selo--recusado, .cp-selo--cancelado, .mp-selo--recusado, .mp-selo--cancelado { color: var(--perigo); }
 
-.cp-tabela td {
-  padding: 0.75rem 0;
-  border-bottom: 1px solid var(--border);
-  color: var(--text-main);
-}
-
-.cp-tag {
-  display: inline-block;
-  margin-left: 0.4rem;
-  font-size: 0.62rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  color: var(--gold);
-  background: color-mix(in srgb, var(--gold) 14%, transparent);
-  border-radius: 999px;
-  padding: 0.1rem 0.45rem;
-}
-
-/* Totais -------------------------------------------------------------- */
-/* Totais: agora sao linhas do <tfoot>, entao herdam as colunas da tabela
-   e o valor cai exatamente embaixo da coluna "Total" dos itens. */
-.cp-total-linha td {
-  border-bottom: none;
-  padding: 0.3rem 0;
-  font-size: 0.88rem;
-  color: var(--text-muted);
-}
-
-/* A primeira linha do rodape se descola dos itens. */
-.cp-tabela tfoot tr:first-child td {
-  padding-top: 0.9rem;
-}
-
-.cp-total-linha--final td {
-  padding-top: 0.7rem;
-  border-top: 1px solid var(--border);
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--text-main);
-}
-
-.cp-total-linha--final td:last-child {
-  color: var(--gold);
-}
-
-/* Endereço + rodapé --------------------------------------------------- */
-.cp-endereco {
-  margin-top: 1.8rem;
-  padding-top: 1.3rem;
-  border-top: 1px solid var(--border);
-  font-family: 'Jost', sans-serif;
-  font-size: 0.88rem;
-  color: var(--text-main);
-  line-height: 1.6;
-}
-
-.cp-secao-titulo {
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  margin-bottom: 0.4rem;
-}
-
-.cp-rodape {
-  margin-top: 1.8rem;
-  padding-top: 1.3rem;
-  border-top: 1px solid var(--border);
-  font-size: 0.76rem;
-}
-
-.cp-acoes {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.7rem;
-  margin-top: 1.5rem;
-}
-
-.cp-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.76rem;
-  letter-spacing: 0.06em;
-  padding: 0.7rem 1.3rem;
-  border-radius: 9px;
-}
-
-.cp-btn__ic {
-  width: 15px;
-  height: 15px;
-}
-.cp-btn__ic svg { width: 100%; height: 100%; display: block; }
-
-.cp-acoes .btn-outline {
-  background: transparent;
-  color: var(--text-main);
-  border: 1px solid var(--border);
-}
-.cp-acoes .btn-outline:hover {
-  border-color: var(--gold);
-  color: var(--gold);
-  background: var(--bg);
-  transform: none;
-}
-
-.cp-link {
-  font-family: 'Jost', sans-serif;
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  text-decoration: underline;
-}
-.cp-link:hover { color: var(--gold); }
-
-/* ── Histórico de pedidos ────────────────────────────────────────────── */
+/* ── Meus pedidos ──────────────────────────────────────────────────────── */
 .mp-cabecalho {
-  margin-bottom: 1.6rem;
+  display: flex; flex-direction: column; gap: var(--s-2);
+  margin-bottom: var(--s-7);
+  padding-bottom: var(--s-6);
+  border-bottom: 1px solid var(--linha);
 }
-
-.mp-cabecalho h1 {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.7rem;
-  font-weight: 500;
-  color: var(--text-main);
-}
-
-.mp-cabecalho p {
-  font-family: 'Jost', sans-serif;
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  margin-top: 0.2rem;
-}
-
-.mp-lista {
-  display: flex;
-  flex-direction: column;
-  gap: 0.9rem;
-}
+.mp-cabecalho p { font-size: var(--t-pp); color: var(--tinta-3); }
+#mp-lista { display: flex; flex-direction: column; }
+.mp-lista { display: flex; flex-direction: column; }
 
 .mp-card {
-  display: block;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 1.2rem 1.3rem;
-  text-decoration: none;
-  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "topo topo" "fotos fotos" "rodape rodape";
+  gap: var(--s-3);
+  padding: var(--s-5) 0;
+  border-bottom: 1px solid var(--linha);
+  color: var(--tinta);
 }
-
-.mp-card:hover {
-  border-color: color-mix(in srgb, var(--gold) 45%, var(--border));
-  transform: translateY(-2px);
-  box-shadow: 0 14px 30px -18px rgba(0, 0, 0, 0.35);
+.mp-card::after {
+  content: "→";
+  position: absolute; right: 0; top: 50%;
+  translate: 0 -50%;
+  font-size: 1.2rem; color: var(--tinta-3);
+  transition: transform var(--t-ui) var(--ease), color var(--t-rapido);
 }
-
-.mp-card__topo {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.8rem;
-  margin-bottom: 0.7rem;
+@media (hover: hover) {
+  .mp-card:hover::after { transform: translateX(4px); color: var(--tinta); }
+  .mp-card:hover .mp-card__codigo { color: var(--marca); }
 }
-
+.mp-card__topo { grid-area: topo; display: flex; align-items: center; gap: var(--s-4); padding-right: var(--s-7); }
 .mp-card__codigo {
-  font-family: 'Jost', sans-serif;
-  font-size: 0.95rem;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  color: var(--text-main);
+  font-family: var(--f-display);
+  font-size: var(--t-3);
+  letter-spacing: 0.06em;
+  transition: color var(--t-rapido);
 }
-
-.mp-card__data {
-  font-family: 'Jost', sans-serif;
-  font-size: 0.76rem;
-  color: var(--text-muted);
-}
-
-.mp-card__miniaturas {
-  display: flex;
-  gap: 0.4rem;
-  margin-bottom: 0.8rem;
-}
-
+.mp-card__miniaturas { grid-area: fotos; display: flex; gap: var(--s-2); }
 .mp-card__miniaturas img {
-  width: 42px;
-  height: 42px;
-  border-radius: 8px;
-  object-fit: cover;
-  border: 1px solid var(--border);
-  background: var(--bg);
+  width: 56px; aspect-ratio: 4 / 5;
+  object-fit: contain; padding: 4px;   /* fixo: % de padding mede a largura do CONTÊINER (a fila toda) */
+  background: var(--pedestal);
+  mix-blend-mode: multiply;
 }
-
+body[data-theme="dark"] .mp-card__miniaturas img { mix-blend-mode: normal; }
 .mp-card__mais {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 8px;
-  border: 1px dashed var(--border);
-  font-family: 'Jost', sans-serif;
-  font-size: 0.72rem;
-  color: var(--text-muted);
+  width: 56px; aspect-ratio: 4 / 5;
+  display: grid; place-items: center;
+  border: 1px solid var(--linha);
+  font-size: var(--t-pp); color: var(--tinta-3);
 }
-
 .mp-card__rodape {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.8rem;
-  font-family: 'Jost', sans-serif;
-  font-size: 0.82rem;
-  color: var(--text-muted);
+  grid-area: rodape;
+  display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-4);
+  padding-right: var(--s-7);
+  font-size: var(--t-pp); color: var(--tinta-2);
 }
+.mp-card__total { font-family: var(--f-display); font-size: 1.25rem; color: var(--tinta); font-variant-numeric: lining-nums tabular-nums; }
 
-.mp-card__total {
-  font-size: 1.05rem;
-  font-weight: 600;
-  color: var(--gold);
+/* ── Comprovante ───────────────────────────────────────────────────────── */
+.cp {
+  position: relative;
+  padding: clamp(var(--s-6), 4vw, var(--s-8));
+  background: var(--porcelana);
+  border: 1px solid var(--linha);
+  border-top: 1px solid var(--ouro);
 }
+body[data-theme="light"] .cp { background: #FFFFFF; }
+.cp-topo {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s-4);
+  padding-bottom: var(--s-5);
+  border-bottom: 1px solid var(--linha);
+}
+.cp-eyebrow { font-size: var(--t-micro); font-weight: 500; letter-spacing: var(--track-micro); text-transform: uppercase; color: var(--tinta-3); margin-bottom: var(--s-2); }
+.cp-titulo { font-size: var(--t-2); }
+.cp-muted { font-size: var(--t-pp); line-height: 1.6; color: var(--tinta-2); }
 
-.mp-vazio {
+.cp-codigo-bloco {
+  display: flex; flex-direction: column; align-items: center; gap: var(--s-3);
+  margin-top: var(--s-6);
+  padding: var(--s-6) var(--s-4);
+  background: var(--pedestal);
   text-align: center;
-  padding: 3.5rem 1.5rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 14px;
 }
+.cp-codigo-rotulo { font-size: var(--t-micro); font-weight: 500; letter-spacing: var(--track-micro); text-transform: uppercase; color: var(--tinta-3); }
+.cp-codigo { font-family: var(--f-display); font-size: clamp(2.2rem, 1.6rem + 3vw, 3.4rem); letter-spacing: 0.12em; font-variant-numeric: lining-nums; }
+.cp-qr svg, .cp-qr img { width: 168px; height: auto; margin-inline: auto; background: #fff; padding: var(--s-2); }
 
-.mp-vazio p {
-  font-family: 'Jost', sans-serif;
-  color: var(--text-muted);
-  margin-bottom: 1.2rem;
+.cp-meta {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--s-4);
+  margin-top: var(--s-6);
+  padding-bottom: var(--s-5);
+  border-bottom: 1px solid var(--linha);
 }
+.cp-meta div { display: flex; flex-direction: column; gap: var(--s-1); }
+.cp-meta span { font-size: var(--t-micro); letter-spacing: 0.12em; text-transform: uppercase; color: var(--tinta-3); }
+.cp-meta strong { font-size: var(--t-p); font-weight: 500; }
 
-@media (max-width: 600px) {
-  .cp-main, .mp-main { padding: 6.5rem 1.1rem 4rem; }
-  .cp { padding: 1.3rem; }
-  .cp-meta { grid-template-columns: 1fr; }
-  .cp-codigo { font-size: 1.5rem; }
-  /* Na tela estreita as colunas de número apertam: o .cp-itens já tem
-     overflow-x, mas encolher aqui evita ter que rolar por uma coluna só. */
-  .cp-col-qtd { width: 3rem; }
+.cp-itens { margin-top: var(--s-5); overflow-x: auto; }
+.cp-tabela { width: 100%; border-collapse: collapse; font-size: var(--t-p); font-variant-numeric: tabular-nums; }
+.cp-col-qtd { width: 4.5rem; }
+.cp-col-valor { width: 7.5rem; }
+.cp-tabela th {
+  padding: 0 0 var(--s-3);
+  border-bottom: 1px solid var(--linha);
+  text-align: left;
+  font-size: var(--t-micro); font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--tinta-3);
+}
+.cp-tabela th:not(:first-child), .cp-tabela td:not(:first-child) { text-align: right; white-space: nowrap; }
+.cp-tabela td { padding: var(--s-3) 0; border-bottom: 1px dashed var(--linha); }
+.cp-tag {
+  display: inline-block; margin-left: var(--s-2); padding: 1px var(--s-2);
+  border: 1px solid var(--linha-forte); border-radius: var(--raio-pilula);
+  font-size: 10px; letter-spacing: 0.1em; color: var(--tinta-2);
+}
+.cp-total-linha td { padding: var(--s-1) 0; border-bottom: 0; color: var(--tinta-2); }
+.cp-tabela tfoot tr:first-child td { padding-top: var(--s-4); }
+.cp-total-linha--final td { padding-top: var(--s-3); border-top: 1px solid var(--ouro); color: var(--tinta); font-size: var(--t-4); }
+.cp-total-linha--final td:last-child { font-family: var(--f-display); font-size: var(--t-3); }
+
+.cp-endereco { margin-top: var(--s-6); padding-top: var(--s-5); border-top: 1px solid var(--linha); font-size: var(--t-p); line-height: 1.6; }
+.cp-secao-titulo { margin-bottom: var(--s-2); font-size: var(--t-micro); font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--tinta-3); }
+.cp-rodape { margin-top: var(--s-6); padding-top: var(--s-5); border-top: 1px solid var(--linha); font-size: var(--t-pp); }
+
+.cp-acoes { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-3); margin-top: var(--s-6); }
+.cp-btn__ic { display: inline-flex; width: 16px; height: 16px; }
+.cp-btn__ic svg { width: 100%; height: 100%; }
+.cp-link {
+  margin-left: auto;
+  font-size: var(--t-micro); letter-spacing: var(--track-micro); text-transform: uppercase;
+  text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px;
+  color: var(--tinta-2);
+}
+@media (hover: hover) { .cp-link:hover { color: var(--tinta); } }
+
+/* ── Responsivo ────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .cp { padding: var(--s-5); margin-inline: calc(var(--margem) * -1); border-inline: 0; }
+  .cp-topo { flex-direction: column; }
+  .cp-meta { grid-template-columns: 1fr 1fr; }
+  .cp-col-qtd { width: 2.6rem; }
   .cp-col-valor { width: 5.8rem; }
-  .cp-tabela { font-size: 0.8rem; }
+  .cp-tabela { font-size: var(--t-pp); }
+  .cp-link { margin-left: 0; }
+  .cp-acoes .btn, .cp-acoes .btn-primary, .cp-acoes .btn-outline { width: 100%; }
+  .mp-card__codigo { font-size: 1.25rem; }
+  .mp-card__topo { flex-wrap: wrap; gap: var(--s-2); }
 }
 
-/* ── Impressão ───────────────────────────────────────────────────────── */
+/* ── Impressão: só o comprovante, em papel branco ──────────────────────── */
 @media print {
-  nav,
-  .mobile-menu-panel,
-  .mobile-menu-overlay,
-  .whatsapp-btn,
-  .cp-acoes,
-  .amira-toasts {
+  .faixa-aviso, .topo, .busca-folha, .veu, .mobile-menu-panel, .mobile-menu-overlay,
+  .rodape, .whatsapp-btn, .cp-acoes, .amira-toasts, .amira-cookie-banner, .cortina, .pular {
     display: none !important;
   }
-  body { background: #fff; }
+  body, body[data-theme="dark"] { background: #fff !important; color: #000 !important; }
   .cp-main { padding: 0; max-width: none; }
-  .cp {
-    border: none;
-    border-radius: 0;
-    padding: 0;
-    background: #fff;
-    color: #000;
-  }
-  .cp-codigo-bloco { break-inside: avoid; }
+  .cp { border: 0; padding: 0; background: #fff !important; color: #000; margin: 0; }
+  .cp-codigo-bloco { break-inside: avoid; background: #f5f5f5; }
+  .cp-muted, .cp-meta span, .cp-tabela th { color: #444 !important; }
 }
