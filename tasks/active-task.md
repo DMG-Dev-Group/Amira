@@ -1,3 +1,3 @@
 # Tarefa ativa
 
-Revisar e integrar `codex/editorial-storefront` com a branch de conta e pedidos. Conferir a vitrine em viewport mobile na integração e substituir links sociais quando houver URLs oficiais.
+Validar e entregar o redesign completo do front-end público na branch `codex/premium-original-redesign`, baseada em `origin/main`. A compra autenticada exige uma conta de teste para validação ponta a ponta.

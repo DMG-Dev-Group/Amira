@@ -1,0 +1,76 @@
+/* Páginas de visita rápida: composição editorial com a identidade da loja. */
+.pagina-editorial {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, .9fr);
+  min-height: 100svh;
+}
+.pagina-editorial__conteudo {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: clamp(var(--s-5), 4vw, var(--s-8));
+}
+.pagina-editorial__marca { display: inline-block; width: max-content; }
+.pagina-editorial__marca img { width: 98px; height: auto; }
+body[data-theme="dark"] .pagina-editorial__marca img { filter: invert(1); }
+.pagina-editorial__mensagem,
+.avl-card { width: min(100%, 590px); margin: auto 0; padding-block: var(--s-8); }
+.pagina-editorial__mensagem h1,
+.avl-titulo { margin-block: var(--s-5); font-size: var(--t-1); }
+.pagina-editorial__mensagem .texto-apoio,
+.avl-subtitulo { margin-bottom: var(--s-7); }
+.pagina-editorial__acoes { display: flex; align-items: center; flex-wrap: wrap; gap: var(--s-5); }
+.pagina-editorial__rodape { margin-top: auto; }
+.pagina-editorial__imagem {
+  min-height: 100%;
+  background: var(--pedestal) url('../images/perfume_asaad.jpg') center / cover no-repeat;
+}
+.pagina-editorial--avaliacao .pagina-editorial__imagem {
+  background-image: url('../images/acessorios_destaque.jpg');
+}
+.avl-form.avaliacao-form { border: 0; background: none; padding: 0; margin: 0; }
+.avl-campo { margin-bottom: var(--s-5); }
+.avl-campo label,
+.avl-campo__rotulo {
+  display: block;
+  margin-bottom: var(--s-2);
+  color: var(--tinta-2);
+  font-size: var(--t-micro);
+  font-weight: 500;
+  letter-spacing: var(--track-micro);
+  text-transform: uppercase;
+}
+.avl-campo label span { color: var(--tinta-3); font-weight: 400; }
+.avl-campo input,
+.avl-campo textarea { width: 100%; }
+.avl-campo textarea { min-height: 110px; resize: vertical; }
+.avl-form .avaliacao-notas { gap: var(--s-2); }
+.avl-form .avaliacao-nota { width: 46px; height: 46px; }
+.avl-form .avaliacao-nota svg { width: 28px; height: 28px; }
+.avl-form .avaliacao-form__rodape { align-items: flex-start; flex-direction: column; gap: var(--s-4); }
+.avl-pos__icone {
+  display: grid; place-items: center;
+  width: 48px; height: 48px;
+  margin-bottom: var(--s-5);
+  border: 1px solid var(--sucesso);
+  border-radius: 50%;
+  color: var(--sucesso);
+}
+.avl-pos__icone svg { width: 22px; height: 22px; }
+.avl-pos p { max-width: 42ch; margin-bottom: var(--s-6); color: var(--tinta-2); }
+.avl-pos .btn-primary,
+.avl-pos .btn-outline { margin-right: var(--s-3); margin-bottom: var(--s-3); }
+@media (max-width: 800px) {
+  .pagina-editorial { grid-template-columns: 1fr; }
+  .pagina-editorial__conteudo { min-height: 100svh; }
+  .pagina-editorial__imagem { display: none; }
+  .pagina-editorial--erro .pagina-editorial__conteudo {
+    background: linear-gradient(rgba(254,245,239,.86), rgba(254,245,239,.92)), url('../images/perfume_asaad.jpg') center / cover;
+  }
+}
+@media (max-width: 480px) {
+  .pagina-editorial__mensagem, .avl-card { padding-block: var(--s-7); }
+  .pagina-editorial__acoes { align-items: stretch; flex-direction: column; }
+  .pagina-editorial__acoes .btn { width: 100%; }
+  .avl-form #avl-enviar { width: 100%; }
+}

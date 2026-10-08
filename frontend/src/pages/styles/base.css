@@ -9,24 +9,24 @@
 :root {
   /* Cor — tema claro "porcelana" (padrão: as fotos dos produtos têm fundo
      branco e pedem um fundo claro e quente). */
-  --porcelana: #FBF8F5;          /* fundo da página */
-  --pedestal: #F3ECE6;           /* onde o produto "pousa" (cards, galeria) */
-  --pedestal-2: #EBE1D8;
-  --tinta: #1C1411;              /* texto principal — espresso */
-  --tinta-2: #5F524C;            /* texto secundário (7.3:1) */
-  --tinta-3: #766760;            /* rótulos, placeholder (5.0:1) */
-  --linha: #E5DAD1;              /* fios e divisórias */
-  --linha-forte: #CDBDB1;
+  --porcelana: #FEF5EF;          /* creme oficial da Amira */
+  --pedestal: #F7E6DA;           /* variação clara já usada no site original */
+  --pedestal-2: #F3D8C4;        /* nude claro da marca */
+  --tinta: #3A2A24;
+  --tinta-2: #5C3B33;
+  --tinta-3: #7A5147;
+  --linha: rgba(122, 81, 71, 0.22);
+  --linha-forte: rgba(122, 81, 71, 0.38);
   --marca: #8A5B4E;              /* mocha — botões de marca, preço promocional */
   --marca-forte: #6F4438;
   --sobre-marca: #FEF5EF;
   --ouro: #B98A2C;               /* dourado do logo — filetes, sol, detalhes */
   --ouro-claro: #E2B84F;
-  --sobre-ouro: #1C1411;
+  --sobre-ouro: #1C1512;
   --perigo: #A3362B;
   --sucesso: #2F6B45;
   --aviso: #8A6114;
-  --vidro: rgba(251, 248, 245, 0.82);   /* barra ao rolar */
+  --vidro: rgba(254, 245, 239, 0.88);   /* barra ao rolar */
   --veu: rgba(28, 20, 17, 0.42);        /* fundo atrás de menus e diálogos */
   --hero-sombra-topo: rgba(18, 13, 11, 0.7);
   --hero-sombra-base: rgba(18, 13, 11, 0.68);
@@ -91,25 +91,25 @@
 
 /* Tema escuro "espresso" — escolha manual, salva pelo services/tema.js */
 body[data-theme="dark"] {
-  --porcelana: #110D0B;
-  --pedestal: #1A1411;
-  --pedestal-2: #241C18;
-  --tinta: #F5EDE7;
-  --tinta-2: #BCAEA6;
-  --tinta-3: #9D8F87;
-  --linha: #2E2420;
-  --linha-forte: #45372F;
+  --porcelana: #1C1512;
+  --pedestal: #241A17;
+  --pedestal-2: #2A201C;
+  --tinta: #FEF5EF;
+  --tinta-2: #F3D8C4;
+  --tinta-3: #ECC1A0;
+  --linha: rgba(236, 193, 160, 0.22);
+  --linha-forte: rgba(236, 193, 160, 0.38);
   --marca: #ECC1A0;
   --marca-forte: #F3D2B8;
-  --sobre-marca: #1C1411;
+  --sobre-marca: #1C1512;
   --ouro: #E2B84F;
   --ouro-claro: #F0CD72;
   --perigo: #F08A7E;
   --sucesso: #7DBE86;
   --aviso: #E8B25C;
-  --vidro: rgba(17, 13, 11, 0.8);
+  --vidro: rgba(28, 21, 18, 0.88);
   --veu: rgba(0, 0, 0, 0.6);
-  --surface: #1A1411;
+  --surface: #241A17;
   --sombra-sobre: 0 24px 60px -20px rgba(0, 0, 0, 0.7), 0 6px 18px -8px rgba(0, 0, 0, 0.5);
   color-scheme: dark;
 }

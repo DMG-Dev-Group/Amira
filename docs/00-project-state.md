@@ -1,12 +1,12 @@
 # Estado do projeto — Amira
 
 - **Fase:** validação do front-end público.
-- **Atividade atual:** revisão do redesign editorial em `codex/editorial-storefront`.
-- **Status:** implementado e verificado localmente no navegador em desktop; checkout isolado do trabalho de conta e pedidos em outra branch.
+- **Atividade atual:** revisão do redesign completo em `codex/premium-original-redesign`, criada a partir de `origin/main`.
+- **Status:** páginas públicas e fluxo de compra visualmente reformulados; validação local em desktop e mobile.
 - **Artefatos confirmados:** `docs/design.md`, páginas públicas em `frontend/src/pages`, catálogo e carrinho existentes.
 - **Decisão ativa:** seguir a composição e o ritmo visual de mdebeauty.com usando apenas identidade, fotos e conteúdo da Amira.
-- **Pendências:** revisar visualmente em viewport mobile na integração final com o trabalho do outro agente; obter URLs oficiais de Instagram/Facebook para substituir os links `#` existentes.
+- **Pendências:** testar a compra autenticada com conta de teste; obter URLs oficiais de Instagram/Facebook para substituir os links `#` existentes.
 - **Bloqueios:** nenhum para implementação local.
 - **Aprovação pendente:** apenas eventual publicação em produção.
-- **Próxima ação:** revisar e integrar a branch; executar a conferência visual mobile na integração.
+- **Próxima ação:** concluir a revisão da branch e entregar para avaliação.
 - **Atualizado em:** 2026-10-08.

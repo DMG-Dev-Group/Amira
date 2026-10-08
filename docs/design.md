@@ -16,7 +16,7 @@
   horário.
 - **Identidade**: cliente (marca própria). Logo Amira (sol nascente dourado sobre a
   linha do horizonte + "AMIRA" em sans geométrica fina), mocha `#9B6B5E`,
-  creme `#FEF5EF`, nude `#ECC1A0`; o dourado do logo vira o acento de detalhe. A paleta é preservada e expandida; a forma muda.
+  creme `#FEF5EF`, nude `#ECC1A0`; o dourado do logo vira o acento de detalhe. A paleta original permanece; a forma muda.
 
 ## Direção
 
@@ -53,14 +53,14 @@
 | Tipografia | **Bodoni Moda** (display; eixo óptico, itálico para a palavra de ênfase) — é a letra do rótulo de perfume e da revista de moda, o mundo do produto. **Jost** (UI e texto; linhagem Futura, a sans clássica das casas de perfume, já era a fonte do site). Escala fluida com `clamp()`. | `styles/base.css` (`--f-*`, `--t-*`) |
 | Espaçamento | Escala 4px (`--s-1`…`--s-10`); seções com respiro grande (`--secao`). | `styles/base.css` |
 | Raio e elevação | Imagens e cards sem raio, sem borda e sem sombra (o pedestal é a cor). Botões e campos 2px; pílula só em chip, contador e quantidade. Sombra só em sobreposição (toast, menu, diálogo). | `styles/base.css` |
-| Movimento | Ease-out exponencial `cubic-bezier(.16,1,.3,1)`. UI 180–240ms; entradas de seção 0.9–1.1s com escalonamento curto. GSAP + ScrollTrigger para hero, filetes, parallax e o frasco 3D. Tudo respeita `prefers-reduced-motion`; conteúdo nunca depende da animação para aparecer. | `services/motion.js`, `styles/base.css` |
+| Movimento | Ease-out exponencial `cubic-bezier(.16,1,.3,1)`. UI 180–240ms; entradas de seção 0.9–1.1s com escalonamento curto. GSAP + ScrollTrigger para hero, filetes, parallax e o frasco 3D. Tudo respeita `prefers-reduced-motion`; conteúdo nunca depende da animação para aparecer. | `services/movimento.js`, `styles/base.css` |
 | Ícones | Traço 1.5px, cantos arredondados, 20–22px — uma família só (SVG inline, estilo Lucide). | inline no HTML/JS |
 
 ## Recursos adotados
 
 | Recurso | Para quê | Adaptação feita |
 |---|---|---|
-| GSAP 3 + ScrollTrigger (self-host em `vendor/`) | Entradas, parallax, frasco 3D guiado pelo scroll, abertura | Carregado sob demanda pelo `motion.js`; sem GSAP o CSS mostra tudo |
+| GSAP 3 + ScrollTrigger (self-host em `vendor/`) | Entradas, parallax, frasco 3D guiado pelo scroll, abertura | Carregado sob demanda pelo `movimento.js`; sem GSAP o CSS mostra tudo |
 | three.js (só o necessário, empacotado em `vendor/frasco-3d.js`) | Frasco de vidro 3D da home | Só em desktop/aparelho capaz, sem economia de dados e sem movimento reduzido; senão, fallback estático |
 | Google Fonts: Bodoni Moda + Jost | Tipografia | `display=swap`, só os pesos usados |
 
@@ -76,6 +76,8 @@
 - 3D é enfeite com motivo: nunca carrega no celular nem atrasa o conteúdo.
 - A home segue uma ordem de compra: hero, coleções, destaques, campanha,
   novidades, marca, linha de iPhones, avaliações e lista de novidades.
+- A página de avaliação e a página 404 usam a mesma fundação visual em
+  `styles/extra-pages.css` e mantêm um caminho simples de volta à loja.
 - O painel admin (`admin/`) é Operar e tem folha própria; fica fora desta
   direção.
 
