@@ -83,8 +83,14 @@ firebase emulators:start
 ## Deploy
 
 - **Site:** `git push` na branch que a Vercel publica.
-- **Regras:** `firebase deploy --only firestore:rules`
-- **Índices:** `firebase deploy --only firestore:indexes`
+- **Regras e índices:** publicar **só a partir do repo `sistema-amira`**
+  (`firebase deploy --only firestore:rules,firestore:indexes` lá). Site e
+  sistema interno dividem o mesmo Firestore, e a cópia oficial dos dois
+  arquivos é a de lá — publicar daqui já derrubou o sistema interno duas
+  vezes (ver o topo de `firestore.rules`).
+- `firestore.rules` e `firestore.indexes.json` deste repo são **cópias
+  idênticas** das do `sistema-amira`. Mudou uma regra ou índice? Faça a
+  mudança lá, publique de lá e copie os dois arquivos para cá no mesmo PR.
 
 > **URLs sem `.html`** — o `vercel.json` usa `"cleanUrls": true`: em produção
 > a Vercel serve `/produtos` e redireciona (308) `/produtos.html` → `/produtos`,

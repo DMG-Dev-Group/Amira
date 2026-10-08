@@ -17,20 +17,24 @@ rules_version = '2';
 //  denied pra quem loga como vendedor). Cada vez que o site evolui as
 //  proprias regras, alguem precisa reaplicar as mudancas AQUI, na secao do
 //  sistema interno, antes de publicar — nunca publicar direto do repo do
-//  site sem antes conferir contra este arquivo.
+//  site sem antes conferir contra este arquivo. Esta versao re-mescla a
+//  secao do sistema sobre a base ATUAL do site (metodo de pagamento
+//  `mercadopago`, `atacadoLigado()`, cancelamento pelo dono do pedido,
+//  `pedidos.observacoes`, `avaliacoes`, validacao mais estrita de
+//  `carrinhos` e `usuarios/dados`).
 //
-//  2026-09-12 (2): remesclado de novo — a copia que estava no repo do site
-//  tinha voltado a divergir desta (via PRs que mexeram nas rules sem
-//  conferir aqui primeiro: faltavam `contadores`, a validacao mais estrita
-//  de `caixa`/`vendas`, `ehVendedor()`/`ehStaff()`, o acesso de vendedor a
-//  `produtos` (baixa de estoque no PDV), a `pedidos`/`usuarios` (mesmo bug
-//  do historico acima) e `integracoes`). Esta versao reaplica tudo isso
-//  sobre a base ATUAL do site — e soma DUAS coisas que so existem no repo
-//  do site e não podem ser perdidas de novo: `metricas/{docId}` (contagem
-//  de visitas, usada por services/metricas.js e services/
-//  registrar-visita-auto.js em toda pagina publica) e `avaliacoesLoja/
-//  {docId}` (avaliacao da LOJA via QR code do balcao fisico, sem login —
-//  ver admin/avaliacoes-loja.html).
+//  2026-09-13: reconciliado de novo — uma copia trazida do repo do site
+//  ainda tinha o campo antigo `estoqueVarejo`/`estoqueAtacado` em
+//  `produtos` (revertido aqui, o correto e o pool unico `estoque` — ver
+//  PR de unificacao de estoque) mas trouxe uma coisa nova e legitima que
+//  faltava aqui: `avaliacoesLoja/{docId}` (avaliacao da LOJA via QR code
+//  do balcao fisico, sem login — ver admin/avaliacoes-loja.html). Ao
+//  reconciliar uma copia trazida de la, sempre comparar campo por campo
+//  com o que ja existe aqui antes de aceitar — nao é só "pegar tudo".
+//
+//  2026-10-08: `configuracoes/sistema` e `/indicadores` deixaram de ser
+//  publicos (so staff le). Mesma mudanca copiada para o repo do site, que
+//  agora guarda uma copia IDENTICA deste arquivo.
 // =============================================================================
 
 service cloud.firestore {
@@ -225,15 +229,17 @@ service cloud.firestore {
     // ── produtos/{produtoId} ─────────────────────────────────────────────
     // Qualquer pessoa (logada ou não) pode VER o catálogo.
     // Só admin cria/edita/remove — MENOS a baixa de estoque no PDV: um
-    // vendedor ativo pode alterar SOMENTE os campos de estoque (a venda em
-    // si vai para a coleção `vendas`).
+    // vendedor ativo pode alterar SOMENTE o campo de estoque (a venda em
+    // si vai para a coleção `vendas`). Estoque e um so pool compartilhado
+    // entre varejo e atacado (nao ha mais estoqueVarejo/estoqueAtacado
+    // separados) — so o preco continua tendo dois valores.
     match /produtos/{produtoId} {
       allow read: if true;
       allow create, delete: if ehAdmin();
       allow update: if ehAdmin()
         || (ehVendedor()
             && request.resource.data.diff(resource.data).affectedKeys()
-                 .hasOnly(['estoqueVarejo', 'estoqueAtacado', 'atualizadoEm']));
+                 .hasOnly(['estoque', 'atualizadoEm']));
     }
 
     // ── camadas/{camadaId} ──────────────────────────────────────────────
@@ -268,9 +274,16 @@ service cloud.firestore {
     // Textos e ajustes globais da loja (ex: mínimo de atacado por
     // carrinho, dados de pagamento PIX, imagens do carrossel da home) E
     // config do sistema interno (configuracoes/sistema, /indicadores).
-    // Públicos para leitura, só admin edita.
+    // Os da loja são públicos para leitura (a vitrine lê sem login). Os do
+    // sistema interno NÃO: `sistema` tem CNPJ, comissão e formas de
+    // pagamento, `indicadores` o percentual pago aos divulgadores — antes
+    // qualquer pessoa lia pela API pública. Só a equipe (admin + vendedor
+    // ativo) lê esses dois; no sistema interno toda página que os lê passa
+    // antes por requireAuth(). Só admin edita qualquer um.
+    // ⚠️ Por isso a coleção não pode ser LISTADA sem login (a regra vale
+    // por documento) — o site só lê documentos pelo id.
     match /configuracoes/{docId} {
-      allow read: if true;
+      allow read: if !(docId in ['sistema', 'indicadores']) || ehStaff();
       allow write: if ehAdmin();
     }
 
@@ -516,7 +529,7 @@ service cloud.firestore {
     }
 
     // =========================================================================
-    //  SISTEMA INTERNO (PDV / caixa / comissoes / indicadores)
+    //  SISTEMA INTERNO (PDV / caixa / vendas / comissoes / indicadores / gastos)
     //  Colecoes usadas SO pelo app interno (sistema-amira). A loja NAO toca
     //  nestas — ver comentario em cada bloco. NUNCA remover esta secao num
     //  deploy feito a partir do repo do site: ver aviso no topo do arquivo.
@@ -594,6 +607,46 @@ service cloud.firestore {
     match /indicadores/{id} {
       allow read: if ehStaff();
       allow create, update, delete: if ehAdmin();
+    }
+
+    // ── gastos/{id} ────────────────────────────────────────────────────
+    // Despesas da loja (aluguel, fornecedor, salario, etc.) — SOLTAS por
+    // data, nao amarradas a uma sessao de caixa (da pra lancar sem caixa
+    // aberto). Caixa atribui um gasto a uma sessao filtrando por essa data;
+    // o Painel soma por mes. So o admin cria/edita/exclui — deixar qualquer
+    // vendedor lancar gasto livremente permitiria forjar uma despesa pra
+    // reduzir o liquido reportado ao dono sem controle nenhum. Leitura e
+    // liberada pra qualquer staff (o resumo aparece pra todo mundo no
+    // Caixa, so a gestao completa e admin-only).
+    function chavesGastoPermitidas() {
+      return ['descricao', 'categoria', 'valor', 'data', 'observacoes',
+        'criado_em', 'criado_por_uid', 'criado_por_nome', 'atualizado_em'];
+    }
+    match /gastos/{id} {
+      allow read: if ehStaff();
+      allow create: if ehAdmin() &&
+        request.resource.data.keys().hasOnly(chavesGastoPermitidas()) &&
+        request.resource.data.keys().hasAll(['descricao', 'valor', 'data', 'criado_em', 'criado_por_uid', 'criado_por_nome']) &&
+        request.resource.data.descricao is string &&
+        request.resource.data.descricao.size() >= 1 &&
+        request.resource.data.descricao.size() <= 200 &&
+        request.resource.data.valor is number &&
+        request.resource.data.valor > 0 &&
+        request.resource.data.data is timestamp &&
+        request.resource.data.criado_por_uid == request.auth.uid &&
+        (!('categoria' in request.resource.data) ||
+          (request.resource.data.categoria is string && request.resource.data.categoria.size() <= 60)) &&
+        (!('observacoes' in request.resource.data) ||
+          (request.resource.data.observacoes is string && request.resource.data.observacoes.size() <= 500));
+      allow update: if ehAdmin() &&
+        request.resource.data.keys().hasOnly(chavesGastoPermitidas()) &&
+        request.resource.data.descricao is string &&
+        request.resource.data.descricao.size() >= 1 &&
+        request.resource.data.descricao.size() <= 200 &&
+        request.resource.data.valor is number &&
+        request.resource.data.valor > 0 &&
+        request.resource.data.data is timestamp;
+      allow delete: if ehAdmin();
     }
 
     // ── integracoes/{doc=**} ─────────────────────────────────────────
