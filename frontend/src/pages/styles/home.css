@@ -193,14 +193,17 @@ body[data-theme="dark"] .highlight-circle img { mix-blend-mode: normal; }
   width: 100%;
 }
 .essencia__palco canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !important; }
+/* Reserva sem 3D (celular, economia de dados, movimento reduzido): a foto
+   tem fundo preto, então vira um quadro escuro de vitrine — não dá para
+   "dissolver" o preto no fundo claro. */
+.essencia__palco:not(.com-3d) { background: #0B0807; overflow: hidden; }
 .essencia__reserva {
-  position: absolute; inset: 8% 12%;
-  width: 76%; height: 84%;
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
   object-fit: contain;
-  mix-blend-mode: multiply;
+  padding: 6% 0;
   transition: opacity 800ms var(--ease);
 }
-body[data-theme="dark"] .essencia__reserva { mix-blend-mode: normal; }
 .essencia__palco.com-3d .essencia__reserva { opacity: 0; }
 /* o sol atrás do frasco: um semicírculo de luz que "nasce" */
 .essencia__sol {
