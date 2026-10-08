@@ -20,6 +20,8 @@ import { escapeHtml } from "./seguranca.js";
 const ALVOS_DROPDOWN = ["dropdown-categorias-home", "dropdown-categorias-lista"];
 const ALVO_RODAPE = "footer-categorias-lista";
 const ALVO_MOBILE = "mobile-menu-camada-links";
+// Barra horizontal de categorias do catálogo (produtos.html)
+const ALVO_BARRA = "barra-categorias";
 
 function linkCatalogo(camadaSlug, opcaoSlug) {
   return `produtos.html?${encodeURIComponent(camadaSlug)}=${encodeURIComponent(opcaoSlug)}`;
@@ -51,11 +53,32 @@ function preencherMobile(camada) {
     .join("");
 }
 
+// Cada opção vira um link; a ativa é a que está na URL (?camada=opção).
+// "Tudo" (já no HTML) fica ativo quando nenhuma opção desta camada está.
+function preencherBarra(camada) {
+  const alvo = document.getElementById(ALVO_BARRA);
+  if (!alvo) return;
+  const marcadas = (new URLSearchParams(location.search).get(camada.slug) || "").split(",").filter(Boolean);
+  alvo.insertAdjacentHTML("beforeend", camada.opcoes
+    .map((op) => {
+      const ativa = marcadas.length === 1 && marcadas[0] === op.slug;
+      return `<a href="${linkCatalogo(camada.slug, op.slug)}" class="barra-categorias__item${ativa ? " ativo" : ""}"${ativa ? ' aria-current="page"' : ""}>${escapeHtml(op.nome)}</a>`;
+    })
+    .join(""));
+  const tudo = alvo.querySelector('a[href="produtos.html"]');
+  if (tudo && marcadas.length === 0 && !location.search.includes("busca=")) {
+    tudo.classList.add("ativo");
+    tudo.setAttribute("aria-current", "page");
+  }
+  alvo.querySelector(".ativo")?.scrollIntoView({ block: "nearest", inline: "center" });
+}
+
 async function montar() {
   const temAlgumAlvo =
     ALVOS_DROPDOWN.some((id) => document.getElementById(id)) ||
     document.getElementById(ALVO_RODAPE) ||
-    document.getElementById(ALVO_MOBILE);
+    document.getElementById(ALVO_MOBILE) ||
+    document.getElementById(ALVO_BARRA);
 
   if (!temAlgumAlvo) return;
 
@@ -71,6 +94,7 @@ async function montar() {
 
     preencherDropdowns(camada);
     preencherMobile(camada);
+    preencherBarra(camada);
   } catch (erro) {
     console.error("Não foi possível montar o menu de camadas:", erro);
   }

@@ -1,18 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="Imagem indisponível">
-  <rect width="120" height="120" fill="#2A161B"/>
-  <g fill="none" stroke="rgba(233,163,176,0.75)" stroke-width="3" stroke-linecap="round">
-    <path d="M 40 70 A 20 20 0 0 1 80 70"/>
-    <line x1="14" y1="70" x2="106" y2="70"/>
-  </g>
-  <g fill="none" stroke="rgba(233,163,176,0.75)" stroke-width="2.6" stroke-linecap="round">
-  <line x1="35.27" y1="61.97" x2="23.86" y2="58.26"/>
-  <line x1="38.97" y1="54.72" x2="29.26" y2="47.66"/>
-  <line x1="44.72" y1="48.97" x2="37.66" y2="39.26"/>
-  <line x1="51.97" y1="45.27" x2="48.26" y2="33.86"/>
-  <line x1="60.00" y1="44.00" x2="60.00" y2="32.00"/>
-  <line x1="68.03" y1="45.27" x2="71.74" y2="33.86"/>
-  <line x1="75.28" y1="48.97" x2="82.34" y2="39.26"/>
-  <line x1="81.03" y1="54.72" x2="90.74" y2="47.66"/>
-  <line x1="84.73" y1="61.97" x2="96.14" y2="58.26"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" role="img" aria-label="Amira">
+  <rect width="400" height="500" fill="#F3ECE6"/>
+  <g transform="translate(146 222) scale(2)" fill="none" stroke="#B98A2C" stroke-linecap="round" opacity=".7">
+    <path d="M10 24a11 11 0 0 1 22 0" stroke-width="1"/>
+    <path d="M-4 24h50" stroke-width="1"/>
+    <path stroke-width=".9" d="M7.21 19.52.55 17.36M9.27 15.48l-5.66-4.12M12.48 12.27 8.36 6.61M16.52 10.21l-2.16-6.66M21 9.5v-7M25.48 10.21l2.16-6.66M29.52 12.27l4.12-5.66M32.73 15.48l5.66-4.12M34.79 19.52l6.66-2.16"/>
   </g>
 </svg>

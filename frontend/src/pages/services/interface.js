@@ -202,3 +202,19 @@ document.addEventListener("click", (e) => {
   if (!trilho) return;
   trilho.scrollBy({ left: Number(seta.dataset.dir || 1) * trilho.clientWidth * 0.8, behavior: reduzido ? "auto" : "smooth" });
 });
+
+// ── Gaveta de filtros do catálogo (celular/tablet) ───────────────────────
+const painelFiltros = document.getElementById("catalogo-filtros");
+const abreFiltros = document.querySelector("[data-abre-filtros]");
+if (painelFiltros && abreFiltros) {
+  const alternar = (abrir) => {
+    painelFiltros.classList.toggle("aberto", abrir);
+    document.body.classList.toggle("filtros-abertos", abrir);
+    abreFiltros.setAttribute("aria-expanded", String(abrir));
+    if (abrir) painelFiltros.querySelector("input, button")?.focus({ preventScroll: true });
+    else abreFiltros.focus({ preventScroll: true });
+  };
+  abreFiltros.addEventListener("click", () => alternar(!painelFiltros.classList.contains("aberto")));
+  document.querySelectorAll("[data-fecha-filtros]").forEach((el) => el.addEventListener("click", () => alternar(false)));
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && painelFiltros.classList.contains("aberto")) alternar(false); });
+}

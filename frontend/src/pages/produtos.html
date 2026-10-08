@@ -123,13 +123,30 @@
 
   <!-- ── CATÁLOGO ─────────────────────────────────────────── -->
   <main id="conteudo" class="catalogo-main">
-    <div class="catalogo-topo">
+    <header class="catalogo-topo catalogo-topo--pagina">
       <div class="catalogo-titulo">
-        <h1 id="catalogo-titulo-texto">Todos os produtos</h1>
-        <p id="catalogo-contagem"></p>
+        <span class="rotulo">Coleção Amira</span>
+        <h1 id="catalogo-titulo-texto" class="titulo-1">Todos os produtos</h1>
+        <p id="catalogo-contagem" class="catalogo-contagem numero"></p>
       </div>
+    </header>
+
+    <!-- Barra de categorias: opções da camada principal, preenchida por
+         services/navegacao-camadas.js. Cada uma é um link (?camada=opção). -->
+    <nav class="barra-categorias" aria-label="Categorias">
+      <div class="barra-categorias__trilho" id="barra-categorias">
+        <a href="produtos.html" class="barra-categorias__item">Tudo</a>
+      </div>
+    </nav>
+
+    <div class="catalogo-ferramentas">
+      <button type="button" class="catalogo-ferramentas__filtros" data-abre-filtros aria-controls="catalogo-filtros" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
+        Filtros
+      </button>
+      <div id="filtro-chips" class="filtro-chips" hidden></div>
       <div class="catalogo-ordenar">
-        <label for="select-ordenar">Ordenar por</label>
+        <label for="select-ordenar">Ordenar</label>
         <select id="select-ordenar">
           <option value="relevancia">Mais recentes</option>
           <option value="menor-preco">Menor preço</option>
@@ -140,28 +157,24 @@
     </div>
 
     <div class="catalogo-layout">
-      <aside class="catalogo-filtros">
+      <aside class="catalogo-filtros" id="catalogo-filtros" aria-label="Filtros">
         <div class="filtro-cabecalho">
           <h2>Filtros</h2>
           <button type="button" class="filtro-limpar-btn" id="btn-limpar-filtros" hidden>Limpar tudo</button>
+          <button type="button" class="filtro-fechar" data-fecha-filtros aria-label="Fechar filtros">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M5 5l14 14M19 5 5 19"/></svg>
+          </button>
         </div>
-        <!-- Busca dentro do painel: no mobile a barra da navbar encolheu
-             muito, e aqui ela fica do lado dos outros filtros, que é onde
-             a pessoa já está mexendo. Filtra a grade ao vivo. -->
         <div class="filtro-grupo filtro-grupo--busca">
           <h3>Buscar</h3>
           <div class="filtro-busca-campo">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <circle cx="11" cy="11" r="8"/>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
-            <input type="search" id="filtro-busca" placeholder="nome do produto" autocomplete="off" aria-label="Buscar no catálogo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            <input type="search" id="filtro-busca" placeholder="Nome, marca ou nota" autocomplete="off" aria-label="Buscar no catálogo">
             <button type="button" id="filtro-busca-limpar" aria-label="Limpar busca" hidden>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
             </button>
           </div>
         </div>
-        <div id="filtro-chips" class="filtro-chips" hidden></div>
         <div id="filtro-camadas"></div>
         <div class="filtro-grupo filtro-grupo--preco">
           <h3>Faixa de preço</h3>
@@ -172,15 +185,17 @@
             </label>
             <label class="filtro-preco-campo">
               <span>Máximo</span>
-              <input type="number" id="filtro-preco-max" placeholder="sem limite" min="0" inputmode="numeric">
+              <input type="number" id="filtro-preco-max" placeholder="Sem limite" min="0" inputmode="numeric">
             </label>
           </div>
-          <button type="button" class="filtro-aplicar-btn" id="btn-aplicar-preco">Aplicar preço</button>
+          <button type="button" class="filtro-aplicar-btn btn btn--contorno btn--compacto btn--bloco" id="btn-aplicar-preco">Aplicar preço</button>
         </div>
+        <button type="button" class="btn btn--bloco filtro-ver" data-fecha-filtros>Ver produtos</button>
       </aside>
+      <div class="filtros-veu" data-fecha-filtros></div>
 
-      <section class="catalogo-grid" id="catalogo-grid">
-        <p class="catalogo-loading">Carregando produtos...</p>
+      <section class="catalogo-grid" id="catalogo-grid" aria-live="polite">
+        <p class="catalogo-loading">Carregando produtos…</p>
       </section>
     </div>
     <!-- Sentinela do scroll infinito (B3): quando aparece na tela, o

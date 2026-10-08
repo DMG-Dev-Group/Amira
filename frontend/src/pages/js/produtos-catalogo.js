@@ -230,6 +230,14 @@ function etiquetaCamada(p) {
   return nomeOpcao(camadaPrincipalSlug, slugs[0]);
 }
 
+// Segunda foto do produto, que aparece no hover do card (se existir)
+function fotoAlternativa(p) {
+  const extra = Array.isArray(p.imagensExtras) ? p.imagensExtras.find(Boolean) : null;
+  return extra
+    ? `<img class="catalogo-card-img__alt" src="${urlImagemSegura(redimensionada(extra, LARGURA.card))}" alt="" loading="lazy">`
+    : "";
+}
+
 function cardProduto(p) {
   const temVarejo = disponivelNoModo(p, "varejo");
   const preco = infoPreco(p, "varejo");
@@ -245,6 +253,7 @@ function cardProduto(p) {
     <article class="catalogo-card ${semEstoque ? "catalogo-card--esgotado" : ""}">
       <div class="catalogo-card-img">
         <img src="${urlImagemSegura(redimensionada(p.imagemURL, LARGURA.card))}" alt="${escapeHtml(p.nome)}" loading="lazy">
+        ${fotoAlternativa(p)}
         ${preco.temDesconto ? `<span class="desconto-selo">-${preco.percentual}%</span>` : ""}
         ${semEstoque ? `<span class="catalogo-card-esgotado-selo">Esgotado</span>` : ""}
       </div>
