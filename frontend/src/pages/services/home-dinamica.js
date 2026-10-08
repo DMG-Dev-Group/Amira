@@ -235,16 +235,20 @@ async function carregarCategoriasVisuais() {
       return;
     }
 
-    grid.innerHTML = opcoes.map((op) => `
-      <a class="cat-card reveal" href="produtos.html?${encodeURIComponent(principal.slug)}=${encodeURIComponent(op.slug)}" style="text-decoration:none; display:block;">
+    document.getElementById("categories-count").textContent = `01—${String(opcoes.length).padStart(2, "0")} / COLEÇÕES`;
+    grid.innerHTML = opcoes.map((op, indice) => `
+      <a class="cat-card" href="produtos.html?${encodeURIComponent(principal.slug)}=${encodeURIComponent(op.slug)}">
         <div class="cat-imagem-generica">
-          <img src="${urlImagemSegura(redimensionada(op.imagemURL, LARGURA.categoria))}" alt="${escapeHtml(op.nome)}">
+          <div class="cat-photo-stage">
+            <img class="cat-photo-ambiente" src="${urlImagemSegura(redimensionada(op.imagemURL, LARGURA.categoria))}" alt="" loading="lazy" decoding="async">
+            <img class="cat-photo-produto" src="${urlImagemSegura(redimensionada(op.imagemURL, LARGURA.categoria))}" alt="" loading="lazy" decoding="async">
+          </div>
         </div>
-        <div class="cat-overlay"></div>
-        <div class="cat-label">
-          <span class="cat-name">${escapeHtml(op.nome)}</span>
+        <div class="cat-copy">
+          <span class="cat-index"><span>COLEÇÃO AMIRA</span><span>${String(indice + 1).padStart(2, "0")} / ${String(opcoes.length).padStart(2, "0")}</span></span>
+          <h3 class="cat-name">${escapeHtml(op.nome)}</h3>
+          <span class="cat-cta">Explorar seleção <span class="cat-arrow" aria-hidden="true">↗</span></span>
         </div>
-        <div class="cat-arrow">→</div>
       </a>
     `).join("");
 

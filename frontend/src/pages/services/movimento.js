@@ -215,15 +215,32 @@ function iniciarEditorial(gsap) {
       .forEach((alvo) => {
         if (alvo.dataset.entradaAtiva) return;
         alvo.dataset.entradaAtiva = "1";
-        entrada([alvo], alvo, 32);
-        const foto = alvo.matches(".cat-card")
+        const categoria = alvo.matches(".cat-card");
+        entrada([alvo], alvo, categoria ? 22 : 32);
+        const foto = categoria
           ? alvo.querySelector(".cat-imagem-generica")
           : alvo.querySelector(".catalogo-card-img, .highlight-circle");
         if (foto) {
-          gsap.fromTo(foto, { clipPath: "inset(0 0 100% 0)" }, {
+          const inicio = categoria
+            ? (alvo.matches(":nth-child(even)") ? "inset(0 0 0 100%)" : "inset(0 100% 0 0)")
+            : "inset(0 0 100% 0)";
+          gsap.fromTo(foto, { clipPath: inicio }, {
             clipPath: "inset(0 0 0% 0)", duration: 1.25, ease: "power3.inOut",
             scrollTrigger: { trigger: alvo, start: "top 88%", once: true },
           });
+        }
+        if (categoria) {
+          gsap.fromTo(alvo.querySelectorAll(".cat-index, .cat-name, .cat-cta"),
+            { autoAlpha: 0, y: 18 },
+            { autoAlpha: 1, y: 0, duration: 1, stagger: 0.11,
+              scrollTrigger: { trigger: alvo, start: "top 82%", once: true } });
+          const palco = alvo.querySelector(".cat-photo-stage");
+          if (palco && matchMedia("(min-width: 701px)").matches) {
+            gsap.fromTo(palco, { yPercent: -3 }, {
+              yPercent: 3, ease: "none",
+              scrollTrigger: { trigger: alvo, start: "top bottom", end: "bottom top", scrub: 0.7 },
+            });
+          }
         }
       });
   };

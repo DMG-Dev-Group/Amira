@@ -199,7 +199,7 @@ if (!reduzido) {
 // Só baixa o GSAP quando a página pede ([data-movimento]) e depois que o
 // navegador está livre — o conteúdo nunca espera por ele.
 if (!reduzido && document.querySelector("[data-movimento]")) {
-  const carregar = () => import("./movimento.js?v=20261008-scroll2").then((m) => m.iniciar()).catch((e) => console.warn("[Amira] movimento indisponível:", e));
+  const carregar = () => import("./movimento.js?v=20261008-categorias").then((m) => m.iniciar()).catch((e) => console.warn("[Amira] movimento indisponível:", e));
   if ("requestIdleCallback" in window) requestIdleCallback(carregar, { timeout: 1200 });
   else setTimeout(carregar, 300);
 }
