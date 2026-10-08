@@ -135,7 +135,7 @@ async function iniciarCarrosselAnuncio() {
     `).join("")}
     <div class="hero-slide-overlay"></div>
     <div class="hero-slide-conteudo hero-conteudo moldura">
-      <span class="rotulo hero-rotulo">Maison Amira · São Luís</span>
+      <span class="rotulo hero-rotulo">Amira · São Luís</span>
       <h1 class="hero-title">${tituloComDestaque(titulo)}</h1>
       ${subtitulo ? `<p class="hero-subtitle">${escapeHtml(subtitulo)}</p>` : ""}
       <div class="hero-acoes">

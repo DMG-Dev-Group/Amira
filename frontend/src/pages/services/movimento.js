@@ -1,4 +1,4 @@
-// ── Movimento autoral (GSAP) — Amira "Maison" ──────────────────────────
+// ── Movimento autoral (GSAP) — Amira ────────────────────────────────────
 // Carregado sob demanda pelo services/interface.js, só em páginas com
 // [data-movimento] e sem prefers-reduced-motion. Tudo aqui é camada por
 // cima de um conteúdo que JÁ está visível: se o GSAP não carregar, nada

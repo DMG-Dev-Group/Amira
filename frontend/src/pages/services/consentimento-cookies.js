@@ -53,7 +53,7 @@ function injetarEstilo() {
   const estilo = document.createElement("style");
   estilo.id = "amira-cookie-estilo";
   estilo.textContent = `
-    /* Visual "Maison" (docs/design.md): cartão claro no canto, filete
+    /* Visual editorial (docs/design.md): cartão claro no canto, filete
        dourado no topo, botões retos. Some do caminho do hero no desktop. */
     .amira-cookie-banner {
       position: fixed;

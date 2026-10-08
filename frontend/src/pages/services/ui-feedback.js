@@ -1,5 +1,5 @@
 // ── Feedback visual — Amira ──────────────────────────────────────────
-// Visual da direção "Maison" (docs/design.md): toast é uma placa escura no
+// Visual da direção editorial (docs/design.md): toast é uma placa escura no
 // rodapé da tela com o horizonte dourado marcando o tempo; diálogo com
 // título em Bodoni e filete dourado no topo.
 //

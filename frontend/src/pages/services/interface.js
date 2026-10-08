@@ -1,4 +1,4 @@
-// ── Interface compartilhada da loja — Amira "Maison" ───────────────────
+// ── Interface compartilhada da loja — Amira ─────────────────────────────
 // Comportamentos da casca (cabeçalho, busca, abertura, transições) que
 // valem em todas as páginas. Direção em docs/design.md.
 //

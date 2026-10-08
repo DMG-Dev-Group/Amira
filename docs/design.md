@@ -1,4 +1,4 @@
-# Design: Amira — "Maison"
+# Design: Amira
 
 > Fonte de verdade das decisões visuais da loja. Atualize quando a direção
 > mudar ou quando o build confirmar tokens provisórios. Adições locais (uma
@@ -20,7 +20,7 @@
 
 ## Direção
 
-- **Tese**: o site é o **balcão de uma maison de perfumaria**, não um
+- **Tese**: o site é o **balcão de uma perfumaria**, não um
   e-commerce de template. Cada produto em cima de um pedestal claro, com luz
   macia e muito ar em volta; a tipografia é a do rótulo do frasco. Recusa o
   arranjo da categoria: carrossel de banner + faixa de marquee + grade de
