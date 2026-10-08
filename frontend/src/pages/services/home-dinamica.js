@@ -11,7 +11,7 @@ import { observarAuth } from "./auth.js";
 import { adicionarAoCarrinho } from "./carrinho.js";
 import { toast } from "./ui-feedback.js";
 import { ativarReveals } from "./script.js";
-import { escapeHtml, urlImagemSegura, urlFundoSegura } from "./seguranca.js";
+import { escapeHtml, urlImagemSegura } from "./seguranca.js";
 import { redimensionada, LARGURA } from "./imagens.js";
 import { db } from "./firebase-config.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
@@ -73,23 +73,10 @@ function precoCardHtml(p) {
 // configuracoes/homeCarrossel:
 //   { imagens: [dataURI|url, ...], titulo, subtitulo, intervaloMs }
 // Sem esse documento, valem os padrões abaixo.
-const IMAGENS_CARROSSEL_PADRAO = [
-  "images/look_rosa.jpeg",
-  "images/look_amarelo.jpeg",
-  "images/look_vinho.jpeg",
-  "images/look_branco.jpeg"
-];
+const IMAGENS_CARROSSEL_PADRAO = ["images/perfume_asaad.jpg"];
 const INTERVALO_CARROSSEL_PADRAO_MS = 4500;
-const TITULO_PADRAO = "Sua *essência*, nossa paixão";
+const TITULO_PADRAO = "Amira";
 const SUBTITULO_PADRAO = "Perfumes, maquiagem e acessórios que contam a sua história.";
-
-// O título aceita *palavra* para destacar em itálico dourado — é o único
-// "markup" que o admin precisa, e nada além disso escapa do escapeHtml.
-function tituloComDestaque(texto) {
-  return escapeHtml(texto)
-    .replace(/\*([^*]+)\*/g, "<em>$1</em>")
-    .replace(/\n/g, "<br>");
-}
 
 async function iniciarCarrosselAnuncio() {
   const container = document.getElementById("hero-carrossel");
@@ -104,63 +91,42 @@ async function iniciarCarrosselAnuncio() {
     const snap = await getDoc(doc(db, "configuracoes", "homeCarrossel"));
     if (snap.exists()) {
       const dados = snap.data();
-      if (Array.isArray(dados.imagens) && dados.imagens.length > 0) {
-        imagens = dados.imagens;
-      }
-      if (Number(dados.intervaloMs) >= 1500) {
-        intervalo = Number(dados.intervaloMs);
-      }
-      if (typeof dados.titulo === "string" && dados.titulo.trim()) {
-        titulo = dados.titulo.trim();
-      }
-      if (typeof dados.subtitulo === "string" && dados.subtitulo.trim()) {
-        subtitulo = dados.subtitulo.trim();
-      }
+      if (Array.isArray(dados.imagens) && dados.imagens.length > 0) imagens = dados.imagens;
+      if (Number(dados.intervaloMs) >= 1500) intervalo = Number(dados.intervaloMs);
+      if (typeof dados.titulo === "string" && dados.titulo.trim()) titulo = dados.titulo.trim();
+      if (typeof dados.subtitulo === "string" && dados.subtitulo.trim()) subtitulo = dados.subtitulo.trim();
     }
   } catch (erro) {
     console.error("Carrossel: usando conteúdo padrão (config indisponível):", erro);
   }
 
-  // A mesma coleção de fotos do painel vira um tríptico editorial. A imagem
-  // central é a campanha ativa; as laterais antecipam as próximas imagens.
-  // Em telas pequenas apenas a imagem central aparece.
-  container.style.setProperty("--intervalo-hero", `${intervalo}ms`);
+  // O banner administrável ocupa o segundo quadro editorial. A campanha
+  // principal permanece estável, sem interferir nos dados do painel.
+  const fontes = imagens.map((url) => urlImagemSegura(redimensionada(url, LARGURA.fundo))).filter(Boolean);
+  if (!fontes.length) return;
   container.innerHTML = `
-    ${imagens.map((url, i) => `
-      <div class="hero-slide ${i === 0 ? "ativa" : ""} ${imagens.length === 1 ? "hero-slide--unica" : ""}">
-        <div class="hero-slide__painel hero-slide__painel--esq" style="background-image:url('${urlFundoSegura(redimensionada(imagens[(i + imagens.length - 1) % imagens.length], LARGURA.fundo))}')"></div>
-        <div class="hero-slide__painel hero-slide__painel--centro" style="background-image:url('${urlFundoSegura(redimensionada(url, LARGURA.fundo))}')"></div>
-        <div class="hero-slide__painel hero-slide__painel--dir" style="background-image:url('${urlFundoSegura(redimensionada(imagens[(i + 1) % imagens.length], LARGURA.fundo))}')"></div>
-      </div>
-    `).join("")}
-    <div class="hero-slide-overlay"></div>
-    <div class="hero-slide-conteudo hero-conteudo moldura">
-      <span class="rotulo hero-rotulo">Amira · São Luís</span>
-      <h1 class="hero-title">${tituloComDestaque(titulo)}</h1>
-      ${subtitulo ? `<p class="hero-subtitle">${escapeHtml(subtitulo)}</p>` : ""}
-      <div class="hero-acoes">
-        <a href="produtos.html" class="btn btn--claro">Explorar a coleção</a>
-        <a href="#categorias" class="link-fio hero-link">Descobrir as categorias</a>
-      </div>
-      ${imagens.length > 1 ? `
-        <div class="hero-indicadores" aria-hidden="true">
-          ${imagens.map((_, i) => `<span class="hero-indicador ${i === 0 ? "ativo" : ""}"><span></span></span>`).join("")}
-        </div>` : ""}
+    <img class="campaign-intro__foto" src="${fontes[0]}" alt="Campanha da Amira" loading="lazy">
+    <div class="campaign-intro__legenda">
+      <span>Curadoria da loja</span>
+      <strong>${escapeHtml(titulo.replaceAll("*", ""))}</strong>
+      ${subtitulo ? `<p>${escapeHtml(subtitulo.replace(/[✨✦✧❦★☆]/gu, "").trim())}</p>` : ""}
     </div>
+    ${fontes.length > 1 ? `<span class="campaign-intro__contador" aria-hidden="true">01 / ${String(fontes.length).padStart(2, "0")}</span>` : ""}
   `;
   document.dispatchEvent(new CustomEvent("amira:hero-atualizado"));
 
-  if (imagens.length <= 1 || matchMedia("(prefers-reduced-motion: reduce), (max-width: 640px)").matches) return;
-
-  const slides = container.querySelectorAll(".hero-slide");
-  const indicadores = container.querySelectorAll(".hero-indicador");
+  if (fontes.length <= 1 || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const foto = container.querySelector(".campaign-intro__foto");
+  const contador = container.querySelector(".campaign-intro__contador");
   let indice = 0;
   setInterval(() => {
-    slides[indice].classList.remove("ativa");
-    indicadores[indice]?.classList.remove("ativo");
-    indice = (indice + 1) % slides.length;
-    slides[indice].classList.add("ativa");
-    indicadores[indice]?.classList.add("ativo");
+    foto.classList.add("em-troca");
+    window.setTimeout(() => {
+      indice = (indice + 1) % fontes.length;
+      foto.src = fontes[indice];
+      if (contador) contador.textContent = `${String(indice + 1).padStart(2, "0")} / ${String(fontes.length).padStart(2, "0")}`;
+      foto.classList.remove("em-troca");
+    }, 350);
   }, intervalo);
 }
 

@@ -48,7 +48,8 @@
   </script>
   <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..600;1,6..96,400..600&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles/base.css">
-  <link rel="stylesheet" href="styles/home.css">
+  <link rel="stylesheet" href="styles/home.css?v=20261008-campanha">
+  <link rel="stylesheet" href="styles/campaign.css?v=20261008-campanha">
 </head>
 <body>
   <script>
@@ -146,29 +147,41 @@
 
   <main id="conteudo">
 
-    <!-- ── HERO ─────────────────────────────────────────────────────────
-         Fotos da marca (admin → configuracoes/homeCarrossel) em fusão com
-         zoom lento. O conteúdo é escrito pelo services/home-dinamica.js;
-         o que está aqui é o estado inicial (sem Firestore ainda). -->
-    <section class="hero-carrossel" data-movimento="hero" aria-label="Destaque da Amira">
-      <div id="hero-carrossel" class="hero-carrossel-trilho">
-        <div class="hero-slide ativa">
-          <div class="hero-slide__painel hero-slide__painel--esq" style="background-image:url('images/maquiagem_fran.jpeg')"></div>
-          <div class="hero-slide__painel hero-slide__painel--centro" style="background-image:url('images/perfume_asaad.jpg')"></div>
-          <div class="hero-slide__painel hero-slide__painel--dir" style="background-image:url('images/acessorios_destaque.jpg')"></div>
-        </div>
-        <div class="hero-slide-overlay"></div>
-        <div class="hero-slide-conteudo hero-conteudo moldura">
-          <span class="rotulo hero-rotulo">Amira · São Luís</span>
-          <h1 class="hero-title">Sua <em>essência</em>,<br>nossa paixão</h1>
-          <p class="hero-subtitle">Perfumes, maquiagem e acessórios escolhidos para você.</p>
+    <!-- Campanha original: imagem editorial com um perfume real do acervo
+         como referência. A configuração do painel aparece no quadro seguinte. -->
+    <section class="campaign-hero" data-movimento="hero" aria-label="Campanha Amira">
+      <div class="hero-carrossel-trilho campaign-hero__imagem" aria-hidden="true">
+        <img src="images/campanha-perfume-mulher.webp" alt="" fetchpriority="high" width="1672" height="941">
+      </div>
+      <div class="campaign-hero__sombra"></div>
+      <div class="moldura campaign-hero__interior">
+        <div class="hero-conteudo campaign-hero__conteudo">
+          <span class="rotulo hero-rotulo">AMIRA / PERFUMARIA</span>
+          <h1 class="hero-title">A arte de ser<br><em>inesquecível.</em></h1>
+          <p class="hero-subtitle">Fragrâncias originais para quem deixa presença.</p>
           <div class="hero-acoes">
-            <a href="produtos.html" class="btn btn--claro">Explorar a coleção</a>
-            <a href="#categorias" class="link-fio hero-link">Descobrir as categorias</a>
+            <a href="produtos.html" class="btn btn--claro">Descobrir fragrâncias</a>
+            <a href="#categorias" class="link-fio hero-link">Explorar a curadoria</a>
           </div>
         </div>
+        <div class="campaign-hero__rodape" aria-hidden="true"><span>São Luís · MA</span><span>Perfumes que permanecem</span><span>01 / 03</span></div>
       </div>
-      <a class="hero-rolar" href="#categorias" aria-label="Rolar para as categorias"><span></span></a>
+    </section>
+
+    <section class="campaign-intro" aria-labelledby="intro-titulo">
+      <div class="campaign-intro__texto">
+        <span class="rotulo">A assinatura Amira</span>
+        <h2 id="intro-titulo">O luxo está<br>no que <em>permanece.</em></h2>
+        <p>Uma seleção de perfumes para fazer de cada encontro uma lembrança.</p>
+        <a class="link-fio" href="produtos.html">Conheça a coleção</a>
+      </div>
+      <div class="campaign-intro__janela" id="hero-carrossel">
+        <img src="images/perfume_asaad.jpg" alt="Perfume da seleção Amira" loading="lazy" width="736" height="1104">
+        <div class="campaign-intro__legenda">
+          <span>Curadoria da loja</span>
+          <strong>Amira</strong>
+        </div>
+      </div>
     </section>
 
     <!-- ── CATEGORIAS ────────────────────────────────────────────────── -->
@@ -176,8 +189,8 @@
       <div class="moldura">
         <header class="secao-cabecalho">
           <div>
-            <span class="rotulo">Por família</span>
-            <h2 class="titulo-2 horizonte">Encontre a <em>sua</em></h2>
+            <span class="rotulo">A coleção</span>
+            <h2 class="titulo-2 horizonte">Encontre sua <em>assinatura</em></h2>
           </div>
         </header>
         <div class="categories-grid" id="grid-categorias-home">
@@ -191,8 +204,8 @@
       <div class="moldura">
         <header class="secao-cabecalho">
           <div>
-            <span class="rotulo">Os mais amados</span>
-            <h2 class="titulo-2 horizonte">Escolhidos pelas <em>clientes</em></h2>
+            <span class="rotulo">Em destaque</span>
+            <h2 class="titulo-2 horizonte">Objetos de <em>desejo</em></h2>
           </div>
           <div class="featured-acoes">
             <a href="produtos.html" class="link-fio">Ver toda a coleção</a>
@@ -203,8 +216,14 @@
           </div>
         </header>
       </div>
-      <div class="products-grid trilho" id="grid-destaques">
-        <p class="catalogo-loading">Carregando destaques…</p>
+      <div class="featured-layout">
+        <figure class="featured-editorial">
+          <img src="images/campanha-perfume-homem.webp" alt="Campanha Amira: modelo com perfume em ambiente de luz dourada" loading="lazy" width="1122" height="1402">
+          <figcaption><span>O gesto que fica</span><span>Campanha Amira / 2026</span></figcaption>
+        </figure>
+        <div class="products-grid trilho" id="grid-destaques">
+          <p class="catalogo-loading">Carregando destaques…</p>
+        </div>
       </div>
     </section>
 

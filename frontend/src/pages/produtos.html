@@ -25,9 +25,9 @@
   <link rel="preconnect" href="https://ik.imagekit.io">
   <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..600;1,6..96,400..600&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles/base.css">
-  <link rel="stylesheet" href="styles/catalogo.css">
+  <link rel="stylesheet" href="styles/catalogo.css?v=20261008-campanha">
 </head>
-<body>
+<body class="pagina-colecao">
   <script>
     /* partida: tema salvo sem piscar + abertura na 1ª página da sessão (ver services/interface.js) */
     (function () {
@@ -123,12 +123,13 @@
 
   <!-- ── CATÁLOGO ─────────────────────────────────────────── -->
   <main id="conteudo" class="catalogo-main">
-    <header class="catalogo-topo catalogo-topo--pagina">
+    <header class="catalogo-topo catalogo-topo--pagina catalogo-campanha">
       <div class="catalogo-titulo">
         <span class="rotulo">Coleção Amira</span>
         <h1 id="catalogo-titulo-texto" class="titulo-1">Todos os produtos</h1>
         <p id="catalogo-contagem" class="catalogo-contagem numero"></p>
       </div>
+      <span class="catalogo-campanha__selo" aria-hidden="true">AMIRA / PERFUMARIA</span>
     </header>
 
     <!-- Barra de categorias: opções da camada principal, preenchida por

@@ -505,3 +505,55 @@ body[data-theme="dark"] .produto-carrossel-slide img { mix-blend-mode: normal; }
   .catalogo-card .catalogo-card-nome { font-size: var(--t-pp); }
   .catalogo-card__add { width: 38px; height: 38px; }
 }
+
+/* Coleção 2026 — abertura de campanha e apresentação sem molduras. */
+.pagina-colecao .catalogo-main { max-width: none; padding-top: 0; }
+.pagina-colecao .catalogo-campanha {
+  position: relative; isolation: isolate; overflow: hidden;
+  min-height: clamp(390px, 43vw, 620px);
+  margin: 0 calc(var(--margem) * -1) 0;
+  padding: clamp(4rem, 7vw, 8rem) var(--margem);
+  display: flex; align-items: center;
+  background: #2a1d18 url('../images/campanha-perfume-homem.webp') no-repeat right 36%;
+  background-size: cover; color: #fffaf6;
+}
+.pagina-colecao .catalogo-campanha::before {
+  content: ''; position: absolute; inset: 0; z-index: -1;
+  background: linear-gradient(90deg, rgba(15,10,9,.91), rgba(15,10,9,.68) 38%, rgba(15,10,9,.05) 78%);
+}
+.pagina-colecao .catalogo-campanha .catalogo-titulo { gap: 1.6rem; max-width: 930px; }
+.pagina-colecao .catalogo-campanha .rotulo,
+.pagina-colecao .catalogo-campanha .catalogo-contagem { color: rgba(255,250,246,.78); }
+.pagina-colecao .catalogo-campanha h1 {
+  color: #fffaf6; font-size: clamp(4.7rem, 8vw, 9.5rem);
+  line-height: .88; letter-spacing: -.065em;
+}
+.pagina-colecao .catalogo-campanha__selo {
+  position: absolute; right: var(--margem); bottom: 1.6rem;
+  font-size: .62rem; letter-spacing: .18em; color: rgba(255,250,246,.8);
+}
+.pagina-colecao .barra-categorias { background: #f2e7de; }
+.pagina-colecao .catalogo-ferramentas { background: rgba(255,250,246,.96); }
+.pagina-colecao .catalogo-layout { max-width: var(--largura); margin-inline: auto; }
+.pagina-colecao .catalogo-grid { gap: clamp(2.5rem, 4vw, 5rem) clamp(.8rem, 1.8vw, 2rem); }
+.pagina-colecao .catalogo-card-img { background: #f1e7de; }
+.pagina-colecao .catalogo-card-nome { font-size: 1rem; }
+.pagina-colecao .catalogo-card-preco { font-size: 1.25rem; }
+
+/* Ficha: frasco maior, informações com mais silêncio e foco no pedido. */
+.produto-main { padding-top: clamp(3rem, 6vw, 7rem); }
+.produto-layout { gap: clamp(3rem, 7vw, 8rem); }
+.produto-info h1, .produto-titulo { font-size: clamp(3rem, 5.2vw, 6rem); letter-spacing: -.055em; line-height: .94; }
+.produto-preco-valor { font-size: clamp(2rem, 2.8vw, 3rem); }
+
+@media (max-width: 700px) {
+  .pagina-colecao .catalogo-campanha { min-height: 500px; background-position: 61% center; align-items: flex-end; padding-bottom: 3.5rem; }
+  .pagina-colecao .catalogo-campanha::before { background: linear-gradient(0deg, rgba(15,10,9,.85), rgba(15,10,9,.12) 85%); }
+  .pagina-colecao .catalogo-campanha h1 { font-size: clamp(3.8rem, 13vw, 6rem); max-width: 9ch; }
+  .pagina-colecao .catalogo-campanha__selo { display: none; }
+  .pagina-colecao .catalogo-grid { gap: 2.5rem .7rem; }
+  .produto-info h1, .produto-titulo { font-size: clamp(2.8rem, 10vw, 4.5rem); }
+}
+.produto-main .produto-carrossel { background: #efe4da; }
+.produto-main .produto-carrossel-slide img { padding: 3%; }
+.produto-main .produto-relacionados__titulo { font-size: clamp(2.6rem, 4vw, 5rem); letter-spacing: -.05em; }

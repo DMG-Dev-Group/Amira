@@ -1,0 +1,253 @@
+/* AMIRA — campanha editorial. A identidade e os dados de produto vêm da loja. */
+:root { --secao: clamp(6rem, 10vw, 11rem); }
+
+/* Abertura cinematográfica com produto e rosto em escala de campanha. */
+.campaign-hero {
+  position: relative;
+  min-height: 700px;
+  height: 100svh;
+  overflow: hidden;
+  isolation: isolate;
+  color: #fffaf6;
+  background: #120d0b;
+}
+.campaign-hero__imagem { position: absolute; inset: -6% 0 0; }
+.campaign-hero__imagem img {
+  width: 100%; height: 100%; object-fit: cover; object-position: center 43%;
+  transform: scale(1.03);
+  animation: campanha-entrar 2.2s cubic-bezier(.16,1,.3,1) both;
+}
+@keyframes campanha-entrar { from { transform: scale(1.12); filter: brightness(.62); } to { transform: scale(1.03); filter: brightness(1); } }
+.campaign-hero__sombra {
+  position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(90deg, rgba(12,9,9,.70), rgba(12,9,9,.38) 34%, transparent 70%),
+              linear-gradient(180deg, rgba(10,7,7,.43), transparent 28%, transparent 70%, rgba(10,7,7,.46));
+}
+.campaign-hero__interior { position: relative; height: 100%; display: flex; align-items: center; }
+.campaign-hero__conteudo { max-width: 660px; margin-top: 7vh; }
+.campaign-hero .hero-rotulo { display: block; margin-bottom: clamp(1rem, 2vw, 2rem); color: rgba(255,250,246,.83); }
+.campaign-hero .hero-title {
+  max-width: 9ch; color: #fffaf6;
+  font-size: clamp(5.5rem, 9.7vw, 10.2rem);
+  line-height: .83; letter-spacing: -.065em; font-weight: 400;
+}
+.campaign-hero .hero-title em { color: #fffaf6; font-weight: 400; }
+.campaign-hero .hero-subtitle {
+  margin-top: clamp(1.5rem, 3vw, 2.8rem); max-width: 36ch;
+  color: rgba(255,250,246,.86); font-size: clamp(.88rem, 1.2vw, 1rem);
+  line-height: 1.7; letter-spacing: .02em;
+}
+.campaign-hero .hero-acoes { display: flex; align-items: center; flex-wrap: wrap; justify-content: flex-start; gap: 2.5rem; margin-top: 2.25rem; }
+.campaign-hero .hero-acoes .btn {
+  min-height: 54px; padding: .9rem 1.7rem; background: #fffaf6; border: 1px solid #fffaf6;
+  color: #251812; font-size: .68rem; letter-spacing: .16em; text-transform: uppercase;
+}
+.campaign-hero .hero-acoes .btn:hover { background: transparent; color: #fffaf6; }
+.campaign-hero .hero-link { color: #fffaf6; font-size: .7rem; letter-spacing: .12em; text-transform: uppercase; }
+.campaign-hero__rodape {
+  position: absolute; inset-inline: var(--margem); bottom: 2rem;
+  display: flex; justify-content: space-between; gap: 1rem;
+  border-top: 1px solid rgba(255,250,246,.35); padding-top: 1rem;
+  font-size: .62rem; letter-spacing: .15em; text-transform: uppercase; color: rgba(255,250,246,.75);
+}
+.topo[data-hero]:not(.scrolled) { top: 34px; }
+.topo[data-hero]:not(.scrolled) .topo__barra { border-bottom: 1px solid rgba(255,250,246,.35); }
+.topo[data-hero].scrolled { background: rgba(254,245,239,.96); }
+
+/* Respiro editorial: manifesto curto e vitrine administrável. */
+.campaign-intro {
+  min-height: min(850px, 88svh); display: grid; grid-template-columns: 1fr 1fr;
+  background: #f4e9df; color: #34251e;
+}
+.campaign-intro__texto {
+  display: flex; flex-direction: column; align-items: flex-start; justify-content: center;
+  padding: clamp(4rem, 10vw, 12rem) clamp(2rem, 9vw, 11rem) clamp(4rem, 9vw, 10rem) var(--margem);
+}
+.campaign-intro__texto .rotulo { color: #896a56; margin-bottom: 2rem; }
+.campaign-intro__texto h2 {
+  font-size: clamp(4rem, 6.8vw, 8.5rem); line-height: .9; letter-spacing: -.065em;
+  max-width: 10ch;
+}
+.campaign-intro__texto h2 em { color: #8a5b4e; }
+.campaign-intro__texto p { max-width: 31ch; margin-top: 2rem; font-size: .95rem; color: #5c463c; line-height: 1.7; }
+.campaign-intro__texto .link-fio { margin-top: 2rem; font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; }
+.campaign-intro__janela { position: relative; min-height: 650px; overflow: hidden; background: #d9c5b5; }
+.campaign-intro__foto, .campaign-intro__janela > img:first-child {
+  width: 100%; height: 100%; object-fit: cover; object-position: center;
+  transition: opacity .45s ease, transform 1.2s var(--ease);
+}
+.campaign-intro__foto.em-troca { opacity: 0; }
+.campaign-intro__janela::after {
+  content: ''; position: absolute; inset: 45% 0 0;
+  background: linear-gradient(transparent, rgba(23,14,12,.6)); pointer-events: none;
+}
+.campaign-intro__legenda {
+  position: absolute; z-index: 1; left: clamp(2rem, 4vw, 4.5rem); bottom: clamp(2rem, 4vw, 4.5rem);
+  display: flex; flex-direction: column; max-width: 70%; color: white;
+}
+.campaign-intro__legenda span { font-size: .63rem; letter-spacing: .19em; text-transform: uppercase; opacity: .85; }
+.campaign-intro__legenda strong { font-family: var(--f-display); font-size: clamp(2.5rem, 4vw, 5rem); font-weight: 400; line-height: 1; }
+.campaign-intro__legenda p { max-width: 30ch; margin-top: .7rem; font-size: .8rem; line-height: 1.5; opacity: .88; }
+.campaign-intro__contador { position: absolute; right: 2rem; bottom: 2rem; z-index: 1; color: white; font-size: .65rem; letter-spacing: .16em; }
+
+/* Coleções como sequência de imagens, não caixas de template. */
+.categories { background: #fffaf6; }
+.categories .secao-cabecalho { margin-bottom: clamp(2rem, 5vw, 5rem); }
+.categories .titulo-2, .featured .titulo-2, .vitrine-produtos .titulo-2 { font-size: clamp(3.4rem, 6vw, 7rem); line-height: .95; letter-spacing: -.055em; }
+.categories-grid {
+  display: flex; grid-auto-rows: auto; gap: clamp(.65rem, 1.2vw, 1.5rem);
+  overflow-x: auto; scrollbar-width: none; scroll-snap-type: x mandatory;
+}
+.categories-grid::-webkit-scrollbar { display: none; }
+.categories-grid .cat-card, .categories-grid .cat-card:nth-child(n) {
+  flex: 0 0 clamp(235px, 20vw, 350px); height: clamp(440px, 50vw, 730px);
+  grid-column: auto; grid-row: auto; scroll-snap-align: start;
+}
+.categories-grid .cat-card:first-child { flex-basis: clamp(340px, 35vw, 560px); }
+.categories-grid .cat-imagem-generica img { filter: saturate(.76) contrast(1.03); }
+.categories-grid .cat-overlay { background: linear-gradient(0deg, rgba(18,13,11,.68), transparent 46%); }
+.categories-grid .cat-label { left: 1.7rem; bottom: 2rem; }
+.categories-grid .cat-name { font-size: clamp(2.1rem, 3vw, 3.8rem); letter-spacing: -.04em; }
+.categories-grid .cat-arrow { right: 1.4rem; bottom: 2rem; border: none; width: 28px; font-size: 1.5rem; }
+@media (hover:hover) { .categories-grid .cat-card:hover img { transform: scale(1.035); filter: saturate(.92); } }
+
+/* Destaques com retrato vertical e linha de compra lateral. */
+.featured { background: #e9d9ca; padding-bottom: 0; }
+.featured .secao-cabecalho { margin-bottom: clamp(2rem, 4vw, 4rem); }
+.featured-layout { display: grid; grid-template-columns: minmax(0, 43%) minmax(0, 57%); min-height: 680px; }
+.featured-editorial { position: relative; overflow: hidden; background: #3d2a21; }
+.featured-editorial img { width: 100%; height: 100%; object-fit: cover; object-position: center 37%; }
+.featured-editorial::after { content: ''; position: absolute; inset: 62% 0 0; background: linear-gradient(transparent, rgba(12,8,7,.5)); }
+.featured-editorial figcaption {
+  position: absolute; z-index: 1; left: clamp(2rem, 5vw, 6rem); right: 2rem; bottom: 2rem;
+  display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; color: white;
+}
+.featured-editorial figcaption span:first-child { font-family: var(--f-display); font-size: clamp(2rem, 3vw, 4rem); line-height: 1; }
+.featured-editorial figcaption span:last-child { font-size: .6rem; letter-spacing: .13em; text-transform: uppercase; }
+.featured .trilho {
+  align-content: center; grid-auto-columns: minmax(280px, 42%); gap: clamp(1rem, 2vw, 2rem);
+  padding: 3rem clamp(2rem, 5vw, 6rem); scroll-padding-inline: clamp(2rem, 5vw, 6rem);
+}
+.featured .catalogo-card-img { aspect-ratio: 3 / 4; background: #f2e8de; }
+.featured .catalogo-card-img img { padding: 9%; }
+.featured .catalogo-card-nome { font-size: 1rem; }
+.featured .catalogo-card-preco { font-size: 1.2rem; }
+
+/* O produto anunciado recebe uma sala inteira. */
+.highlight { background: #1a1412; color: #f8eee5; padding-block: clamp(5rem, 9vw, 10rem); }
+.highlight-inner { min-height: 660px; grid-template-columns: minmax(0, 1.12fr) minmax(0, .88fr); gap: clamp(3rem, 9vw, 10rem); }
+.highlight-circle { background: #2c201b; aspect-ratio: 1 / 1.04; }
+.highlight-circle img { padding: 7%; mix-blend-mode: normal; }
+.highlight-tag { background: #f8eee5; color: #261c18; }
+.highlight-content { color: #f8eee5; gap: 1.8rem; }
+.highlight-content .section-eyebrow2 { color: #cbb6a4; }
+.highlight-content .highlight-title { font-size: clamp(4.4rem, 6.8vw, 8rem); letter-spacing: -.065em; line-height: .88; color: #f8eee5; }
+.highlight-content .highlight-title em { color: #d5a789; }
+.highlight-content .highlight-text { color: #d5c4b8; line-height: 1.8; font-size: .95rem; }
+.highlight-content .note-pill { border-radius: 0; border-color: rgba(248,238,229,.35); color: #e2d1c5; }
+.highlight-content .highlight-price { border-color: rgba(248,238,229,.3); color: #f8eee5; }
+.highlight-content .highlight-price small { color: #bda99b; }
+.highlight-content .btn { --btn-fundo: #f8eee5; --btn-texto: #251a16; --btn-borda: #f8eee5; }
+.highlight-nav-btn { color: #f8eee5; border-color: rgba(248,238,229,.4); }
+.highlight-nav-contador { color: #d5c4b8; }
+
+.vitrine-produtos { background: #fffaf6; }
+.vitrine-produtos .secao-cabecalho { margin-bottom: clamp(3rem, 5vw, 5.5rem); }
+.vitrine-grid { gap: clamp(2rem, 4vw, 5rem) clamp(.7rem, 1.6vw, 2rem); }
+.vitrine-grid > .catalogo-card:nth-child(-n+2) .catalogo-card-img { aspect-ratio: 1 / 1; }
+.vitrine-grid .catalogo-card-img { background: #f2e9e1; }
+.vitrine-grid .catalogo-card-info { padding-top: 1rem; }
+.vitrine-grid .catalogo-card-nome { font-size: 1rem; }
+
+/* Pausas entre as vitrines: a tecnologia 3D continua discreta. */
+.essencia { background: #e9d9ca; }
+.essencia__texto .titulo-1 { font-size: clamp(3.7rem, 6vw, 7.2rem); letter-spacing: -.06em; }
+.essencia__palco:not(.com-3d) { background: #241b17; }
+.essencia__acao .texto-apoio { max-width: 40ch; }
+.carousel-section { background: #231915; padding-block: clamp(5rem, 8vw, 9rem); }
+.carousel-cabecalho .titulo-1 { font-size: clamp(3.5rem, 6vw, 7rem); letter-spacing: -.06em; }
+.carousel-cabecalho .texto-apoio { max-width: 42ch; }
+.carousel-card { background: #efe7df; }
+.newsletter { background: #e9d9ca; border: 0; }
+.newsletter-title { font-size: clamp(3rem, 5vw, 6rem); line-height: .95; letter-spacing: -.05em; }
+
+@media (max-width: 960px) {
+  .campaign-hero { min-height: 650px; }
+  .campaign-hero .hero-title { font-size: clamp(5rem, 11vw, 8rem); }
+  .campaign-intro { min-height: auto; }
+  .campaign-intro__texto { padding: 5rem var(--margem); }
+  .campaign-intro__texto h2 { font-size: clamp(3.8rem, 7vw, 6rem); }
+  .campaign-intro__janela { min-height: 590px; }
+  .featured-layout { grid-template-columns: 40% 60%; min-height: 620px; }
+  .featured .trilho { grid-auto-columns: minmax(240px, 68%); }
+}
+@media (max-width: 700px) {
+  .campaign-hero { min-height: 620px; height: 94svh; }
+  .campaign-hero__imagem img { object-position: 61% center; }
+  .campaign-hero__sombra { background: linear-gradient(0deg, rgba(10,7,7,.76), rgba(10,7,7,.08) 80%), linear-gradient(90deg, rgba(10,7,7,.2), transparent); }
+  .campaign-hero__interior { align-items: flex-end; padding-bottom: 6.5rem; }
+  .campaign-hero__conteudo { max-width: 100%; margin: 0; }
+  .campaign-hero .hero-title { font-size: clamp(3.9rem, 14vw, 6rem); max-width: 11ch; }
+  .campaign-hero .hero-subtitle { margin-top: 1.4rem; }
+  .campaign-hero .hero-acoes { gap: 1rem; margin-top: 1.4rem; }
+  .campaign-hero .hero-acoes .btn { min-height: 48px; padding-inline: 1.1rem; }
+  .campaign-hero .hero-link { display: none; }
+  .campaign-hero__rodape { bottom: 1.1rem; }
+  .campaign-hero__rodape span:nth-child(2) { display: none; }
+  .campaign-intro { display: flex; flex-direction: column; }
+  .campaign-intro__texto { padding: 5rem var(--margem) 4rem; }
+  .campaign-intro__texto h2 { font-size: clamp(4rem, 12vw, 6rem); }
+  .campaign-intro__janela { min-height: 0; height: 78svh; max-height: 700px; }
+  .categories-grid { margin-right: calc(-1 * var(--margem)); padding-right: var(--margem); }
+  .categories-grid .cat-card, .categories-grid .cat-card:nth-child(n), .categories-grid .cat-card:first-child { flex: 0 0 75vw; height: min(108vw, 600px); }
+  .featured-layout { display: block; min-height: 0; }
+  .featured-editorial { height: 115vw; max-height: 690px; }
+  .featured .trilho { grid-auto-columns: 68vw; padding: 2.5rem var(--margem) 3.5rem; scroll-padding-inline: var(--margem); }
+  .highlight-inner { display: flex; flex-direction: column; gap: 3rem; }
+  .highlight-circle { aspect-ratio: 1 / 1; }
+  .highlight-content .highlight-title { font-size: clamp(3.7rem, 12vw, 6rem); }
+  .vitrine-grid { gap: 2.4rem .8rem; }
+  .vitrine-grid > .catalogo-card:nth-child(-n+2) .catalogo-card-img { aspect-ratio: 4 / 5; }
+  .essencia__interno { display: flex; flex-direction: column; }
+  .newsletter-title { font-size: clamp(3rem, 10vw, 4.5rem); }
+}
+@media (max-width: 430px) {
+  .campaign-hero .hero-title { font-size: 13.5vw; }
+  .campaign-hero__rodape { font-size: .55rem; }
+  .campaign-intro__legenda { max-width: 83%; left: 1.5rem; bottom: 1.5rem; }
+  .campaign-intro__legenda strong { font-size: 2.7rem; }
+  .featured .trilho { grid-auto-columns: 78vw; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .campaign-hero__imagem img { animation: none; transform: none; }
+  .campaign-intro__foto { transition: none; }
+}
+
+/* Linha secundária preservada, em escala de capítulo breve. */
+@media (min-width: 900px) {
+  .carousel-section {
+    display: grid; grid-template-columns: minmax(0, 38%) minmax(0, 62%);
+    align-items: center; padding-block: 5rem;
+  }
+  .carousel-cabecalho {
+    grid-column: 1; grid-row: 1 / span 2;
+    max-width: none; margin: 0; padding-left: var(--margem); padding-right: clamp(2rem, 4vw, 5rem);
+  }
+  .carousel-cabecalho .titulo-1 { font-size: clamp(3rem, 4.3vw, 5.5rem); }
+  .carousel-cabecalho .texto-apoio { font-size: .88rem; max-width: 34ch; }
+  .carousel-track-wrapper { grid-column: 2; grid-row: 1; }
+  .carousel-controls { grid-column: 2; grid-row: 2; margin-top: 1rem; padding-right: var(--margem); }
+  .carousel-card { width: clamp(190px, 17vw, 270px); }
+}
+
+/* As páginas editoriais têm direção cromática fixa; o seletor de tema não
+   pode transformar texto e botões claros em claro sobre claro. */
+.campaign-intro, .categories, .featured, .vitrine-produtos, .essencia, .newsletter {
+  --porcelana: #FEF5EF; --pedestal: #F7E6DA; --tinta: #3A2A24;
+  --tinta-2: #5C3B33; --tinta-3: #7A5147; --linha: rgba(122,81,71,.22);
+  --linha-forte: rgba(122,81,71,.38); --marca: #8A5B4E;
+  --sobre-marca: #FEF5EF; color: var(--tinta);
+}
+.topo[data-hero].scrolled { color: #3A2A24; }
+.topo[data-hero].scrolled img.logo-amira--escuro { display: block; }
+.topo[data-hero].scrolled img.logo-amira--claro { display: none; }

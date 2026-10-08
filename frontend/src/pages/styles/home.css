@@ -1,102 +1,12 @@
 /* ════════════════════════════════════════════════════════════════════════
    AMIRA — home  (tokens e componentes em base.css)
-   Ritmo: tríptico fotográfico → coleções → produtos → campanha → mais
-   produtos → história da marca → iPhones → depoimentos → lista. A gramática
-   (filete, Bodoni, pedestal) não.
+   Componentes de produto, coleções e pausas da home. A campanha principal
+   e o ritmo editorial estão em campaign.css.
    ════════════════════════════════════════════════════════════════════════ */
 
-/* ── Hero ──────────────────────────────────────────────────────────────── */
-.hero-carrossel {
-  position: relative;
-  height: 100svh;
-  min-height: 600px;
-  overflow: hidden;
-  background: #120D0B;
-  color: #FBF8F5;
-  isolation: isolate;
-}
-.hero-carrossel-trilho { position: absolute; inset: 0; }
-.hero-slide {
-  position: absolute; inset: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 2.35fr) minmax(0, 1fr);
-  gap: var(--s-1);
-  opacity: 0;
-  transition: opacity var(--t-entrada) var(--ease-io);
-}
-.hero-slide.ativa {
-  opacity: 1;
-}
-.hero-slide--unica { grid-template-columns: minmax(0, 1fr); }
-.hero-slide--unica .hero-slide__painel:not(.hero-slide__painel--centro) { display: none; }
-.hero-slide__painel {
-  min-width: 0;
-  background-size: cover;
-  background-position: center;
-  transform: scale(1.04);
-  transition: transform calc(var(--intervalo-hero, 4500ms) + var(--t-entrada)) linear;
-}
-.hero-slide__painel--centro { background-position: center 38%; }
-.hero-slide.ativa .hero-slide__painel { transform: scale(1); }
-.hero-slide__painel--esq,
-.hero-slide__painel--dir { filter: saturate(0.82); }
-.hero-slide__painel--esq { background-position: 60% center; }
-.hero-slide__painel--dir { background-position: 40% center; }
-.hero-carrossel::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(90deg, var(--hero-sombra-lateral), transparent 20%, transparent 80%, var(--hero-sombra-lateral));
-}
-.hero-slide-overlay {
-  position: absolute; inset: 0;
-  background:
-    linear-gradient(180deg, var(--hero-sombra-topo), transparent 23%),
-    linear-gradient(0deg, var(--hero-sombra-base), transparent 48%);
-}
-.hero-slide-conteudo {
-  position: absolute; left: 0; right: 0; bottom: clamp(var(--s-8), 7vh, var(--s-10));
-  z-index: 2;
-  display: flex; flex-direction: column; align-items: center; text-align: center; gap: var(--s-4);
-}
-.hero-rotulo { color: rgba(251, 248, 245, 0.75); }
-.hero-title {
-  max-width: 18ch;
-  font-size: clamp(2.8rem, 2rem + 4.4vw, 5.7rem);
-  line-height: 1;
-  letter-spacing: -0.03em;
-  color: #FBF8F5;
-}
-.hero-title em { color: #FEF5EF; }
-.hero-subtitle { max-width: 42ch; font-size: var(--t-p); line-height: 1.5; color: rgba(251, 248, 245, 0.88); }
-.hero-acoes { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--s-6); margin-top: var(--s-2); }
-.hero-link { color: #FBF8F5; }
-.hero-indicadores { display: flex; gap: var(--s-2); margin-top: var(--s-4); }
-.hero-indicador { width: 48px; height: 1px; background: rgba(251, 248, 245, 0.28); overflow: hidden; }
-.hero-indicador span { display: block; height: 100%; background: var(--ouro-claro); transform: scaleX(0); transform-origin: left; }
-.hero-indicador.ativo span { animation: indicador var(--intervalo-hero, 4500ms) linear forwards; }
-@keyframes indicador { to { transform: scaleX(1); } }
-
-/* palavras do título (movimento.js) — a máscara corta a subida */
-.palavra { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: 0.08em; margin-bottom: -0.08em; }
+/* Máscaras das palavras animadas pelo GSAP na campanha principal. */
+.palavra { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: .08em; margin-bottom: -.08em; }
 .palavra__dentro { display: inline-block; will-change: transform; }
-
-.hero-rolar {
-  position: absolute; left: 50%; bottom: var(--s-5); z-index: 2;
-  width: 1px; height: 56px;
-  translate: -50% 0;
-  background: rgba(251, 248, 245, 0.25);
-  overflow: hidden;
-}
-.hero-rolar span {
-  position: absolute; inset: 0;
-  background: var(--ouro-claro);
-  transform: translateY(-100%);
-  animation: rolar 2.2s var(--ease-io) infinite;
-}
-@keyframes rolar { 0% { transform: translateY(-100%); } 60%, 100% { transform: translateY(100%); } }
-@media (max-width: 760px) { .hero-rolar { display: none; } }
 
 /* ── Vitrine (novidades): variação de escala editorial ─────────────────── */
 .vitrine-grid {
@@ -388,7 +298,6 @@ body[data-theme="dark"] .highlight-circle img { mix-blend-mode: normal; }
   .reviews-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 860px) {
-  .hero-slide { grid-template-columns: minmax(0, 1fr) minmax(0, 3fr) minmax(0, 1fr); }
   .highlight-inner, .essencia__interno { grid-template-columns: 1fr; }
   .highlight-inner { min-height: 0; }
   .essencia { min-height: 0; }
@@ -398,15 +307,6 @@ body[data-theme="dark"] .highlight-circle img { mix-blend-mode: normal; }
   .cat-card:nth-child(3n + 1) { grid-column: span 2; }
 }
 @media (max-width: 640px) {
-  .hero-carrossel { min-height: min(620px, 100svh); height: 92svh; }
-  .hero-slide { display: block; }
-  .hero-slide__painel { display: none; height: 100%; }
-  .hero-slide__painel--centro { display: block; background-position: center; }
-  .hero-slide-conteudo { bottom: var(--s-8); align-items: flex-start; text-align: left; }
-  .hero-title { font-size: clamp(2.9rem, 12vw, 4.75rem); max-width: 12ch; }
-  .hero-subtitle { max-width: 34ch; }
-  .hero-acoes { justify-content: flex-start; gap: var(--s-4); }
-  .hero-indicadores { margin-top: var(--s-3); }
   .vitrine-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-6) var(--s-3); }
   .vitrine-grid > .catalogo-card,
   .vitrine-grid > .catalogo-card:nth-child(-n + 2) { grid-column: span 1; }
@@ -423,18 +323,5 @@ body[data-theme="dark"] .highlight-circle img { mix-blend-mode: normal; }
   .trilho { grid-auto-columns: 62vw; gap: var(--s-3); }
   .trilho-setas { display: none; }
   .featured-acoes { width: 100%; justify-content: flex-start; }
-  .hero-acoes { gap: var(--s-5); }
   .carousel-card { width: 220px; }
-}
-@media (max-width: 480px) {
-  .cat-card:not(:first-child) .cat-arrow {
-    top: var(--s-3);
-    bottom: auto;
-  }
-  .cat-card:not(:first-child) .cat-label { right: var(--s-4); }
-  .cat-card:not(:first-child) .cat-name { font-size: clamp(1.2rem, 5vw, 1.5rem); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .hero-slide, .hero-slide__painel, .hero-indicador span { transition: none; animation: none; }
-  .hero-indicador.ativo span { transform: scaleX(1); }
 }
