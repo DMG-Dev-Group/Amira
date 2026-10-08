@@ -49,7 +49,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..600;1,6..96,400..600&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles/base.css?v=20261008-tema-amira">
   <link rel="stylesheet" href="styles/home.css?v=20261008-tema-amira">
-  <link rel="stylesheet" href="styles/campaign.css?v=20261008-tema-amira">
+  <link rel="stylesheet" href="styles/campaign.css?v=20261008-scroll2">
 </head>
 <body class="home-editorial">
   <script>
@@ -146,13 +146,14 @@
   <!-- /casca:topo -->
 
   <main id="conteudo">
+    <div class="scroll-progress" aria-hidden="true"></div>
 
     <!-- Campanha com fotografias originais inspiradas nos frascos da loja. -->
     <section class="campaign-hero" data-movimento="hero" aria-label="Campanha Amira">
       <div class="hero-carrossel-trilho campaign-hero__painelaria" aria-hidden="true">
-        <div class="campaign-hero__painel campaign-hero__painel--esquerdo"><img src="images/campanha-asad-macro.webp" alt="" fetchpriority="high" width="1051" height="1496"></div>
-        <div class="campaign-hero__painel campaign-hero__painel--centro"><img src="images/campanha-asad-toque.webp" alt="" fetchpriority="high" width="1122" height="1402"></div>
-        <div class="campaign-hero__painel campaign-hero__painel--direito"><img src="images/campanha-ouro-pavao.webp" alt="" fetchpriority="high" width="1122" height="1402"></div>
+        <div class="campaign-hero__painel campaign-hero__painel--esquerdo"><div class="campaign-hero__media"><img src="images/campanha-asad-macro.webp" alt="" fetchpriority="high" width="1051" height="1496"></div></div>
+        <div class="campaign-hero__painel campaign-hero__painel--centro"><div class="campaign-hero__media"><img src="images/campanha-asad-toque.webp" alt="" fetchpriority="high" width="1122" height="1402"></div></div>
+        <div class="campaign-hero__painel campaign-hero__painel--direito"><div class="campaign-hero__media"><img src="images/campanha-ouro-pavao.webp" alt="" fetchpriority="high" width="1122" height="1402"></div></div>
       </div>
       <div class="campaign-hero__sombra"></div>
       <div class="moldura campaign-hero__interior">
@@ -438,6 +439,6 @@
   <script type="module" src="./services/nav-mobile-menu.js"></script>
   <script type="module" src="services/consentimento-cookies.js"></script>
   <script type="module" src="services/google-analytics.js"></script>
-  <script type="module" src="services/interface.js"></script>
+  <script type="module" src="services/interface.js?v=20261008-scroll"></script>
 </body>
 </html>

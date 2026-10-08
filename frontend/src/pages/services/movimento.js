@@ -73,6 +73,7 @@ export async function iniciar() {
   gsap.defaults({ ease: "expo.out", duration: 1.1 });
   document.documentElement.classList.add("com-gsap");
 
+  iniciarProgresso(gsap, ScrollTrigger);
   iniciarHero(gsap);
   iniciarEditorial(gsap);
   iniciarParallax(gsap);
@@ -82,6 +83,15 @@ export async function iniciar() {
   let espera;
   new ResizeObserver(() => { clearTimeout(espera); espera = setTimeout(() => ScrollTrigger.refresh(), 200); })
     .observe(document.body);
+}
+
+function iniciarProgresso(gsap, ScrollTrigger) {
+  const linha = document.querySelector(".scroll-progress");
+  if (!linha) return;
+  gsap.to(linha, {
+    scaleX: 1, ease: "none",
+    scrollTrigger: { start: 0, end: () => ScrollTrigger.maxScroll(window), scrub: 0.25 },
+  });
 }
 
 // ── Hero ────────────────────────────────────────────────────────────────
@@ -108,8 +118,22 @@ function iniciarHero(gsap) {
   // Parallax de saída: a foto afunda devagar e o texto some ao rolar
   gsap.to(hero.querySelector(".hero-carrossel-trilho"), {
     yPercent: 18, ease: "none",
-    scrollTrigger: { trigger: hero, start: "top top", end: "bottom top", scrub: true },
+    scrollTrigger: { trigger: hero, start: "top top", end: "bottom top", scrub: 0.7 },
   });
+  if (matchMedia("(min-width: 701px)").matches) {
+    [
+      [".campaign-hero__painel--esquerdo .campaign-hero__media", -1],
+      [".campaign-hero__painel--centro .campaign-hero__media", -11],
+      [".campaign-hero__painel--direito .campaign-hero__media", -2],
+    ].forEach(([seletor, fim]) => {
+      const media = hero.querySelector(seletor);
+      if (!media) return;
+      gsap.fromTo(media, { yPercent: -7 }, {
+        yPercent: fim, ease: "none",
+        scrollTrigger: { trigger: hero, start: "top top", end: "bottom top", scrub: 0.9 },
+      });
+    });
+  }
   gsap.to(hero.querySelector(".hero-conteudo") || {}, {
     autoAlpha: 0, y: -40, ease: "none",
     scrollTrigger: { trigger: hero, start: "35% top", end: "80% top", scrub: true },
@@ -132,11 +156,14 @@ function iniciarEditorial(gsap) {
     entrada([
       code.querySelector(".rotulo"),
       code.querySelector(".campaign-code__sinais"),
-      code.querySelector("h2"),
       code.querySelector("p"),
       code.querySelector(".campaign-code__sol"),
     ].filter(Boolean), code, 32);
     if (matchMedia("(min-width: 701px)").matches) {
+      gsap.fromTo(code.querySelector("h2"), { autoAlpha: 0.22, scale: 0.84 }, {
+        autoAlpha: 1, scale: 1, ease: "none",
+        scrollTrigger: { trigger: code, start: "top 90%", end: "center 52%", scrub: 0.7 },
+      });
       gsap.to(code.querySelector(".campaign-code__linha--esq"), {
         xPercent: -8, ease: "none",
         scrollTrigger: { trigger: code, start: "top bottom", end: "bottom top", scrub: true },
@@ -145,6 +172,8 @@ function iniciarEditorial(gsap) {
         xPercent: 8, ease: "none",
         scrollTrigger: { trigger: code, start: "top bottom", end: "bottom top", scrub: true },
       });
+    } else {
+      entrada([code.querySelector("h2")].filter(Boolean), code, 32);
     }
   }
 
@@ -153,9 +182,9 @@ function iniciarEditorial(gsap) {
     entrada([...intro.querySelectorAll(".campaign-intro__texto > *")], intro);
     const janela = intro.querySelector(".campaign-intro__janela");
     if (janela && matchMedia("(min-width: 701px)").matches) {
-      gsap.fromTo(janela, { clipPath: "inset(9% 7%)" }, {
+      gsap.fromTo(janela, { clipPath: "inset(17% 10%)" }, {
         clipPath: "inset(0% 0%)", ease: "none",
-        scrollTrigger: { trigger: intro, start: "top 85%", end: "center 45%", scrub: 1 },
+        scrollTrigger: { trigger: intro, start: "top 85%", end: "center 45%", scrub: 0.8 },
       });
     }
   }
@@ -170,6 +199,10 @@ function iniciarEditorial(gsap) {
   if (retrato) {
     entrada([retrato], retrato, 60);
     if (matchMedia("(min-width: 701px)").matches) {
+      gsap.fromTo(retrato, { clipPath: "inset(0 0 20% 0)" }, {
+        clipPath: "inset(0 0 0% 0)", ease: "none",
+        scrollTrigger: { trigger: retrato, start: "top 88%", end: "center 52%", scrub: 0.8 },
+      });
       gsap.fromTo(retrato.querySelector("img"), { scale: 1.12, yPercent: -4 }, {
         scale: 1.04, yPercent: 4, ease: "none",
         scrollTrigger: { trigger: retrato, start: "top bottom", end: "bottom top", scrub: true },
@@ -183,6 +216,15 @@ function iniciarEditorial(gsap) {
         if (alvo.dataset.entradaAtiva) return;
         alvo.dataset.entradaAtiva = "1";
         entrada([alvo], alvo, 32);
+        const foto = alvo.matches(".cat-card")
+          ? alvo.querySelector(".cat-imagem-generica")
+          : alvo.querySelector(".catalogo-card-img, .highlight-circle");
+        if (foto) {
+          gsap.fromTo(foto, { clipPath: "inset(0 0 100% 0)" }, {
+            clipPath: "inset(0 0 0% 0)", duration: 1.25, ease: "power3.inOut",
+            scrollTrigger: { trigger: alvo, start: "top 88%", once: true },
+          });
+        }
       });
   };
   ligarDinamicos();
