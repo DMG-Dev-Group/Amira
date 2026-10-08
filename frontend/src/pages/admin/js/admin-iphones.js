@@ -11,6 +11,7 @@
 import { protegerPaginaAdmin } from "./admin-auth.js";
 import { confirmar, toast } from "../../services/ui-feedback.js";
 import { escapeHtml, urlImagemSegura } from "../../services/seguranca.js";
+import { redimensionada, LARGURA } from "../../services/imagens.js";
 import {
   listarProdutos,
   infoPreco,
@@ -46,7 +47,7 @@ function linha(p) {
   return `
     <tr>
       <td>
-        <img class="thumb" src="${urlImagemSegura(p.imagemURL, "../images/amira-placeholder.svg")}" alt="">
+        <img class="thumb" src="${urlImagemSegura(redimensionada(p.imagemURL, LARGURA.icone), "../images/amira-placeholder.svg")}" alt="">
       </td>
       <td>
         ${escapeHtml(p.nome)}

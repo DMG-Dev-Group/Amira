@@ -10,9 +10,10 @@ import {
 } from "../../services/produtos.js";
 import { listarCamadas, camadaPrincipal } from "../../services/camadas.js";
 import { filtrarProdutosIphone } from "../../services/iphones.js";
-import { comprimirImagem, montarUploadFoto } from "../../services/imagem-upload.js";
+import { montarUploadFoto } from "../../services/imagem-upload.js";
 import { montarGaleriaProduto } from "./fotos-produto.js";
 import { escapeHtml, urlImagemSegura } from "../../services/seguranca.js";
+import { redimensionada, LARGURA } from "../../services/imagens.js";
 import { db } from "../../services/firebase-config.js";
 import {
   collection,
@@ -49,6 +50,7 @@ const btnAddImagem = document.getElementById("btn-add-imagem");
 const bannerUpload = montarUploadFoto(document.getElementById("p-banner-imagem-upload"), {
   placeholder: "../images/amira-placeholder.svg",
   textoVazio: "Escolher imagem do banner",
+  pasta: "banners",
   maxLado: 1400,
   alvoBytes: 320 * 1024
 });
@@ -178,7 +180,7 @@ function renderizarTabela() {
         ${lista.map((p) => `
           <tr draggable="true" data-id="${escapeHtml(p.id)}">
             <td class="arrastar" aria-hidden="true">⠿</td>
-            <td><img class="thumb" src="${urlImagemSegura(primeiraImagem(p), '../images/amira-placeholder.svg')}" alt=""></td>
+            <td><img class="thumb" src="${urlImagemSegura(redimensionada(primeiraImagem(p), LARGURA.icone), '../images/amira-placeholder.svg')}" alt=""></td>
             <td>${escapeHtml(p.nome)}
               ${p.bannerHero ? '<span class="badge badge-aprovado" title="No banner Produto da Estação">BANNER</span>' : ""}
               ${p.descontoAtivo ? `<span class="badge badge-pendente" title="Produto em desconto">-${Number(p.descontoPercentual) || 0}%</span>` : ""}

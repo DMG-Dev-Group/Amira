@@ -40,6 +40,7 @@ import {
 import { listarCamadas, camadaPrincipal } from "../services/camadas.js";
 import { filtrarProdutosPerfumaria, opcoesSemIphone, slugEhIphone } from "../services/iphones.js";
 import { escapeHtml, urlImagemSegura } from "../services/seguranca.js";
+import { redimensionada, LARGURA } from "../services/imagens.js";
 import { observarAuth } from "../services/auth.js";
 import { adicionarAoCarrinho } from "../services/carrinho.js";
 import { toast } from "../services/ui-feedback.js";
@@ -243,7 +244,7 @@ function cardProduto(p) {
   return `
     <article class="catalogo-card ${semEstoque ? "catalogo-card--esgotado" : ""}">
       <div class="catalogo-card-img">
-        <img src="${urlImagemSegura(p.imagemURL)}" alt="${escapeHtml(p.nome)}" loading="lazy">
+        <img src="${urlImagemSegura(redimensionada(p.imagemURL, LARGURA.card))}" alt="${escapeHtml(p.nome)}" loading="lazy">
         ${preco.temDesconto ? `<span class="desconto-selo">-${preco.percentual}%</span>` : ""}
         ${semEstoque ? `<span class="catalogo-card-esgotado-selo">Esgotado</span>` : ""}
       </div>

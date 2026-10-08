@@ -75,3 +75,6 @@ node_modules/
 
 # dataconnect generated files
 .dataconnect
+
+# Backup gerado por scripts/migrar-imagens-imagekit.js
+backup-imagens/

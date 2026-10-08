@@ -15,6 +15,7 @@ import { adicionarAoCarrinho } from "../services/carrinho.js";
 import { registrarVisita } from "../services/metricas.js";
 import { consentiuAnalytics } from "../services/consentimento-cookies.js";
 import { escapeHtml, urlImagemSegura } from "../services/seguranca.js";
+import { redimensionada, LARGURA } from "../services/imagens.js";
 import { toast } from "../services/ui-feedback.js";
 
 // ⚠️ Miguel: para mudar o tempo de troca automática das imagens do
@@ -227,7 +228,7 @@ async function carregarProduto() {
           <div class="produto-carrossel-trilho" id="produto-carrossel-trilho">
             ${todasImagens.map((url, i) => `
               <div class="produto-carrossel-slide">
-                <img src="${urlImagemSegura(url)}" alt="${escapeHtml(p.nome)} - imagem ${i + 1}" draggable="false">
+                <img src="${urlImagemSegura(redimensionada(url, LARGURA.galeria))}" alt="${escapeHtml(p.nome)} - imagem ${i + 1}" draggable="false">
               </div>
             `).join("")}
           </div>
@@ -474,7 +475,7 @@ async function carregarRelacionados(produto) {
         return `
           <a class="catalogo-card" href="produto.html?id=${encodeURIComponent(p.id)}">
             <div class="catalogo-card-img">
-              <img src="${urlImagemSegura(p.imagemURL)}" alt="${escapeHtml(p.nome)}" loading="lazy">
+              <img src="${urlImagemSegura(redimensionada(p.imagemURL, LARGURA.card))}" alt="${escapeHtml(p.nome)}" loading="lazy">
               ${preco.temDesconto ? `<span class="desconto-selo">-${preco.percentual}%</span>` : ""}
               ${semEstoque ? `<span class="catalogo-card-esgotado-selo">Esgotado</span>` : ""}
             </div>

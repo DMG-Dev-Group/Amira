@@ -31,8 +31,10 @@ const btnSalvarHero = document.getElementById("btn-salvar-hero");
 const msgHero = document.getElementById("msg-hero");
 
 const MAX_FOTOS_HERO = 6;
-// Fotos de fundo são largas; cada uma vira data URI dentro do MESMO
+// Fotos de fundo são largas. No ImageKit vão com folga (HERO_LADO_ENVIO);
+// na reserva sem ImageKit cada uma vira data URI dentro do MESMO
 // documento (limite de 1 MB no Firestore), então o orçamento é apertado.
+const HERO_LADO_ENVIO = 2000;
 const HERO_MAX_LADO = 1600;
 const HERO_ALVO_BYTES = 120 * 1024;
 
@@ -68,6 +70,8 @@ function adicionarSlotHero(valor = "") {
     textoVazio: "Escolher foto",
     textoCheio: "Trocar foto",
     placeholder: "../images/amira-placeholder.svg",
+    pasta: "home",
+    ladoEnvio: HERO_LADO_ENVIO,
     maxLado: HERO_MAX_LADO,
     alvoBytes: HERO_ALVO_BYTES,
     permiteRemover: false
