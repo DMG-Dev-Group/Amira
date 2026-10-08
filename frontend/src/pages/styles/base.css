@@ -17,6 +17,7 @@
   --tinta-3: #7A5147;
   --linha: rgba(122, 81, 71, 0.22);
   --linha-forte: rgba(122, 81, 71, 0.38);
+  --acento-editorial: #9B6B5E;  /* mocha original da identidade */
   --marca: #8A5B4E;              /* mocha — botões de marca, preço promocional */
   --marca-forte: #6F4438;
   --sobre-marca: #FEF5EF;
@@ -31,6 +32,18 @@
   --hero-sombra-topo: rgba(18, 13, 11, 0.7);
   --hero-sombra-base: rgba(18, 13, 11, 0.68);
   --hero-sombra-lateral: rgba(18, 13, 11, 0.24);
+  --produto-pedestal: #F7E6DA;  /* fundo claro mantém as fotos legíveis nos dois temas */
+  --produto-tinta: #3A2A24;
+  --campanha-fundo: var(--marca);
+  --campanha-texto: #FEF5EF;
+  --campanha-texto-suave: rgba(254, 245, 239, 0.94);
+  --campanha-linha: rgba(254, 245, 239, 0.35);
+  --iphone-fundo: #3A2A24;
+  --iphone-texto: #FEF5EF;
+  --rodape-fundo: #3A2A24;
+  --rodape-texto: #FEF5EF;
+  --rodape-linha: rgba(254, 245, 239, 0.38);
+  --editorial-linha: rgba(155, 107, 94, 0.18);
 
   /* Tipografia */
   --f-display: "Bodoni Moda", "Didot", "Bodoni 72", Georgia, serif;
@@ -100,6 +113,7 @@ body[data-theme="dark"] {
   --linha: rgba(236, 193, 160, 0.22);
   --linha-forte: rgba(236, 193, 160, 0.38);
   --marca: #ECC1A0;
+  --acento-editorial: #ECC1A0;  /* nude original em fundo escuro */
   --marca-forte: #F3D2B8;
   --sobre-marca: #1C1512;
   --ouro: #E2B84F;
@@ -110,6 +124,10 @@ body[data-theme="dark"] {
   --vidro: rgba(28, 21, 18, 0.88);
   --veu: rgba(0, 0, 0, 0.6);
   --surface: #241A17;
+  --campanha-fundo: #2A201C;
+  --iphone-fundo: #1C1512;
+  --rodape-fundo: #1C1512;
+  --editorial-linha: rgba(236, 193, 160, 0.2);
   --sombra-sobre: 0 24px 60px -20px rgba(0, 0, 0, 0.7), 0 6px 18px -8px rgba(0, 0, 0, 0.5);
   color-scheme: dark;
 }
@@ -682,11 +700,10 @@ body[data-theme="dark"] .theme-toggle .tema-lua { opacity: 0; transform: rotate(
 .rodape {
   position: relative;
   padding: var(--s-9) 0 calc(var(--s-6) + env(safe-area-inset-bottom));
-  background: var(--tinta);
-  color: var(--porcelana);
+  background: var(--rodape-fundo);
+  color: var(--rodape-texto);
   overflow: hidden;
 }
-body[data-theme="dark"] .rodape { background: #0B0807; }
 .rodape__sol { width: 64px; height: auto; color: var(--ouro-claro); margin-bottom: var(--s-5); }
 .rodape__grade {
   display: grid;
@@ -741,8 +758,9 @@ body[data-theme="dark"] .rodape { background: #0B0807; }
 .rodape__social { display: flex; gap: var(--s-2); margin-top: var(--s-5); }
 .rodape__social a {
   width: 44px; height: 44px; display: grid; place-items: center;
-  border: 1px solid rgba(251, 248, 245, 0.2);
+  border: 1px solid var(--rodape-linha);
   border-radius: var(--raio-pilula);
+  color: var(--rodape-texto);
   transition: border-color var(--t-rapido), color var(--t-rapido);
 }
 .rodape__social svg { width: 18px; height: 18px; }
@@ -760,7 +778,7 @@ body[data-theme="dark"] .rodape { background: #0B0807; }
   position: relative;
   aspect-ratio: 4 / 5;
   overflow: hidden;
-  background: var(--pedestal);
+  background: var(--produto-pedestal);
 }
 .catalogo-card-img img {
   position: absolute; inset: 0;

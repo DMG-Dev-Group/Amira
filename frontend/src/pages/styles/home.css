@@ -129,7 +129,7 @@ body[data-theme="dark"] .highlight-circle img { mix-blend-mode: normal; }
 /* Reserva sem 3D (celular, economia de dados, movimento reduzido): a foto
    tem fundo preto, então vira um quadro escuro de vitrine — não dá para
    "dissolver" o preto no fundo claro. */
-.essencia__palco:not(.com-3d) { background: #0B0807; overflow: hidden; }
+.essencia__palco:not(.com-3d) { background: var(--iphone-fundo); overflow: hidden; }
 .essencia__reserva {
   position: absolute; inset: 0;
   width: 100%; height: 100%;
@@ -162,7 +162,7 @@ body[data-theme="dark"] .highlight-circle img { mix-blend-mode: normal; }
   grid-auto-rows: clamp(220px, 18vw, 320px);
   gap: var(--s-4);
 }
-.cat-card { position: relative; overflow: hidden; background: var(--pedestal); color: #FBF8F5; grid-column: span 4; }
+.cat-card { position: relative; overflow: hidden; background: var(--pedestal); color: var(--campanha-texto); grid-column: span 4; }
 .cat-card:nth-child(5n + 1) { grid-column: span 7; grid-row: span 2; }
 .cat-card:nth-child(5n + 2) { grid-column: span 5; }
 .cat-card:nth-child(5n + 3) { grid-column: span 5; }
@@ -183,7 +183,7 @@ body[data-theme="dark"] .highlight-circle img { mix-blend-mode: normal; }
 }
 @media (hover: hover) {
   .cat-card:hover .cat-imagem-generica img { transform: scale(1.06); }
-  .cat-card:hover .cat-arrow { background: #FBF8F5; color: #1C1411; transform: translateX(4px); }
+  .cat-card:hover .cat-arrow { background: var(--campanha-texto); color: var(--produto-tinta); transform: translateX(4px); }
 }
 
 /* ── Os mais amados: trilho horizontal com encaixe ─────────────────────── */
@@ -208,13 +208,13 @@ body[data-theme="dark"] .highlight-circle img { mix-blend-mode: normal; }
 /* ── iPhones: bloco escuro, o aparelho em destaque ─────────────────────── */
 .carousel-section {
   padding-block: var(--secao);
-  background: #0E0B0A;
-  color: #F5EDE7;
+  background: var(--iphone-fundo);
+  color: var(--iphone-texto);
   overflow: hidden;
 }
 .carousel-cabecalho { display: flex; flex-direction: column; align-items: flex-start; gap: var(--s-5); margin-bottom: var(--s-8); }
 .carousel-cabecalho .rotulo { color: rgba(245, 237, 231, 0.6); }
-.carousel-cabecalho .titulo-1 { color: #F5EDE7; }
+.carousel-cabecalho .titulo-1 { color: var(--iphone-texto); }
 .carousel-cabecalho .titulo-1 em { color: var(--ouro-claro); }
 .carousel-cabecalho .texto-apoio { color: rgba(245, 237, 231, 0.72); }
 .carousel-track-wrapper {
@@ -237,8 +237,8 @@ body[data-theme="dark"] .highlight-circle img { mix-blend-mode: normal; }
   width: 280px;
   aspect-ratio: 4 / 5;
   overflow: hidden;
-  background: #EFEAE6;
-  color: #1C1411;
+  background: var(--produto-pedestal);
+  color: var(--produto-tinta);
 }
 .carousel-card img { width: 100%; height: 100%; object-fit: contain; padding: 12%; mix-blend-mode: multiply; transition: transform 1s var(--ease); }
 @media (hover: hover) { .carousel-card:hover img { transform: scale(1.05); } }
@@ -248,11 +248,11 @@ body[data-theme="dark"] .highlight-circle img { mix-blend-mode: normal; }
   display: flex; flex-direction: column; gap: 2px;
 }
 .carousel-card-nome { font-size: var(--t-p); line-height: 1.35; }
-.carousel-card-preco { font-family: var(--f-display); font-size: 1.1rem; color: #1C1411; }
-.carousel-card-selo { background: #1C1411; color: #F5EDE7; }
+.carousel-card-preco { font-family: var(--f-display); font-size: 1.1rem; color: var(--produto-tinta); }
+.carousel-card-selo { background: var(--produto-tinta); color: var(--produto-pedestal); }
 .carousel-controls { display: flex; justify-content: flex-end; gap: var(--s-2); margin-top: var(--s-6); }
-.carousel-btn { border-color: rgba(245, 237, 231, 0.3); color: #F5EDE7; }
-@media (hover: hover) { .carousel-btn:hover { background: #F5EDE7; color: #0E0B0A; border-color: #F5EDE7; } }
+.carousel-btn { border-color: var(--campanha-linha); color: var(--iphone-texto); }
+@media (hover: hover) { .carousel-btn:hover { background: var(--iphone-texto); color: var(--iphone-fundo); border-color: var(--iphone-texto); } }
 
 /* ── Depoimentos ───────────────────────────────────────────────────────── */
 .reviews-grid {
