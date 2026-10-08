@@ -11,22 +11,30 @@
     <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
     <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://ik.imagekit.io">
-    <link rel="stylesheet" href="./styles/auth.css">
+    <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..600;1,6..96,400..600&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles/base.css?v=20261008-tema-amira">
+    <link rel="stylesheet" href="styles/auth.css?v=20261008-tema-amira">
     <title>Amira — Cadastro</title>
 </head>
-<body data-theme="light">
+<body>
+    <script>
+      /* partida: tema salvo sem piscar (ver services/interface.js nas páginas da loja) */
+      (function () {
+        document.documentElement.classList.add("js");
+        try { var t = localStorage.getItem("amiraTheme") || localStorage.getItem("floraTheme"); document.body.dataset.theme = (t === "dark") ? "dark" : "light"; } catch (e) { document.body.dataset.theme = "light"; }
+      })();
+    </script>
     <div class="auth-layout">
 
         <aside class="auth-marca">
-            <img class="auth-marca__logo" src="images/amira-claro.svg" alt="Amira">
-            <h2 class="auth-marca__titulo">Sua <em>essência</em>, nossa paixão</h2>
-            <p class="auth-marca__texto">
-                Crie sua conta para acompanhar pedidos, salvar endereço e — se
-                você tem loja — pedir acesso aos preços de atacado.
-            </p>
-            <div class="auth-marca__selos">
-                <span class="auth-marca__selo">Produtos originais</span>
-                <span class="auth-marca__selo">Atacado e varejo</span>
+            <a href="index.html" class="auth-marca__logo-link" aria-label="Amira — voltar para a loja">
+                <img class="auth-marca__logo" src="images/amira-marca-claro.svg" alt="Amira" width="96" height="72">
+            </a>
+            <img class="auth-marca__foto" src="images/perfume_principal.png" alt="" width="408" height="612">
+            <div class="auth-marca__conteudo">
+                <svg class="auth-marca__sol" viewBox="5 15 54 26" fill="none" stroke="currentColor" stroke-linecap="round" aria-hidden="true"><path d="M21 39a11 11 0 0 1 22 0" stroke-width="1.4"/><path d="M7 39h50" stroke-width="1.4"/><path stroke-width="1.2" d="M18.21 34.52 11.55 32.36M20.27 30.48l-5.66-4.12M23.48 27.27l-4.12-5.66M27.52 25.21l-2.16-6.66M32 24.5v-7M36.48 25.21l2.16-6.66M40.52 27.27l4.12-5.66M43.73 30.48l5.66-4.12M45.79 34.52l6.66-2.16"/></svg>
+                <h2 class="auth-marca__titulo">Sua <em>assinatura</em> começa aqui.</h2>
+                <p class="auth-marca__texto">Perfumes originais escolhidos um a um — entrega em toda São Luís e retirada no Monumental Shopping.</p>
             </div>
         </aside>
 

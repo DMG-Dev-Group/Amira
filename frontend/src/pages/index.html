@@ -26,9 +26,6 @@
   <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
   <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://ik.imagekit.io">
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles/style.css">
-  <link rel="stylesheet" href="./styles/catalogo.css">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -49,359 +46,381 @@
     }
   }
   </script>
+  <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..600;1,6..96,400..600&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles/base.css?v=20261008-tema-amira">
+  <link rel="stylesheet" href="styles/home.css?v=20261008-tema-amira">
+  <link rel="stylesheet" href="styles/campaign.css?v=20261008-categorias">
 </head>
-<body>
+<body class="home-editorial">
+  <script>
+    /* partida: tema salvo sem piscar + abertura na 1ª página da sessão (ver services/interface.js) */
+    (function () {
+      var d = document.documentElement; d.classList.add("js", "entrando");
+      try { var t = localStorage.getItem("amiraTheme") || localStorage.getItem("floraTheme"); document.body.dataset.theme = (t === "dark") ? "dark" : "light"; } catch (e) { document.body.dataset.theme = "light"; }
+      var abrir = false;
+      try { abrir = !sessionStorage.getItem("amiraAbertura") && !matchMedia("(prefers-reduced-motion: reduce)").matches; if (abrir) sessionStorage.setItem("amiraAbertura", "1"); } catch (e) {}
+      if (!abrir) return;
+      d.classList.add("com-abertura");
+      var raios = [[18.21,34.52,11.55,32.36],[20.27,30.48,14.61,26.36],[23.48,27.27,19.36,21.61],[27.52,25.21,25.36,18.55],[32,24.5,32,17.5],[36.48,25.21,38.64,18.55],[40.52,27.27,44.64,21.61],[43.73,30.48,49.39,26.36],[45.79,34.52,52.45,32.36]];
+      var r = raios.map(function (l, i) { return '<line class="raio" style="--i:' + i + ';--comp:8" x1="' + l[0] + '" y1="' + l[1] + '" x2="' + l[2] + '" y2="' + l[3] + '" stroke-width="1.4"/>'; }).join("");
+      document.currentScript.insertAdjacentHTML("afterend",
+        '<div class="abertura" id="abertura" role="presentation"><div class="abertura__marca">' +
+        '<svg class="abertura__sol" viewBox="5 15 54 26" aria-hidden="true">' +
+        '<line class="horizonte-linha" style="--comp:50" x1="7" y1="39" x2="57" y2="39" stroke-width="1.6"/>' +
+        '<path class="arco" style="--comp:36" d="M21 39a11 11 0 0 1 22 0" stroke-width="1.6"/>' + r + '</svg>' +
+        '<span class="abertura__nome">AMIRA</span></div></div>');
+    })();
+  </script>
 
-  <!-- ── NAV ──────────────────────────────────────────────── -->
-  <nav id="navbar" data-hero>
-    <div class="nav-logo">
-      <a href="#" id="logo-button">
-        <img class="logo-amira logo-amira--claro" src="images/amira-claro.svg" alt="Amira">
-        <img class="logo-amira logo-amira--escuro" src="images/amira-escuro.svg" alt="Amira">
-      </a>
-    </div>
-    <form class="nav-busca-form" id="nav-busca-form" role="search">
-      <input type="text" id="nav-busca-input" placeholder="Buscar produtos..." autocomplete="off">
-      <button type="submit" aria-label="Buscar" id="search">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="17" height="17">
-          <circle cx="11" cy="11" r="8"/>
-          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-        </svg>
-      </button>
-    </form>
-    <div class="nav-categorias-wrapper">
-      <button class="nav-categorias-btn" id="categoriasBtn" aria-expanded="false" aria-haspopup="true">
-        Categorias
-        <svg class="cat-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="6 9 12 15 18 9"/>
-        </svg>
-      </button>
-      <div class="nav-categories-dropdown" id="categoriasDropdown" aria-hidden="true">
-        <ul class="dropdown-list" id="dropdown-categorias-home">
-          <li><a href="produtos.html"> Ver todos os produtos</a></li>
-        </ul>
-      </div>
-    </div>
-    <div class="nav-actions">
-      <a href="atacado.html" id="nav-btn-atacado" class="nav-account-btn" style="text-decoration:none;" title="Comprar em atacado">
-        Atacado
-      </a>
-      <a href="iphones.html" id="nav-btn-iphones" class="nav-account-btn" style="text-decoration:none;" title="Ver os iPhones disponíveis">
-        iPhones
-      </a>
-      <div id="nav-carrinho-slot">
-        <a href="carrinho.html" class="nav-carrinho-btn" id="nav-carrinho-btn" aria-label="Ver carrinho">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
-            <circle cx="9" cy="21" r="1"/>
-            <circle cx="20" cy="21" r="1"/>
-            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
-          </svg>
-          <span class="nav-carrinho-contador" id="nav-carrinho-contador" hidden></span>
-        </a>
+  <!-- casca:topo -->
+  <a class="pular" href="#conteudo">Pular para o conteúdo</a>
+  <div class="faixa-aviso" aria-label="Avisos da loja"><span class="faixa-aviso__item ativo">Perfumes originais · varejo e atacado</span><span class="faixa-aviso__item">Entrega em toda São Luís</span><span class="faixa-aviso__item">Monumental Shopping · 2º piso</span><span class="faixa-aviso__item">Pix, crédito e boleto</span></div>
+  <header class="topo" id="navbar" data-hero>
+    <div class="moldura topo__barra">
+      <div class="topo__esq">
+        <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Abrir menu" aria-expanded="false" aria-controls="mobile-menu-panel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" aria-hidden="true"><path d="M3 8h18M3 16h12"/></svg></button>
+        <div class="nav-categorias-wrapper">
+          <button class="nav-categorias-btn" id="categoriasBtn" aria-expanded="false" aria-haspopup="true" aria-controls="categoriasDropdown">Coleção <svg class="cat-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+          <div class="nav-categories-dropdown" id="categoriasDropdown" aria-hidden="true">
+            <ul class="dropdown-list" id="dropdown-categorias-home">
+              <li><a href="produtos.html">Ver todos os produtos</a></li>
+            </ul>
+          </div>
         </div>
-      <div class="nav-account" id="nav-account">
-        <a href="login.html" class="nav-account-btn" id="nav-account-btn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-            <circle cx="12" cy="7" r="4"/>
-          </svg>
-          <span id="nav-account-label">Entrar</span>
+        <a href="#destaques" class="topo__link">Destaques</a>
+        <a href="#produtos" class="topo__link">Novidades</a>
+      </div>
+      <div class="topo__logo nav-logo">
+        <a href="index.html" aria-label="Amira — início">
+          <img class="logo-amira logo-amira--escuro" src="images/amira-marca-escuro.svg" alt="Amira" width="76" height="57">
+          <img class="logo-amira logo-amira--claro" src="images/amira-marca-claro.svg" alt="" width="76" height="57">
         </a>
       </div>
-      <div id="theme-button">
-        <button id="theme-toggle" class="theme-toggle" aria-label="Alternar tema claro e escuro">
-          <span class="theme-icon theme-icon--moon">🌙</span>
-          <span class="theme-icon theme-icon--sun">☀️</span>
-          <span class="theme-toggle__circle"></span>
-        </button>
-      </div>
-      <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Abrir menu" aria-expanded="false">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="4" y1="6" x2="20" y2="6"/>
-          <line x1="4" y1="12" x2="20" y2="12"/>
-          <line x1="4" y1="18" x2="20" y2="18"/>
-        </svg>
-      </button>
-    </div>
-  </nav>
-
-  <!-- ── MENU MOBILE ──────────────────────────────────────── -->
-  <div class="mobile-menu-overlay" id="mobile-menu-overlay"></div>
-  <aside class="mobile-menu-panel" id="mobile-menu-panel" aria-hidden="true">
-    <div class="mobile-menu-header">
-      <span class="mobile-menu-title">Menu</span>
-      <button class="mobile-menu-close" id="mobile-menu-close" aria-label="Fechar menu">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="5" y1="5" x2="19" y2="19"/>
-          <line x1="19" y1="5" x2="5" y2="19"/>
-        </svg>
-      </button>
-    </div>
-    <nav class="mobile-menu-links">
-      <a href="login.html" class="mobile-menu-link" id="mobile-nav-perfil">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-          <circle cx="12" cy="7" r="4"/>
-        </svg>
-        <span id="mobile-nav-perfil-label">Entrar</span>
-      </a>
-      <a href="meus-pedidos.html" class="mobile-menu-link" id="mobile-nav-pedidos" style="display:none;">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M6 2 4 6v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6l-2-4z"/>
-          <path d="M4 6h16"/>
-          <path d="M16 10a4 4 0 0 1-8 0"/>
-        </svg>
-        Meus pedidos
-      </a>
-      <div class="mobile-menu-category-group">
-        <a href="#categorias" class="mobile-menu-link mobile-menu-category-toggle" aria-expanded="false">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="7" height="7"/>
-            <rect x="14" y="3" width="7" height="7"/>
-            <rect x="14" y="14" width="7" height="7"/>
-            <rect x="3" y="14" width="7" height="7"/>
-          </svg>
-          Categorias
-        </a>
-        <div id="mobile-menu-camada-links"></div>
-      </div>
-      <a href="iphones.html" class="mobile-menu-link">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="6" y="2" width="12" height="20" rx="3"/>
-          <line x1="10.5" y1="18.5" x2="13.5" y2="18.5"/>
-        </svg>
-        iPhones
-      </a>
-      <a href="#contato" class="mobile-menu-link">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="2" y="4" width="20" height="16" rx="2"/>
-          <path d="M22 6l-10 7L2 6"/>
-        </svg>
-        Contato
-      </a>
-      <a href="carrinho.html" class="mobile-menu-link" id="mobile-nav-carrinho" style="display:none;">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="9" cy="21" r="1"/>
-          <circle cx="20" cy="21" r="1"/>
-          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
-        </svg>
-        Carrinho
-        <span class="mobile-menu-badge" id="mobile-carrinho-badge" style="display:none;"></span>
-      </a>
-    </nav>
-    <div class="mobile-menu-footer">
-      <button id="theme-toggle-mobile" class="theme-toggle" aria-label="Alternar tema claro e escuro">
-        <span class="theme-icon theme-icon--moon">🌙</span>
-        <span class="theme-icon theme-icon--sun">☀️</span>
-        <span class="theme-toggle__circle"></span>
-      </button>
-    </div>
-  </aside>
-
-  <!-- ── CARROSSEL DE ANÚNCIO (B1) ─────────────────────────── -->
-  <!-- Fotos da marca passando automaticamente. As imagens são
-       configuráveis no Firestore (configuracoes/homeCarrossel). -->
-  <section class="hero-carrossel">
-    <div id="hero-carrossel" class="hero-carrossel-trilho">
-      <div class="hero-slide-conteudo">
-        <h1 class="hero-title">Sua <em>essência</em>,<br>nossa paixão</h1>
+      <div class="topo__dir">
+        <button class="topo__icone" id="busca-abrir" aria-label="Buscar produtos" aria-expanded="false" aria-controls="busca-folha"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button>
+        <a href="login.html" class="nav-account-btn" id="nav-account-btn" aria-label="Minha conta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><span class="topo__conta-txt" id="nav-account-label">Entrar</span></a>
+        <a href="carrinho.html" class="nav-carrinho-btn" id="nav-carrinho-btn" aria-label="Sacola"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1 13H6L5 8Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><span class="nav-carrinho-contador" id="nav-carrinho-contador" hidden></span></a>
+        <button id="theme-toggle" class="theme-toggle" aria-label="Alternar tema claro e escuro"><svg class="tema-lua" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z"/></svg><svg class="tema-sol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
       </div>
     </div>
-  </section>
+  </header>
 
-  <!-- ── MARQUEE ───────────────────────────────────────────── -->
-  <div class="marquee-section">
-    <div class="marquee-track">
-      <span class="marquee-item">Perfumes Importados</span>
-      <span class="marquee-item">Maquiagem Premium</span>
-      <span class="marquee-item">Acessórios Exclusivos</span>
-      <span class="marquee-item">Atacado e Varejo</span>
-      <span class="marquee-item">Frete para toda São Luís</span>
-      <span class="marquee-item">Produtos Originais</span>
-      <span class="marquee-item">Perfumes Importados</span>
-      <span class="marquee-item">Maquiagem Premium</span>
-      <span class="marquee-item">Acessórios Exclusivos</span>
-      <span class="marquee-item">Atacado e Varejo</span>
-      <span class="marquee-item">Frete para toda São Luís</span>
-      <span class="marquee-item">Produtos Originais</span>
+  <div class="busca-folha" id="busca-folha" role="dialog" aria-modal="true" aria-label="Buscar produtos">
+    <div class="moldura">
+      <div class="busca-folha__topo">
+        <span class="rotulo">Buscar na Amira</span>
+        <button class="topo__icone" id="busca-fechar" aria-label="Fechar busca"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" aria-hidden="true"><path d="M5 5l14 14M19 5 5 19"/></svg></button>
+      </div>
+      <form class="nav-busca-form" id="nav-busca-form" role="search">
+        <input type="search" id="nav-busca-input" placeholder="Perfume, marca ou nota…" autocomplete="off" enterkeyhint="search" aria-label="Buscar produtos">
+        <button type="submit" aria-label="Buscar" id="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button>
+      </form>
+      <div class="busca-folha__dicas" aria-label="Sugestões"><a href="produtos.html?busca=lattafa">Lattafa</a><a href="produtos.html?busca=body%20splash">Body splash</a><a href="produtos.html?busca=miniatura">Miniaturas</a><a href="iphones.html">iPhones</a></div>
     </div>
   </div>
+  <div class="veu" id="busca-veu"></div>
 
-  <!-- ── LANÇAMENTO / "Produto da Estação" — subiu para logo após o carrossel (R2 3.1) ── -->
-  <section class="highlight" id="sobre">
-    <div class="highlight-inner" id="highlight-conteudo">
-      <p class="catalogo-loading">Carregando...</p>
+  <div class="mobile-menu-overlay" id="mobile-menu-overlay"></div>
+  <aside class="mobile-menu-panel" id="mobile-menu-panel" aria-hidden="true" aria-label="Menu">
+    <div class="mobile-menu-header">
+      <span class="mobile-menu-title">Menu</span>
+      <button class="mobile-menu-close" id="mobile-menu-close" aria-label="Fechar menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" aria-hidden="true"><path d="M5 5l14 14M19 5 5 19"/></svg></button>
     </div>
-    <div class="highlight-nav" id="highlight-nav" style="display:none;">
-      <button class="highlight-nav-btn" id="highlight-prev" aria-label="Produto anterior">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><polyline points="15 18 9 12 15 6"/></svg>
-      </button>
-      <span class="highlight-nav-contador" id="highlight-contador"></span>
-      <button class="highlight-nav-btn" id="highlight-next" aria-label="Próximo produto">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><polyline points="9 18 15 12 9 6"/></svg>
-      </button>
-    </div>
-  </section>
-
-  <!-- ── VITRINE DE PRODUTOS (B2) ─────────────────────────── -->
-  <section class="vitrine-produtos" id="produtos">
-    <div class="section-header reveal">
-      <h2 class="section-title">Nossos <em>produtos</em></h2>
-    </div>
-    <div class="vitrine-grid" id="grid-produtos-home">
-      <p class="catalogo-loading" style="padding: 2rem;">Carregando produtos...</p>
-    </div>
-    <div class="vitrine-vermais">
-      <a href="produtos.html" class="btn-primary" style="text-decoration:none;">Ver mais produtos</a>
-    </div>
-  </section>
-
-  <!-- ── CATEGORIES ───────────────────────────────────────── -->
-  <section class="categories" id="categorias">
-    <div class="section-header reveal">
-      <h2 class="section-title">Nossas <em>categorias</em></h2>
-    </div>
-    <div class="categories-grid" id="grid-categorias-home">
-      <p class="catalogo-loading">Carregando categorias...</p>
-    </div>
-  </section>
-
-  <!-- ── DESTAQUES ("Os mais amados") — desceu para o lugar do lançamento (R2 3.1) ── -->
-  <section class="featured" id="destaques">
-    <div class="section-header-feat">
-      <span class="section-eyebrow1">Os mais amados</span>
-      <h2 class="section-title2">Destaques da semana</h2>
-    </div>
-    <div class="products-grid" id="grid-destaques">
-      <p class="catalogo-loading" style="padding: 2rem;">Carregando destaques...</p>
-    </div>
-  </section>
-
-  <section class="carousel-section" id="galeria-iphones">
-    <div class="section-header-car" style="padding-top:3rem;">
-      <span class="section-eyebrow7">Novidade na loja</span>
-      <h2 class="section-title7">Chegaram os <em>iPhones</em></h2>
-    </div>
-    <div class="carousel-track-wrapper">
-      <!-- Cada foto leva para a seção de iPhones (iphones.html). -->
-      <div class="carousel-track" id="carouselTrack">
-        <!-- Fotos (trocáveis pelo Firestore — ver services/home-dinamica.js) -->
-        <a class="carousel-card" href="iphones.html" aria-label="Ver os iPhones disponíveis"><img src="images/iphone-1.svg" alt="iPhone disponível na Amira" /></a>
-        <a class="carousel-card" href="iphones.html" aria-label="Ver os iPhones disponíveis"><img src="images/iphone-2.svg" alt="iPhone disponível na Amira" /></a>
-        <a class="carousel-card" href="iphones.html" aria-label="Ver os iPhones disponíveis"><img src="images/iphone-3.svg" alt="iPhone disponível na Amira" /></a>
-        <a class="carousel-card" href="iphones.html" aria-label="Ver os iPhones disponíveis"><img src="images/iphone-4.svg" alt="iPhone disponível na Amira" /></a>
-        <!-- Duplicatas para loop infinito -->
-        <a class="carousel-card" href="iphones.html" aria-hidden="true" tabindex="-1"><img src="images/iphone-1.svg" alt="" /></a>
-        <a class="carousel-card" href="iphones.html" aria-hidden="true" tabindex="-1"><img src="images/iphone-2.svg" alt="" /></a>
-        <a class="carousel-card" href="iphones.html" aria-hidden="true" tabindex="-1"><img src="images/iphone-3.svg" alt="" /></a>
-        <a class="carousel-card" href="iphones.html" aria-hidden="true" tabindex="-1"><img src="images/iphone-4.svg" alt="" /></a>
+    <nav class="mobile-menu-links" aria-label="Navegação principal">
+      <div class="mobile-menu-category-group">
+        <a href="produtos.html" class="mobile-menu-link mobile-menu-category-toggle" aria-expanded="false">Coleção</a>
+        <div id="mobile-menu-camada-links"></div>
       </div>
+      <a href="produtos.html" class="mobile-menu-link">Todos os produtos</a>
+      <a href="iphones.html" class="mobile-menu-link">iPhones</a>
+      <a href="atacado.html" class="mobile-menu-link" id="mobile-nav-atacado">Atacado</a>
+      <a href="login.html" class="mobile-menu-link" id="mobile-nav-perfil"><span id="mobile-nav-perfil-label">Entrar</span></a>
+      <a href="meus-pedidos.html" class="mobile-menu-link" id="mobile-nav-pedidos" style="display:none;">Meus pedidos</a>
+      <a href="carrinho.html" class="mobile-menu-link" id="mobile-nav-carrinho" style="display:none;">Sacola <span class="mobile-menu-badge" id="mobile-carrinho-badge" style="display:none;"></span></a>
+    </nav>
+    <div class="mobile-menu-footer">
+      <a href="https://wa.me/559884421875" class="link-fio" target="_blank" rel="noopener">Falar no WhatsApp</a>
+      <button id="theme-toggle-mobile" class="theme-toggle" aria-label="Alternar tema claro e escuro"><svg class="tema-lua" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z"/></svg><svg class="tema-sol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
     </div>
-    <div class="carousel-controls">
-      <button class="carousel-btn carousel-btn--prev" id="btnPrev">
-        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-        Anterior
-      </button>
-      <button class="carousel-btn carousel-btn--next" id="btnNext">
-        Próximo
-        <svg viewBox="0 0 24 24"><polyline points="9 6 15 12 9 18"/></svg>
-      </button>
-    </div>
-  </section>
-  <!-- ── AVALIAÇÕES DA LOJA ───────────────────────────────────
-       Só aparece quando há pelo menos uma avaliação publicada — ver
-       js/avaliacoes-loja-home.js. Conteúdo vem de avaliacoesLoja
-       (QR code do balcão físico), moderado no painel admin. -->
-  <section class="testimonials" id="avaliacoes-loja-secao" hidden>
-    <span class="testimonials-eyebrow">O que dizem sobre a gente</span>
-    <h2 class="testimonials-titulo">Avaliações da <em>loja</em></h2>
-    <div class="reviews-grid" id="grid-avaliacoes-loja"></div>
-    <p class="testimonials-cta">
-      <a href="avaliar-loja.html" class="btn-outline">Deixe sua avaliação</a>
-    </p>
-  </section>
+  </aside>
+  <!-- /casca:topo -->
 
-  <!-- ── NEWSLETTER ────────────────────────────────────────── -->
-  <section class="newsletter" id="contato">
-    <div class="newsletter-content reveal">
-      <span class="section-eyebrow4">Fique por dentro</span>
-      <h2 class="newsletter-title">Receba novidades<br>em primeira mão</h2>
-      <p class="newsletter-text">Promoções exclusivas, lançamentos e dicas de beleza diretamente no seu WhatsApp.</p>
-      <div class="newsletter-form">
-        <input type="email" class="newsletter-input" placeholder="Seu melhor e-mail" id="email-input">
-        <button class="newsletter-btn" onclick="handleNewsletter()">Quero receber</button>
+  <main id="conteudo">
+    <div class="scroll-progress" aria-hidden="true"></div>
+
+    <!-- Campanha com fotografias originais inspiradas nos frascos da loja. -->
+    <section class="campaign-hero" data-movimento="hero" aria-label="Campanha Amira">
+      <div class="hero-carrossel-trilho campaign-hero__painelaria" aria-hidden="true">
+        <div class="campaign-hero__painel campaign-hero__painel--esquerdo"><div class="campaign-hero__media"><img src="images/campanha-asad-macro.webp" alt="" fetchpriority="high" width="1051" height="1496"></div></div>
+        <div class="campaign-hero__painel campaign-hero__painel--centro"><div class="campaign-hero__media"><img src="images/campanha-asad-toque.webp" alt="" fetchpriority="high" width="1122" height="1402"></div></div>
+        <div class="campaign-hero__painel campaign-hero__painel--direito"><div class="campaign-hero__media"><img src="images/campanha-ouro-pavao.webp" alt="" fetchpriority="high" width="1122" height="1402"></div></div>
       </div>
-    </div>
-  </section>
-
-  <!-- ── FOOTER ────────────────────────────────────────────── -->
-  <footer>
-    <div class="footer-top">
-      <div class="footer-brand">
-        <div class="footer-logo">
-          <img src="images/amira-favicon.svg" alt="" width="48" height="48">
-          <span class="footer-logo-name">Amira</span>
+      <div class="campaign-hero__sombra"></div>
+      <div class="moldura campaign-hero__interior">
+        <div class="hero-conteudo campaign-hero__conteudo">
+          <span class="rotulo hero-rotulo">AMIRA / PERFUMARIA</span>
+          <h1 class="hero-title">A presença <em>permanece.</em></h1>
+          <div class="hero-acoes">
+            <a href="produtos.html" class="btn btn--claro">Explorar a coleção <span aria-hidden="true">↗</span></a>
+          </div>
         </div>
-        <p class="footer-desc">
-          Perfumes, maquiagem e acessórios premium para quem valoriza elegância e qualidade.
-          Atendemos no varejo e atacado em todo o Brasil.
-        </p>
-        <div class="footer-social">
-          <a href="#" class="social-btn" aria-label="Facebook">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
-            </svg>
-          </a>
-          <a href="#" class="social-btn" aria-label="Instagram">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-              <circle cx="12" cy="12" r="4"/>
-              <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/>
-            </svg>
-          </a>
-          <a href="https://wa.me/559884421875?text=Boa%20noite" class="social-btn" aria-label="WhatsApp">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
-      <path d="M12 0C5.373 0 0 5.373 0 12c0 2.117.549 4.107 1.51 5.833L.057 23.215a.75.75 0 0 0 .916.932l5.546-1.43A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.907 0-3.7-.5-5.253-1.375l-.372-.215-3.892 1.004 1.028-3.773-.23-.38A9.956 9.956 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
-            </svg>
-          </a>
+        <div class="campaign-hero__rodape" aria-hidden="true"><span>São Luís · MA</span><span>Amira / 2026</span><span>Deslize para descobrir ↓</span></div>
+      </div>
+    </section>
+
+    <section class="campaign-code" data-movimento="code" aria-labelledby="code-titulo">
+      <span class="campaign-code__linha campaign-code__linha--esq" aria-hidden="true"></span>
+      <span class="campaign-code__linha campaign-code__linha--dir" aria-hidden="true"></span>
+      <div class="campaign-code__conteudo moldura">
+        <span class="rotulo">O ritual Amira</span>
+        <div class="campaign-code__sinais" aria-hidden="true">
+          <span><img src="images/sol.svg" alt="">01</span>
+          <span><img src="images/sol.svg" alt="">02</span>
+          <span><img src="images/sol.svg" alt="">03</span>
+        </div>
+        <h2 id="code-titulo">Um aroma.<br><em>Uma presença.</em></h2>
+        <p>Fragrâncias originais escolhidas para marcar o que importa.</p>
+        <img class="campaign-code__sol" src="images/sol.svg" alt="" aria-hidden="true">
+      </div>
+    </section>
+
+    <section class="campaign-intro" aria-labelledby="intro-titulo">
+      <div class="campaign-intro__texto">
+        <span class="rotulo">A assinatura Amira</span>
+        <h2 id="intro-titulo">O luxo está<br>no que <em>permanece.</em></h2>
+        <p>Uma seleção de perfumes para fazer de cada encontro uma lembrança.</p>
+        <a class="link-fio" href="produtos.html">Conheça a coleção</a>
+      </div>
+      <div class="campaign-intro__janela" id="hero-carrossel">
+        <img src="images/perfume_asaad.jpg" alt="Perfume da seleção Amira" loading="lazy" width="736" height="1104">
+        <div class="campaign-intro__legenda">
+          <span>Curadoria da loja</span>
+          <strong>Amira</strong>
         </div>
       </div>
-      <div class="footer-col">
-        <h4>Institucional</h4>
-        <ul>
-          <ul><a href="index.html#sobre">Sobre nós</a></ul>
-          <ul><a href="atacado.html">Atacado</a></ul>
-          <ul><a href="cadastro.html">Seja revendedora</a></ul>
-          <ul><a href="privacidade.html">Política de Privacidade</a></ul>
-          <ul><a href="privacidade.html#cookies" data-abrir-cookies>Preferências de cookies</a></ul>
-        </ul>
+    </section>
+
+    <!-- ── CATEGORIAS ────────────────────────────────────────────────── -->
+    <section class="secao categories" id="categorias">
+      <div class="moldura">
+        <header class="secao-cabecalho">
+          <div>
+            <span class="rotulo">A coleção</span>
+            <h2 class="titulo-2 horizonte">Encontre sua <em>assinatura</em></h2>
+          </div>
+          <div class="categories-aside" aria-hidden="true"><span id="categories-count">A seleção Amira</span><span>Desça para explorar ↓</span></div>
+        </header>
+        <div class="categories-grid" id="grid-categorias-home">
+          <p class="catalogo-loading">Carregando categorias…</p>
+        </div>
       </div>
-      <div class="footer-col">
-        <h4>Atendimento</h4>
-        <ul>
-          <ul><a href="https://wa.me/559884421875?text=Boa%20noite">WhatsApp</a></ul>
-          <ul><a href="perfil.html">Minha Conta</a></ul>
-          <ul><a href="carrinho.html">Meu Carrinho</a></ul>
-        </ul>
+    </section>
+
+    <!-- ── OS MAIS AMADOS (destaques) ────────────────────────────────── -->
+    <section class="secao featured" id="destaques">
+      <div class="moldura">
+        <header class="secao-cabecalho">
+          <div>
+            <span class="rotulo">Em destaque</span>
+            <h2 class="titulo-2 horizonte">Objetos de <em>desejo</em></h2>
+          </div>
+          <div class="featured-acoes">
+            <a href="produtos.html" class="link-fio">Ver toda a coleção</a>
+            <div class="trilho-setas">
+              <button class="trilho-seta" data-trilho="grid-destaques" data-dir="-1" aria-label="Produtos anteriores"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
+              <button class="trilho-seta" data-trilho="grid-destaques" data-dir="1" aria-label="Próximos produtos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+            </div>
+          </div>
+        </header>
       </div>
-    </div>
-    <div class="footer-bottom">
-      <p class="footer-copy">© 2026 Amira — Atacado e Varejo. Todos os direitos reservados.</p>
-      <div class="footer-payment">
-        <span class="pay-badge">PIX</span>
-        <span class="pay-badge">CRÉDITO</span>
-        <span class="pay-badge">BOLETO</span>
+      <div class="featured-layout">
+        <figure class="featured-editorial">
+          <img src="images/campanha-perfume-mulher.webp" alt="Campanha Amira: modelo aplicando perfume" loading="lazy" width="1672" height="941">
+          <figcaption><span>O gesto que fica</span><span>Campanha Amira / 2026</span></figcaption>
+        </figure>
+        <div class="products-grid trilho" id="grid-destaques">
+          <p class="catalogo-loading">Carregando destaques…</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── PRODUTO DA ESTAÇÃO (banner do admin) ──────────────────────── -->
+    <section class="highlight" id="sobre" aria-label="Produto da estação">
+      <div class="moldura">
+        <div class="highlight-inner" id="highlight-conteudo">
+          <div class="highlight-visual">
+            <div class="highlight-circle">
+              <img src="images/perfume_principal.png" alt="Frasco de perfume da coleção Amira" loading="lazy">
+            </div>
+          </div>
+          <div class="highlight-content">
+            <span class="section-eyebrow2">Seleção Amira</span>
+            <h2 class="highlight-title titulo-1">A coleção <em>Amira</em></h2>
+            <p class="highlight-text">Encontre uma fragrância para chamar de sua.</p>
+            <a href="produtos.html" class="btn">Conhecer a coleção</a>
+          </div>
+        </div>
+        <div class="highlight-nav" id="highlight-nav" style="display:none;">
+          <button class="highlight-nav-btn" id="highlight-prev" aria-label="Produto anterior">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+          </button>
+          <span class="highlight-nav-contador numero" id="highlight-contador"></span>
+          <button class="highlight-nav-btn" id="highlight-next" aria-label="Próximo produto">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── NOVIDADES (vitrine B2) ────────────────────────────────────── -->
+    <section class="secao vitrine-produtos" id="produtos">
+      <div class="moldura">
+        <header class="secao-cabecalho">
+          <div>
+            <span class="rotulo">Acabaram de chegar</span>
+            <h2 class="titulo-2 horizonte">Novidades da <em>Amira</em></h2>
+          </div>
+          <a href="produtos.html" class="link-fio">Ver toda a coleção</a>
+        </header>
+        <div class="vitrine-grid" id="grid-produtos-home">
+          <p class="catalogo-loading">Carregando produtos…</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── SUA ESSÊNCIA (frasco 3D) ──────────────────────────────────────
+         Seção fixada: o frasco gira com o scroll e as frases acendem.
+         Sem 3D (celular, economia de dados, movimento reduzido) fica a foto
+         de reserva e as frases já visíveis. -->
+    <section class="essencia" data-movimento="essencia" aria-labelledby="essencia-titulo">
+      <div class="essencia__interno moldura">
+        <div class="essencia__palco" aria-hidden="true">
+          <img class="essencia__reserva" src="images/perfume_principal.png" alt="" loading="lazy" width="640" height="800">
+          <span class="essencia__sol"></span>
+        </div>
+        <div class="essencia__texto">
+          <span class="rotulo">A essência</span>
+          <h2 class="titulo-1" id="essencia-titulo">
+            <span class="essencia__frase">Um perfume</span>
+            <span class="essencia__frase">é uma <em>assinatura</em>.</span>
+            <span class="essencia__frase">A sua começa</span>
+            <span class="essencia__frase">aqui.</span>
+          </h2>
+          <div class="essencia__acao">
+            <p class="texto-apoio">Árabes, importados e nacionais originais, escolhidos um a um. Experimente no balcão do Monumental Shopping ou receba em casa em São Luís.</p>
+            <a href="produtos.html" class="btn">Explorar a coleção <svg class="seta" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M4 12h15m-5-6 6 6-6 6"/></svg></a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── iPHONES ───────────────────────────────────────────────────── -->
+    <section class="carousel-section" id="galeria-iphones" aria-labelledby="iphones-titulo">
+      <div class="moldura carousel-cabecalho">
+        <span class="rotulo">Nova linha na loja</span>
+        <h2 class="titulo-1" id="iphones-titulo">iPhone.<br><em>Na Amira.</em></h2>
+        <p class="texto-apoio">Aparelhos e acessórios com a mesma curadoria dos perfumes. Tire dúvidas de capacidade, cor e pagamento direto no WhatsApp.</p>
+        <a href="iphones.html" class="btn btn--claro">Ver os iPhones</a>
+      </div>
+      <div class="carousel-track-wrapper">
+        <div class="carousel-track" id="carouselTrack">
+          <a class="carousel-card" href="iphones.html" aria-label="Ver os iPhones disponíveis"><img src="images/iphone-1.svg" alt="iPhone disponível na Amira"></a>
+          <a class="carousel-card" href="iphones.html" aria-label="Ver os iPhones disponíveis"><img src="images/iphone-2.svg" alt="iPhone disponível na Amira"></a>
+          <a class="carousel-card" href="iphones.html" aria-label="Ver os iPhones disponíveis"><img src="images/iphone-3.svg" alt="iPhone disponível na Amira"></a>
+          <a class="carousel-card" href="iphones.html" aria-label="Ver os iPhones disponíveis"><img src="images/iphone-4.svg" alt="iPhone disponível na Amira"></a>
+          <a class="carousel-card" href="iphones.html" aria-hidden="true" tabindex="-1"><img src="images/iphone-1.svg" alt=""></a>
+          <a class="carousel-card" href="iphones.html" aria-hidden="true" tabindex="-1"><img src="images/iphone-2.svg" alt=""></a>
+          <a class="carousel-card" href="iphones.html" aria-hidden="true" tabindex="-1"><img src="images/iphone-3.svg" alt=""></a>
+          <a class="carousel-card" href="iphones.html" aria-hidden="true" tabindex="-1"><img src="images/iphone-4.svg" alt=""></a>
+        </div>
+      </div>
+      <div class="moldura carousel-controls">
+        <button class="carousel-btn carousel-btn--prev" id="btnPrev" aria-label="Anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
+        <button class="carousel-btn carousel-btn--next" id="btnNext" aria-label="Próximo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+      </div>
+    </section>
+
+    <!-- ── AVALIAÇÕES DA LOJA ────────────────────────────────────────────
+         Só aparece com pelo menos uma avaliação publicada
+         (js/avaliacoes-loja-home.js; QR code do balcão, moderado no admin). -->
+    <section class="secao testimonials" id="avaliacoes-loja-secao" hidden>
+      <div class="moldura">
+        <header class="secao-cabecalho">
+          <div>
+            <span class="rotulo testimonials-eyebrow">Quem passou pelo balcão</span>
+            <h2 class="titulo-2 horizonte testimonials-titulo">O que dizem da <em>Amira</em></h2>
+          </div>
+          <a href="avaliar-loja.html" class="link-fio">Deixe sua avaliação</a>
+        </header>
+        <div class="reviews-grid" id="grid-avaliacoes-loja"></div>
+      </div>
+    </section>
+
+    <!-- ── NOVIDADES NO WHATSAPP ─────────────────────────────────────── -->
+    <section class="secao newsletter" id="contato">
+      <div class="moldura newsletter-content">
+        <span class="rotulo">Lista da Amira</span>
+        <h2 class="titulo-2 newsletter-title">Lançamentos e reservas<br><em>antes de todo mundo</em>.</h2>
+        <p class="texto-apoio newsletter-text">Informe seu e-mail e confirme a inscrição em uma mensagem pelo WhatsApp.</p>
+        <form class="newsletter-form" onsubmit="event.preventDefault(); handleNewsletter();">
+          <label class="visualmente-oculto" for="email-input">Seu e-mail</label>
+          <input type="email" class="newsletter-input" placeholder="Seu melhor e-mail" id="email-input" autocomplete="email" required>
+          <button type="submit" class="newsletter-btn btn">Continuar no WhatsApp</button>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <!-- casca:rodape -->
+  <footer class="rodape">
+    <div class="moldura">
+      <div class="rodape__grade">
+        <div>
+          <svg class="rodape__sol" viewBox="5 15 54 26" fill="none" stroke="currentColor" stroke-linecap="round" aria-hidden="true"><path d="M21 39a11 11 0 0 1 22 0" stroke-width="1.6"/><path d="M7 39h50" stroke-width="1.6"/><path stroke-width="1.4" d="M18.21 34.52 11.55 32.36M20.27 30.48l-5.66-4.12M23.48 27.27l-4.12-5.66M27.52 25.21l-2.16-6.66M32 24.5v-7M36.48 25.21l2.16-6.66M40.52 27.27l4.12-5.66M43.73 30.48l5.66-4.12M45.79 34.52l6.66-2.16"/></svg>
+          <p class="rodape__frase">Sua <em>essência</em>, nossa paixão.</p>
+          <p class="rodape__endereco">Monumental Shopping, 2º piso<br>São Luís — MA</p>
+          <div class="rodape__social">
+            <a href="#" aria-label="Instagram da Amira"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".6" fill="currentColor"/></svg></a>
+            <a href="#" aria-label="Facebook da Amira"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h-2a4 4 0 0 0-4 4v3H7v4h2v7h4v-7h2.5l.5-4h-3V7a1 1 0 0 1 1-1h2V3Z"/></svg></a>
+            <a href="https://wa.me/559884421875" aria-label="WhatsApp da Amira" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.47 14.38c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.16-.17.2-.35.22-.64.07-.3-.15-1.26-.46-2.39-1.47-.88-.79-1.48-1.76-1.65-2.06-.17-.3-.02-.46.13-.6.13-.14.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.03-.52-.07-.15-.67-1.6-.91-2.2-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.48s1.07 2.88 1.21 3.07c.15.2 2.1 3.2 5.08 4.49.71.3 1.26.49 1.7.63.71.22 1.36.19 1.87.12.57-.09 1.76-.72 2-1.42.25-.69.25-1.29.18-1.41-.08-.13-.28-.2-.57-.35ZM12 0C5.37 0 0 5.37 0 12c0 2.12.55 4.11 1.51 5.83L.06 23.22a.75.75 0 0 0 .92.93l5.54-1.43A11.95 11.95 0 0 0 12 24c6.63 0 12-5.37 12-12S18.63 0 12 0Zm0 22c-1.9 0-3.7-.5-5.25-1.38l-.37-.21-3.9 1 1.03-3.77-.23-.38A9.96 9.96 0 0 1 2 12C2 6.48 6.48 2 12 2s10 4.48 10 10-4.48 10-10 10Z"/></svg></a>
+          </div>
+        </div>
+        <div class="rodape__col">
+          <h4>Coleção</h4>
+          <ul id="footer-categorias-lista">
+            <li><a href="produtos.html">Todos os produtos</a></li>
+            <li><a href="iphones.html">iPhones</a></li>
+          </ul>
+        </div>
+        <div class="rodape__col">
+          <h4>A Amira</h4>
+          <ul>
+            <li><a href="atacado.html">Atacado</a></li>
+            <li><a href="cadastro.html">Seja revendedora</a></li>
+            <li><a href="avaliar-loja.html">Avalie a loja</a></li>
+            <li><a href="privacidade.html">Privacidade</a></li>
+            <li><a href="privacidade.html#cookies" data-abrir-cookies>Preferências de cookies</a></li>
+          </ul>
+        </div>
+        <div class="rodape__col">
+          <h4>Atendimento</h4>
+          <ul>
+            <li><a href="https://wa.me/559884421875?text=Ol%C3%A1%2C%20Amira!" target="_blank" rel="noopener">WhatsApp</a></li>
+            <li><a href="perfil.html">Minha conta</a></li>
+            <li><a href="meus-pedidos.html">Meus pedidos</a></li>
+            <li><a href="carrinho.html">Sacola</a></li>
+          </ul>
+        </div>
+      </div>
+      <p class="rodape__marca" aria-hidden="true">AMIRA</p>
+      <div class="rodape__base">
+        <p>© 2026 Amira — Atacado e Varejo</p>
+        <div class="rodape__pagamentos" aria-label="Formas de pagamento"><span>Pix</span><span>Crédito</span><span>Boleto</span></div>
       </div>
     </div>
   </footer>
-
-  <!-- ── WHATSAPP FAB ──────────────────────────────────────── -->
-  <a href="https://wa.me/559884421875" class="whatsapp-btn" target="_blank" rel="noopener" title="Fale no WhatsApp" aria-label="Fale no WhatsApp">
-    <svg viewBox="0 0 32 32" fill="currentColor" aria-hidden="true">
-      <path d="M16.04 3.2C8.93 3.2 3.2 8.94 3.2 16.05c0 2.26.6 4.47 1.73 6.42L3.1 28.9l6.6-1.79a12.8 12.8 0 0 0 6.33 1.66h.01c7.1 0 12.85-5.75 12.85-12.85a12.75 12.75 0 0 0-3.77-9.09 12.75 12.75 0 0 0-9.08-3.63m.01 2.14c2.85 0 5.53 1.11 7.55 3.13a10.6 10.6 0 0 1 3.13 7.56c0 5.9-4.8 10.7-10.7 10.7a10.64 10.64 0 0 1-5.43-1.49l-.39-.23-4.05 1.06 1.08-3.95-.25-.4a10.62 10.62 0 0 1-1.63-5.69c0-5.9 4.8-10.69 10.69-10.69m-4.55 4.75c-.22 0-.56.08-.86.4-.29.32-1.12 1.1-1.12 2.68 0 1.58 1.15 3.11 1.31 3.32.16.22 2.23 3.41 5.42 4.78.76.33 1.35.52 1.81.67.76.24 1.45.2 2 .13.61-.09 1.87-.77 2.13-1.51.27-.74.27-1.37.19-1.5-.08-.14-.29-.22-.61-.38-.32-.16-1.87-.92-2.16-1.03-.29-.1-.5-.16-.71.16-.21.32-.82 1.03-1 1.24-.19.21-.37.24-.69.08-.32-.16-1.36-.5-2.6-1.6-.96-.85-1.61-1.91-1.8-2.23-.18-.32-.02-.5.14-.65.15-.15.32-.38.48-.57.16-.19.21-.32.32-.53.11-.22.05-.4-.03-.56-.08-.16-.71-1.74-1-2.38-.26-.62-.52-.54-.71-.55h-.6"/>
-    </svg>
-  </a>
+  <a href="https://wa.me/559884421875" class="whatsapp-btn" target="_blank" rel="noopener" aria-label="Falar no WhatsApp"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.47 14.38c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.16-.17.2-.35.22-.64.07-.3-.15-1.26-.46-2.39-1.47-.88-.79-1.48-1.76-1.65-2.06-.17-.3-.02-.46.13-.6.13-.14.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.03-.52-.07-.15-.67-1.6-.91-2.2-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.48s1.07 2.88 1.21 3.07c.15.2 2.1 3.2 5.08 4.49.71.3 1.26.49 1.7.63.71.22 1.36.19 1.87.12.57-.09 1.76-.72 2-1.42.25-.69.25-1.29.18-1.41-.08-.13-.28-.2-.57-.35ZM12 0C5.37 0 0 5.37 0 12c0 2.12.55 4.11 1.51 5.83L.06 23.22a.75.75 0 0 0 .92.93l5.54-1.43A11.95 11.95 0 0 0 12 24c6.63 0 12-5.37 12-12S18.63 0 12 0Zm0 22c-1.9 0-3.7-.5-5.25-1.38l-.37-.21-3.9 1 1.03-3.77-.23-.38A9.96 9.96 0 0 1 2 12C2 6.48 6.48 2 12 2s10 4.48 10 10-4.48 10-10 10Z"/></svg></a>
+  <!-- /casca:rodape -->
 
   <script type="module" src="./services/script.js"></script>
   <script src="./services/tema.js"></script>
@@ -411,11 +430,12 @@
   <script type="module" src="./services/indicador.js"></script>
   <script type="module" src="./services/registrar-visita-auto.js"></script>
   <script type="module" src="./services/navegacao-camadas.js"></script>
-  <script type="module" src="./services/home-dinamica.js"></script>
+  <script type="module" src="./services/home-dinamica.js?v=20261008-categorias"></script>
   <script type="module" src="./js/avaliacoes-loja-home.js"></script>
   <script type="module" src="./services/nav-busca.js"></script>
   <script type="module" src="./services/nav-mobile-menu.js"></script>
   <script type="module" src="services/consentimento-cookies.js"></script>
   <script type="module" src="services/google-analytics.js"></script>
+  <script type="module" src="services/interface.js?v=20261008-categorias"></script>
 </body>
 </html>

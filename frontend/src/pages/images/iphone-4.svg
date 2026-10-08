@@ -4,8 +4,8 @@
       <stop offset="0%" stop-color="#2A1218"/><stop offset="100%" stop-color="#120709"/>
     </linearGradient>
     <radialGradient id="brilho3" cx="0.5" cy="0.34" r="0.62">
-      <stop offset="0%" stop-color="#D2566C" stop-opacity="0.55"/>
-      <stop offset="100%" stop-color="#D2566C" stop-opacity="0"/>
+      <stop offset="0%" stop-color="#C99A3B" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#C99A3B" stop-opacity="0"/>
     </radialGradient>
   <linearGradient id="metal3" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#F2EFEA"/>
@@ -13,7 +13,7 @@
       <stop offset="100%" stop-color="#F2EFEA"/>
     </linearGradient>
   <linearGradient id="tela3" x1="0" y1="0" x2="0.8" y2="1">
-      <stop offset="0%" stop-color="#2B4B7A"/><stop offset="100%" stop-color="#8E2B4E"/>
+      <stop offset="0%" stop-color="#2B4B7A"/><stop offset="100%" stop-color="#8A5B4E"/>
     </linearGradient>
     <filter id="sombra3" x="-30%" y="-20%" width="160%" height="150%">
       <feDropShadow dx="0" dy="26" stdDeviation="26" flood-color="#000000" flood-opacity="0.55"/>

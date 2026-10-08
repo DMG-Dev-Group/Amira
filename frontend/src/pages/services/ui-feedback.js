@@ -1,6 +1,7 @@
 // ── Feedback visual — Amira ──────────────────────────────────────────
-// Baseado no visual de "Alert" do shadcn/ui: card discreto, borda 1px,
-// canto arredondado, título em destaque + descrição suave.
+// Visual da direção editorial (docs/design.md): toast é uma placa escura no
+// rodapé da tela com o horizonte dourado marcando o tempo; diálogo com
+// título em Bodoni e filete dourado no topo.
 //
 //   import { toast, carregando, confirmar } from "../services/ui-feedback.js";
 //   toast("Conta criada com sucesso.", "sucesso");
@@ -27,49 +28,55 @@ const IC_FECHAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
   const s = document.createElement("style");
   s.id = "amira-ui-feedback-css";
   s.textContent = `
-  .amira-alert{display:grid;grid-template-columns:auto 1fr auto;align-items:start;column-gap:.75rem;padding:1rem 1.05rem;border:1px solid var(--border);border-radius:14px;background:var(--surface);color:var(--text-main);font-family:'Jost',sans-serif}
-  .amira-alert__icone{width:18px;height:18px;margin-top:.1rem;color:var(--text-muted)}
+  .amira-alert{display:grid;grid-template-columns:auto 1fr auto;align-items:start;column-gap:.85rem;padding:1rem 1.1rem;border:1px solid var(--linha,#E5DAD1);border-radius:2px;background:var(--porcelana,#FBF8F5);color:var(--tinta,#1C1411);font-family:var(--f-texto,'Jost',sans-serif)}
+  .amira-alert__icone{width:18px;height:18px;margin-top:.15rem;color:var(--tinta-2,#5F524C)}
   .amira-alert__icone svg{width:100%;height:100%;display:block}
-  .amira-alert--sucesso .amira-alert__icone{color:var(--success)}
-  .amira-alert--erro .amira-alert__icone{color:var(--danger)}
-  .amira-alert--info .amira-alert__icone{color:var(--gold)}
+  .amira-alert--sucesso .amira-alert__icone{color:var(--sucesso,#2F6B45)}
+  .amira-alert--erro .amira-alert__icone{color:var(--perigo,#A3362B)}
+  .amira-alert--info .amira-alert__icone{color:var(--ouro,#B98A2C)}
   .amira-alert__corpo{min-width:0}
-  .amira-alert__titulo{font-size:.9rem;font-weight:600;line-height:1.35}
-  .amira-alert--sucesso .amira-alert__titulo{color:var(--success)}
-  .amira-alert--erro .amira-alert__titulo{color:var(--danger)}
-  .amira-alert--info .amira-alert__titulo{color:var(--gold)}
-  .amira-alert__msg{margin-top:.15rem;font-size:.84rem;line-height:1.5;color:var(--text-muted)}
-  .amira-alert__fechar{width:22px;height:22px;padding:3px;border:none;background:none;color:var(--text-muted);cursor:pointer;border-radius:6px;transition:color .15s,background .15s}
-  .amira-alert__fechar:hover{color:var(--text-main);background:var(--bg)}
+  .amira-alert__titulo{font-size:.6875rem;font-weight:500;letter-spacing:.18em;text-transform:uppercase;line-height:1.4}
+  .amira-alert__msg{margin-top:.2rem;font-size:.9rem;line-height:1.5;color:var(--tinta-2,#5F524C)}
+  .amira-alert__fechar{width:28px;height:28px;padding:5px;margin:-4px -4px 0 0;border:none;background:none;color:inherit;opacity:.6;cursor:pointer;border-radius:2px;transition:opacity .18s}
+  .amira-alert__fechar:hover{opacity:1}
   .amira-alert__fechar svg{width:100%;height:100%}
-  .amira-toasts{position:fixed;top:4.5rem;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;gap:.6rem;width:min(94vw,440px);pointer-events:none}
-  .amira-toast{pointer-events:auto;box-shadow:0 14px 40px -12px rgba(0,0,0,.5),0 2px 10px rgba(0,0,0,.22);animation:amira-toast-in .3s cubic-bezier(.2,.7,.2,1) both}
-  .amira-toast--saindo{animation:amira-toast-out .24s ease forwards}
-  @keyframes amira-toast-in{from{opacity:0;transform:translateY(-12px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
-  @keyframes amira-toast-out{to{opacity:0;transform:translateY(-8px) scale(.98)}}
-  .amira-loading{position:fixed;inset:0;z-index:9998;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--bg) 72%,transparent);backdrop-filter:blur(3px);opacity:0;visibility:hidden;transition:opacity .2s ease,visibility .2s}
+  /* Toast: placa escura no rodapé da tela, com o horizonte dourado marcando o tempo */
+  .amira-toasts{position:fixed;left:50%;bottom:calc(1.5rem + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column-reverse;gap:.6rem;width:min(92vw,420px);pointer-events:none}
+  .amira-toast{position:relative;overflow:hidden;pointer-events:auto;background:var(--tinta,#1C1411);color:var(--porcelana,#FBF8F5);border-color:transparent;box-shadow:0 24px 60px -24px rgba(28,20,17,.55),0 6px 18px -8px rgba(28,20,17,.3);animation:amira-toast-in .55s cubic-bezier(.16,1,.3,1) both}
+  .amira-toast .amira-alert__msg{color:color-mix(in srgb,var(--porcelana,#FBF8F5) 78%,transparent)}
+  .amira-toast.amira-alert--info .amira-alert__icone,.amira-toast .amira-alert__titulo{color:inherit}
+  .amira-toast.amira-alert--sucesso .amira-alert__icone{color:#9FD3A8}
+  .amira-toast.amira-alert--erro .amira-alert__icone{color:#F4A094}
+  .amira-toast__tempo{position:absolute;left:0;bottom:0;height:1px;width:100%;background:var(--ouro-claro,#E2B84F);transform-origin:left;animation:amira-toast-tempo var(--duracao,4s) linear forwards}
+  .amira-toast:hover .amira-toast__tempo{animation-play-state:paused}
+  .amira-toast--saindo{animation:amira-toast-out .3s cubic-bezier(.65,0,.35,1) forwards}
+  @keyframes amira-toast-in{from{opacity:0;transform:translateY(16px) scale(.98)}to{opacity:1;transform:none}}
+  @keyframes amira-toast-out{to{opacity:0;transform:translateY(10px) scale(.98)}}
+  @keyframes amira-toast-tempo{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+  /* Carregando: o sol da marca pulsando sobre um véu */
+  .amira-loading{position:fixed;inset:0;z-index:9998;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--porcelana,#FBF8F5) 80%,transparent);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);opacity:0;visibility:hidden;transition:opacity .25s ease,visibility .25s}
   .amira-loading--on{opacity:1;visibility:visible}
-  .amira-loading__box{display:flex;flex-direction:column;align-items:center;gap:1rem;padding:2rem 2.4rem;border-radius:16px;background:var(--surface);border:1px solid var(--border);box-shadow:0 20px 50px -12px rgba(0,0,0,.5)}
-  .amira-loading__ring{width:38px;height:38px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--gold);animation:amira-spin .8s linear infinite}
-  .amira-loading__txt{font-family:'Jost',sans-serif;font-size:.85rem;letter-spacing:.04em;color:var(--text-muted)}
-  @keyframes amira-spin{to{transform:rotate(360deg)}}
-  .amira-dialog{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;padding:1.2rem;background:color-mix(in srgb,var(--bg) 55%,rgba(0,0,0,.5));backdrop-filter:blur(2px);animation:amira-fade .16s ease both}
-  .amira-dialog--saindo{animation:amira-fade .16s ease reverse forwards}
-  .amira-dialog__box{width:min(94vw,420px);background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.5rem;box-shadow:0 24px 60px -14px rgba(0,0,0,.55);font-family:'Jost',sans-serif;animation:amira-pop .2s cubic-bezier(.2,.7,.2,1) both}
-  .amira-dialog__titulo{font-family:'Playfair Display',serif;font-size:1.15rem;font-weight:500;color:var(--text-main)}
-  .amira-dialog__desc{margin-top:.5rem;font-size:.88rem;line-height:1.55;color:var(--text-muted)}
-  .amira-dialog__acoes{display:flex;justify-content:flex-end;gap:.6rem;margin-top:1.5rem;flex-wrap:wrap}
-  .amira-dialog__btn{font-family:'Jost',sans-serif;font-size:.82rem;font-weight:500;letter-spacing:.04em;padding:.6rem 1.1rem;border-radius:8px;border:1px solid transparent;cursor:pointer;transition:background .15s,border-color .15s,opacity .15s}
-  .amira-dialog__btn--ghost{background:none;border-color:var(--border);color:var(--text-main)}
-  .amira-dialog__btn--ghost:hover{background:var(--bg)}
-  .amira-dialog__btn--ok{background:var(--brand);color:var(--on-brand)}
-  .amira-dialog__btn--ok:hover{background:var(--brand-strong)}
-  .amira-dialog__btn--perigo{background:var(--danger);color:#fff}
+  .amira-loading__box{display:flex;flex-direction:column;align-items:center;gap:1.1rem}
+  .amira-loading__ring{width:64px;height:34px;background:var(--ouro,#B98A2C);-webkit-mask:url("/images/sol.svg") center/contain no-repeat;mask:url("/images/sol.svg") center/contain no-repeat;animation:amira-sol 1.6s cubic-bezier(.65,0,.35,1) infinite}
+  .amira-loading__txt{font-family:var(--f-texto,'Jost',sans-serif);font-size:.6875rem;letter-spacing:.18em;text-transform:uppercase;color:var(--tinta-2,#5F524C)}
+  @keyframes amira-sol{0%,100%{opacity:.35;transform:translateY(4px)}50%{opacity:1;transform:none}}
+  .amira-dialog{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;padding:1.2rem;background:var(--veu,rgba(28,20,17,.42));-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);animation:amira-fade .2s ease both}
+  .amira-dialog--saindo{animation:amira-fade .2s ease reverse forwards}
+  .amira-dialog__box{width:min(94vw,440px);background:var(--porcelana,#FBF8F5);border-top:1px solid var(--ouro,#B98A2C);padding:2rem;box-shadow:0 24px 60px -24px rgba(28,20,17,.45);font-family:var(--f-texto,'Jost',sans-serif);animation:amira-pop .45s cubic-bezier(.16,1,.3,1) both}
+  .amira-dialog__titulo{font-family:var(--f-display,'Bodoni Moda',serif);font-size:1.6rem;line-height:1.15;font-weight:400;color:var(--tinta,#1C1411)}
+  .amira-dialog__desc{margin-top:.75rem;font-size:.95rem;line-height:1.6;color:var(--tinta-2,#5F524C)}
+  .amira-dialog__acoes{display:flex;justify-content:flex-end;gap:.6rem;margin-top:1.75rem;flex-wrap:wrap}
+  .amira-dialog__btn{min-height:46px;padding:0 1.4rem;font-family:var(--f-texto,'Jost',sans-serif);font-size:.6875rem;font-weight:500;letter-spacing:.18em;text-transform:uppercase;border-radius:2px;border:1px solid transparent;cursor:pointer;transition:background-color .2s,border-color .2s,color .2s}
+  .amira-dialog__btn--ghost{background:none;border-color:var(--linha-forte,#CDBDB1);color:var(--tinta,#1C1411)}
+  .amira-dialog__btn--ghost:hover{border-color:var(--tinta,#1C1411)}
+  .amira-dialog__btn--ok{background:var(--tinta,#1C1411);color:var(--porcelana,#FBF8F5)}
+  .amira-dialog__btn--ok:hover{background:var(--marca,#8A5B4E)}
+  .amira-dialog__btn--perigo{background:var(--perigo,#A3362B);color:#fff}
   .amira-dialog__btn--perigo:hover{opacity:.9}
-  .amira-dialog__btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+  .amira-dialog__btn:focus-visible{outline:1.5px solid var(--ouro,#B98A2C);outline-offset:3px}
   @keyframes amira-fade{from{opacity:0}to{opacity:1}}
-  @keyframes amira-pop{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
-  @media (prefers-reduced-motion: reduce){.amira-toast,.amira-dialog,.amira-dialog__box{animation-duration:.01ms}}
+  @keyframes amira-pop{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion: reduce){.amira-toast,.amira-dialog,.amira-dialog__box,.amira-loading__ring{animation-duration:.01ms}}
   `;
   (document.head || document.documentElement).appendChild(s);
 })();
@@ -106,7 +113,10 @@ export function toast(mensagem, tipo = "info", opcoes = {}) {
       <p class="amira-alert__msg"></p>
     </div>
     <button class="amira-alert__fechar" aria-label="Fechar">${IC_FECHAR}</button>
+    <span class="amira-toast__tempo" aria-hidden="true"></span>
   `;
+  const duracao = opcoes.duracao || DURACAO[t];
+  el.style.setProperty("--duracao", `${duracao}ms`);
   el.querySelector(".amira-alert__titulo").textContent = titulo;
   el.querySelector(".amira-alert__msg").textContent = mensagem;
 
@@ -119,9 +129,11 @@ export function toast(mensagem, tipo = "info", opcoes = {}) {
 
   garantirPilha().appendChild(el);
 
-  let timer = setTimeout(fechar, opcoes.duracao || DURACAO[t]);
-  el.addEventListener("mouseenter", () => clearTimeout(timer));
-  el.addEventListener("mouseleave", () => { timer = setTimeout(fechar, 1800); });
+  // O tempo restante acompanha a barra dourada (que pausa no hover)
+  let restante = duracao, inicio = Date.now();
+  let timer = setTimeout(fechar, restante);
+  el.addEventListener("mouseenter", () => { clearTimeout(timer); restante -= Date.now() - inicio; });
+  el.addEventListener("mouseleave", () => { inicio = Date.now(); timer = setTimeout(fechar, Math.max(restante, 1200)); });
 
   return fechar;
 }

@@ -148,10 +148,11 @@ async function carregarProdutosDoCarrinho() {
 function renderizarCarrinho() {
   if (itensAtuais.length === 0) {
     conteudo.innerHTML = `
-      <p class="carrinho-vazio">
-        Seu carrinho está vazio.<br><br>
-        <a href="produtos.html" class="btn-primary" style="text-decoration:none;">Ver produtos</a>
-      </p>
+      <div class="carrinho-vazio">
+        <h2 class="titulo-3">Sua sacola está vazia</h2>
+        <p>Os perfumes que você escolher aparecem aqui.</p>
+        <a href="produtos.html" class="btn">Explorar a coleção</a>
+      </div>
     `;
     return;
   }
@@ -251,7 +252,7 @@ function renderizarCarrinho() {
 
         <button class="btn-finalizar" id="btn-finalizar" ${itensSel.length === 0 ? "disabled" : ""}>
           <span class="btn-finalizar__ic">${IC_CADEADO}</span>
-          <span>Finalizar compra</span>
+          <span>Ir para o pagamento</span>
         </button>
         <p class="carrinho-resumo__seguro">Pagamento por PIX ou cartão na próxima etapa</p>
       </aside>

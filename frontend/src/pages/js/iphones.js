@@ -25,6 +25,14 @@ function formatarPreco(valor) {
 }
 
 // Mesmo card do catálogo (js/produtos-catalogo.js).
+// Segunda foto do produto, que aparece no hover do card (se existir)
+function fotoAlternativa(p) {
+  const extra = Array.isArray(p.imagensExtras) ? p.imagensExtras.find(Boolean) : null;
+  return extra
+    ? `<img class="catalogo-card-img__alt" src="${urlImagemSegura(redimensionada(extra, LARGURA.card))}" alt="" loading="lazy">`
+    : "";
+}
+
 function cardProduto(p) {
   const temVarejo = disponivelNoModo(p, "varejo");
   const preco = infoPreco(p, "varejo");
@@ -34,6 +42,7 @@ function cardProduto(p) {
     <a class="catalogo-card" href="produto.html?id=${encodeURIComponent(p.id)}">
       <div class="catalogo-card-img">
         <img src="${urlImagemSegura(redimensionada(p.imagemURL, LARGURA.card))}" alt="${escapeHtml(p.nome)}" loading="lazy">
+        ${fotoAlternativa(p)}
         ${preco.temDesconto ? `<span class="desconto-selo">-${preco.percentual}%</span>` : ""}
       </div>
       <div class="catalogo-card-info">

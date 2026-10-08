@@ -1,1671 +1,559 @@
-/* ── CATÁLOGO DE PRODUTOS ─────────────────────────────────────────────── */
+/* ════════════════════════════════════════════════════════════════════════
+   AMIRA — catálogo, produto, iPhones e atacado  (tokens em base.css)
+   Modo "Experiência": o produto lidera, a interface recua. Card, campos e
+   botões vêm do base.css; aqui só a composição destas páginas.
+   ════════════════════════════════════════════════════════════════════════ */
 
-.catalogo-main {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 7rem 1.5rem 5rem;
+/* ── Página ────────────────────────────────────────────────────────────── */
+.catalogo-main, .produto-main {
+  width: 100%;
+  max-width: var(--largura);
+  margin-inline: auto;
+  padding: var(--s-7) var(--margem) var(--secao);
 }
 
 .catalogo-topo {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap;
+  gap: var(--s-4) var(--s-6);
+  margin: var(--s-8) 0 var(--s-6);
 }
+.catalogo-topo:first-child { margin-top: 0; }
+.catalogo-titulo { display: flex; flex-direction: column; gap: var(--s-2); }
+.catalogo-titulo h1, .catalogo-titulo h2 { font-size: var(--t-2); }
+.catalogo-topo--pagina { margin-bottom: var(--s-6); }
+.catalogo-topo--pagina .catalogo-titulo h1 { font-size: var(--t-1); }
+.catalogo-titulo p, .catalogo-contagem { font-size: var(--t-pp); color: var(--tinta-3); letter-spacing: 0.04em; }
 
-.catalogo-titulo h1 {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.8rem;
-  color: var(--text-main);
+/* ── Barra de categorias ───────────────────────────────────────────────── */
+.barra-categorias {
+  margin-inline: calc(var(--margem) * -1);
+  border-block: 1px solid var(--linha);
 }
-
-.catalogo-titulo p {
-  font-family: 'Jost', sans-serif;
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  margin-top: 0.2rem;
+.barra-categorias__trilho {
+  display: flex; gap: var(--s-6);
+  padding: 0 var(--margem);
+  overflow-x: auto;
+  scrollbar-width: none;
+  scroll-snap-type: x proximity;
 }
-
-.catalogo-ordenar {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  font-family: 'Jost', sans-serif;
-  font-size: 0.82rem;
-  color: var(--text-muted);
+.barra-categorias__trilho::-webkit-scrollbar { display: none; }
+.barra-categorias__item {
+  position: relative;
+  flex: none;
+  padding: var(--s-4) 0;
+  font-size: var(--t-micro);
+  font-weight: 500;
+  letter-spacing: var(--track-micro);
+  text-transform: uppercase;
+  color: var(--tinta-3);
+  white-space: nowrap;
+  scroll-snap-align: center;
+  transition: color var(--t-rapido);
 }
+.barra-categorias__item::after {
+  content: "";
+  position: absolute; left: 0; right: 0; bottom: -1px;
+  height: 1px; background: var(--ouro);
+  transform: scaleX(0); transform-origin: left;
+  transition: transform 500ms var(--ease);
+}
+@media (hover: hover) { .barra-categorias__item:hover { color: var(--tinta); } }
+.barra-categorias__item.ativo { color: var(--tinta); }
+.barra-categorias__item.ativo::after { transform: scaleX(1); }
 
+/* ── Ferramentas (filtros, chips, ordenar) — fixa sob o cabeçalho ──────── */
+.catalogo-ferramentas {
+  position: sticky; top: var(--topo-altura); z-index: 20;
+  display: flex; align-items: center; gap: var(--s-4);
+  min-height: 64px;
+  margin: 0 calc(var(--margem) * -1) var(--s-6);
+  padding: var(--s-2) var(--margem);
+  background: var(--vidro);
+  -webkit-backdrop-filter: saturate(1.4) blur(16px);
+  backdrop-filter: saturate(1.4) blur(16px);
+  border-bottom: 1px solid var(--linha);
+}
+.catalogo-ferramentas__filtros {
+  display: none;
+  align-items: center; gap: var(--s-2);
+  min-height: 44px;
+  font-size: var(--t-micro); font-weight: 500;
+  letter-spacing: var(--track-micro); text-transform: uppercase;
+}
+.catalogo-ferramentas__filtros svg { width: 20px; height: 20px; }
+.catalogo-ordenar { display: flex; align-items: center; gap: var(--s-3); margin-left: auto; }
+.catalogo-ordenar label {
+  font-size: var(--t-micro); letter-spacing: var(--track-micro); text-transform: uppercase; color: var(--tinta-3); white-space: nowrap;
+}
 .catalogo-ordenar select {
-  font-family: 'Jost', sans-serif;
-  font-size: 0.82rem;
-  padding: 0.55rem 0.8rem;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  background: var(--surface);
-  color: var(--text-main);
-  cursor: pointer;
+  width: auto; min-height: 40px;
+  padding: 0 var(--s-6) 0 0;
+  border: 0; border-bottom: 1px solid transparent;
+  border-radius: 0;
+  background-position: right 0 center;
+  font-size: var(--t-p);
 }
+.catalogo-ordenar select:hover, .catalogo-ordenar select:focus { border-bottom-color: var(--tinta); box-shadow: none; }
 
+.filtro-chips { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+.filtro-chip {
+  display: inline-flex; align-items: center; gap: var(--s-2);
+  min-height: 34px;
+  padding: 0 var(--s-3);
+  border: 1px solid var(--tinta);
+  border-radius: var(--raio-pilula);
+  font-size: var(--t-pp);
+  transition: background-color var(--t-rapido), color var(--t-rapido);
+}
+.filtro-chip span { font-size: 1rem; line-height: 1; }
+@media (hover: hover) { .filtro-chip:hover { background: var(--tinta); color: var(--porcelana); } }
+
+/* ── Layout com filtros ────────────────────────────────────────────────── */
 .catalogo-layout {
   display: grid;
-  grid-template-columns: 230px 1fr;
-  gap: 2rem;
+  grid-template-columns: 248px minmax(0, 1fr);
+  gap: var(--s-8);
   align-items: start;
 }
-
-/* ── Filtros laterais ─────────────────────────────────────────────────── */
 .catalogo-filtros {
-  position: sticky;
-  top: 6.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 1.3rem;
-  background: var(--surface);
+  position: sticky; top: calc(var(--topo-altura) + 64px + var(--s-6));
+  max-height: calc(100vh - var(--topo-altura) - 64px - var(--s-8));
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--linha-forte) transparent;
+  padding-right: var(--s-2);
 }
-
-/* Cabeçalho do painel — deixa claro que este bloco é o de filtros e
-   concentra o "limpar tudo" (só aparece quando há filtro ativo). */
 .filtro-cabecalho {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding-bottom: 0.9rem;
-  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between; gap: var(--s-3);
+  padding-bottom: var(--s-4);
 }
-
-.filtro-cabecalho h2 {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.1rem;
-  font-weight: 500;
-  color: var(--text-main);
-}
-
-/* O container das camadas também é uma coluna com o mesmo respiro —
-   isso resolve o "gap" que sumia entre a última camada e o Preço. */
-#filtro-camadas {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.filtro-grupo {
-  margin: 0;
-}
-
-/* Campo de busca do painel de filtros */
-.filtro-busca-campo {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.7rem;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface);
-  transition: border-color 0.2s ease;
-}
-
-.filtro-busca-campo:focus-within {
-  border-color: var(--gold);
-}
-
-.filtro-busca-campo svg {
-  width: 15px;
-  height: 15px;
-  flex-shrink: 0;
-  color: var(--text-muted);
-}
-
-.filtro-busca-campo input {
-  flex: 1;
-  min-width: 0;   /* input não encolhe sozinho abaixo da largura intrínseca */
-  border: none;
-  outline: none;
-  background: none;
-  font-family: 'Jost', sans-serif;
-  font-size: 0.85rem;
-  color: var(--text-main);
-  /* o "x" nativo do type=search duplicaria o nosso botão */
-  appearance: none;
-}
-
-.filtro-busca-campo input::-webkit-search-cancel-button { display: none; }
-
-.filtro-busca-campo button {
-  flex-shrink: 0;
-  display: flex;
-  padding: 2px;
-  border: none;
-  background: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  border-radius: 5px;
-}
-
-.filtro-busca-campo button:hover { color: var(--gold); }
-.filtro-busca-campo button[hidden] { display: none; }
-
-.filtro-grupo h3 {
-  font-family: 'Jost', sans-serif;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  margin-bottom: 0.7rem;
-}
-
-/* ── Filtro em camadas: chips ativos + checkboxes por camada ─────────── */
-.filtro-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  margin: 0;
-  padding-bottom: 1.2rem;
-  border-bottom: 1px solid var(--border);
-}
-
-.filtro-chips[hidden] {
-  display: none;
-}
-
-.filtro-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-family: 'Jost', sans-serif;
-  font-size: 0.76rem;
-  color: var(--on-brand);
-  background: var(--brand);
-  border: none;
-  border-radius: 999px;
-  padding: 0.3rem 0.7rem;
-  cursor: pointer;
-  transition: background 0.2s ease, transform 0.12s ease, box-shadow 0.2s ease;
-  animation: filtro-chip-in 0.18s ease both;
-}
-
-.filtro-chip:hover {
-  background: var(--brand-strong);
-}
-
-.filtro-chip:active {
-  transform: scale(0.95);
-}
-
-.filtro-chip:focus-visible {
-  outline: 2px solid var(--gold);
-  outline-offset: 2px;
-}
-
-.filtro-chip span {
-  font-size: 0.95rem;
-  line-height: 1;
-  transition: transform 0.15s ease;
-}
-
-.filtro-chip:hover span {
-  transform: rotate(90deg);
-}
-
-@keyframes filtro-chip-in {
-  from { opacity: 0; transform: translateY(3px) scale(0.96); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-.filtro-grupo[data-camada] {
-  animation: filtro-grupo-in 0.3s ease both;
-}
-
-.filtro-grupo[data-camada]:nth-child(2) { animation-delay: 0.05s; }
-.filtro-grupo[data-camada]:nth-child(3) { animation-delay: 0.1s; }
-.filtro-grupo[data-camada]:nth-child(4) { animation-delay: 0.15s; }
-
-@keyframes filtro-grupo-in {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-.filtro-opcoes {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-}
-
-.filtro-opcao {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  font-family: 'Jost', sans-serif;
-  font-size: 0.88rem;
-  color: var(--text-muted);
-  padding: 0.5rem 0.5rem;
-  margin: 0 -0.5rem;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: color 0.2s ease, background 0.2s ease;
-}
-
-.filtro-opcao:hover {
-  color: var(--gold);
-  background: color-mix(in srgb, var(--gold) 8%, transparent);
-}
-
-.filtro-opcao:focus-within {
-  color: var(--gold);
-}
-
-.filtro-opcao input {
-  width: 15px;
-  height: 15px;
-  accent-color: var(--gold);
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.filtro-opcao:has(input:checked) {
-  color: var(--gold);
-  font-weight: 600;
-}
-
-.filtro-preco-inputs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.6rem;
-}
-
-.filtro-preco-campo {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  cursor: text;
-}
-
-.filtro-preco-campo span {
-  font-family: 'Jost', sans-serif;
-  font-size: 0.68rem;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-
-.filtro-preco-inputs input {
-  width: 100%;
-  padding: 0.55rem 0.65rem;
-  font-family: 'Jost', sans-serif;
-  font-size: 0.85rem;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg);
-  color: var(--text-main);
-  outline: none;
-  transition: border-color 0.2s ease;
-}
-
-.filtro-preco-inputs input:focus {
-  border-color: var(--gold);
-}
-
-.filtro-aplicar-btn {
-  margin-top: 0.9rem;
-  width: 100%;
-  font-family: 'Jost', sans-serif;
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--on-brand);
-  background: var(--brand);
-  border: none;
-  padding: 0.7rem;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.filtro-aplicar-btn:hover {
-  background: var(--brand-strong);
-}
-
+.filtro-cabecalho h2 { font-size: var(--t-4); font-family: var(--f-display); }
 .filtro-limpar-btn {
-  flex-shrink: 0;
-  font-family: 'Jost', sans-serif;
-  font-size: 0.74rem;
-  color: var(--text-muted);
-  background: none;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 0.3rem 0.75rem;
+  font-size: var(--t-micro); letter-spacing: var(--track-micro); text-transform: uppercase;
+  color: var(--marca);
+  text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px;
+}
+.filtro-fechar { display: none; width: 44px; height: 44px; place-items: center; }
+.filtro-fechar svg { width: 22px; height: 22px; }
+
+.filtro-grupo { padding: var(--s-5) 0; border-top: 1px solid var(--linha); }
+.filtro-grupo h3 {
+  margin-bottom: var(--s-3);
+  font-family: var(--f-texto);
+  font-size: var(--t-micro); font-weight: 500;
+  letter-spacing: var(--track-micro); text-transform: uppercase;
+  color: var(--tinta-3);
+}
+.filtro-opcoes { display: flex; flex-direction: column; gap: 2px; }
+.filtro-opcao {
+  display: flex; align-items: center; gap: var(--s-3);
+  min-height: 36px;
+  font-size: var(--t-p);
+  color: var(--tinta);
   cursor: pointer;
-  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
 }
-
-.filtro-limpar-btn:hover {
-  color: var(--danger);
-  border-color: color-mix(in srgb, var(--danger) 35%, transparent);
-  background: color-mix(in srgb, var(--danger) 8%, transparent);
+/* caixinha própria: um quadrado de traço fino que vira tinta cheia */
+.filtro-opcao input {
+  appearance: none;
+  flex: none;
+  width: 16px; height: 16px;
+  border: 1px solid var(--linha-forte);
+  border-radius: 1px;
+  display: grid; place-items: center;
+  cursor: pointer;
+  transition: background-color var(--t-rapido), border-color var(--t-rapido);
 }
+.filtro-opcao input::after {
+  content: ""; width: 8px; height: 4px;
+  border: solid var(--porcelana); border-width: 0 0 1.5px 1.5px;
+  transform: rotate(-45deg) translate(1px, -1px) scale(0);
+  transition: transform var(--t-rapido) var(--ease);
+}
+.filtro-opcao input:checked { background: var(--tinta); border-color: var(--tinta); }
+.filtro-opcao input:checked::after { transform: rotate(-45deg) translate(1px, -1px) scale(1); }
+@media (hover: hover) { .filtro-opcao:hover input:not(:checked) { border-color: var(--tinta); } }
 
-/* ── Grid de produtos ─────────────────────────────────────────────────── */
+.filtro-busca-campo { position: relative; display: flex; align-items: center; }
+.filtro-busca-campo > svg { position: absolute; left: var(--s-3); width: 17px; height: 17px; color: var(--tinta-3); pointer-events: none; }
+.filtro-busca-campo input#filtro-busca { padding-left: calc(var(--s-3) + 26px); padding-right: 40px; min-height: 44px; }
+#filtro-busca-limpar { position: absolute; right: 4px; width: 36px; height: 36px; display: grid; place-items: center; color: var(--tinta-3); }
+#filtro-busca-limpar svg { width: 16px; height: 16px; }
+.filtro-preco-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-2); margin-bottom: var(--s-3); }
+.filtro-preco-campo { display: flex; flex-direction: column; gap: var(--s-1); font-size: var(--t-micro); letter-spacing: 0.08em; text-transform: uppercase; color: var(--tinta-3); }
+.filtro-preco-campo input { min-height: 44px; }
+.filtro-ver, .filtros-veu { display: none; }
+
+/* ── Grade ─────────────────────────────────────────────────────────────── */
 .catalogo-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-  gap: 1.4rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--s-7) var(--s-5);
 }
+.catalogo-layout .catalogo-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+#catalogo-sentinela { height: 1px; }
 
-.catalogo-card {
-  position: relative;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  transition: transform 0.28s cubic-bezier(0.2, 0.7, 0.2, 1),
-              box-shadow 0.28s ease, border-color 0.28s ease;
-  cursor: pointer;
-  text-decoration: none;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.catalogo-card:is(a, :has(.catalogo-card__link)):hover {
-  transform: translateY(-6px);
-  border-color: color-mix(in srgb, var(--gold) 45%, var(--border));
-  box-shadow: 0 18px 40px -16px rgba(0, 0, 0, 0.32);
-}
-
-.catalogo-card-img {
-  position: relative;
-  aspect-ratio: 1;
-  background: var(--bg);
-  overflow: hidden;
-}
-
-.catalogo-card-img img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.5s cubic-bezier(0.2, 0.6, 0.2, 1);
-}
-
-.catalogo-card:is(a, :has(.catalogo-card__link)):hover .catalogo-card-img img {
-  transform: scale(1.06);
-}
-
-/* Chamada que surge sobre a imagem no hover — dá "vida" ao card sem um
-   botão aninhado (o card inteiro já é um link). */
-.catalogo-card-img::after {
-  content: "Ver produto";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  padding: 1.4rem 1rem 0.9rem;
-  font-family: 'Jost', sans-serif;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: #fff;
-  text-align: center;
-  background: linear-gradient(to top, rgba(20, 14, 12, 0.82), transparent);
-  opacity: 0;
-  transform: translateY(8px);
-  transition: opacity 0.25s ease, transform 0.25s ease;
-  pointer-events: none;
-}
-
-.catalogo-card:is(a, :has(.catalogo-card__link)):hover .catalogo-card-img::after {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.catalogo-card-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  padding: 0.9rem 1rem 1rem;
-  flex: 1;
-}
-
-/* Etiqueta de contexto (camada principal do produto) */
-.catalogo-card-etiqueta {
-  font-family: 'Jost', sans-serif;
-  font-size: 0.63rem;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-
-.catalogo-card-nome {
-  font-family: 'Playfair Display', serif;
-  font-size: 0.98rem;
-  font-weight: 500;
-  line-height: 1.3;
-  color: var(--text-main);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-/* Link esticado: cobre o cartão inteiro para ele continuar clicável,
-   mas deixa o botão de compra rápida acima (z-index maior). */
-.catalogo-card__link {
-  color: inherit;
-  text-decoration: none;
-}
-.catalogo-card__link::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-}
-.catalogo-card__link:focus-visible {
-  outline: 2px solid var(--gold);
-  outline-offset: 3px;
-}
-
-/* Rodapé: preço à esquerda, compra rápida à direita */
-.catalogo-card-rodape {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 0.6rem;
-  margin-top: auto;
-  padding-top: 0.55rem;
-}
-
-.catalogo-card-precos {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-  min-width: 0;
-}
-
-.catalogo-card-preco {
-  font-family: 'Jost', sans-serif;
-  font-size: 1.08rem;
-  font-weight: 600;
-  color: var(--gold);
-  line-height: 1.15;
-}
-
-/* iphones.js e atacado.js montam o card sem .catalogo-card-rodape — ali o
-   preço continua sendo o último filho e precisa ser empurrado para baixo. */
-.catalogo-card-info > .catalogo-card-preco {
-  margin-top: auto;
-}
-
-.catalogo-card-preco--so-atacado {
-  font-size: 0.86rem;
-  color: var(--text-muted);
-}
-
-/* Botão de compra rápida — o que faltava para o card não parecer inerte */
-.catalogo-card__add {
-  position: relative;
-  z-index: 2;
-  flex-shrink: 0;
-  display: inline-flex;
+/* ── iPhones ───────────────────────────────────────────────────────────── */
+.iphone-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
   align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  border: 1px solid var(--border);
-  background: var(--bg);
-  color: var(--text-main);
-  cursor: pointer;
-  opacity: 0;
-  transform: translateY(6px) scale(0.9);
-  transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.2, 0.7, 0.2, 1),
-              background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+  gap: var(--s-8);
+  margin: calc(var(--s-7) * -1) calc(var(--margem) * -1) var(--s-6);
+  padding: var(--secao) var(--margem);
+  background: var(--iphone-fundo);
+  color: var(--iphone-texto);
 }
+.iphone-hero-texto { display: flex; flex-direction: column; align-items: flex-start; gap: var(--s-5); }
+.iphone-hero-eyebrow { font-size: var(--t-micro); letter-spacing: var(--track-micro); text-transform: uppercase; color: var(--campanha-texto-suave); }
+.iphone-hero-titulo { font-size: var(--t-1); color: var(--iphone-texto); }
+.iphone-hero-titulo em { color: var(--ouro-claro); }
+.iphone-hero-texto-desc { max-width: 46ch; font-size: var(--t-4); line-height: 1.65; color: var(--campanha-texto-suave); }
+.iphone-hero-acoes { display: flex; flex-wrap: wrap; gap: var(--s-3); margin-top: var(--s-2); }
+.iphone-hero .btn-primary { --btn-fundo: var(--iphone-texto); --btn-texto: var(--iphone-fundo); --btn-borda: var(--iphone-texto); }
+.iphone-hero .btn-outline { --btn-texto: var(--iphone-texto); --btn-borda: var(--campanha-linha); }
+.iphone-hero-arte { position: relative; display: flex; justify-content: center; align-items: flex-end; min-height: 380px; }
+.iphone-hero-arte img { width: 44%; max-width: 230px; filter: drop-shadow(0 40px 50px rgba(0, 0, 0, 0.55)); }
+.iphone-hero-arte img:first-child { transform: translateX(14%) rotate(-6deg); z-index: 1; }
+.iphone-hero-arte img:last-child { transform: translateX(-14%) translateY(-10%) rotate(5deg); }
 
-.catalogo-card__add svg { width: 17px; height: 17px; }
-
-/* Aparece no hover do cartão; em telas de toque fica sempre visível,
-   já que lá não existe hover. */
-.catalogo-card:hover .catalogo-card__add,
-.catalogo-card:focus-within .catalogo-card__add {
-  opacity: 1;
-  transform: translateY(0) scale(1);
+/* ── Atacado ───────────────────────────────────────────────────────────── */
+.atacado-aviso {
+  display: flex; flex-direction: column; align-items: flex-start; gap: var(--s-3);
+  padding: var(--s-6);
+  background: var(--pedestal);
+  border-top: 1px solid var(--ouro);
 }
+.atacado-aviso h2 { font-size: var(--t-3); }
+.atacado-aviso p { max-width: 62ch; color: var(--tinta-2); line-height: 1.65; }
+.atacado-aviso-acoes { display: flex; flex-wrap: wrap; gap: var(--s-3); margin-top: var(--s-2); }
+.atacado-aviso-acoes a { margin-left: 0 !important; }
+.atacado-nota { margin: calc(var(--s-4) * -1) 0 var(--s-6); font-size: var(--t-p); color: var(--tinta-2); }
+.catalogo-card .btn-add-atacado { min-height: 44px; font-size: var(--t-micro) !important; padding: 0 var(--s-4) !important; }
 
-@media (hover: none) {
-  .catalogo-card__add { opacity: 1; transform: none; }
+/* Quantidade (produto e atacado) */
+.produto-qtd-wrap { display: flex; align-items: center; gap: var(--s-3); }
+.produto-qtd-controle {
+  display: inline-grid; grid-template-columns: 44px 52px 44px;
+  height: 52px;
+  border: 1px solid var(--linha-forte);
+  border-radius: var(--raio);
 }
-
-.catalogo-card__add:hover {
-  background: var(--brand);
-  border-color: var(--brand);
-  color: var(--on-brand);
+.produto-qtd-controle button {
+  display: grid; place-items: center;
+  font-size: 1.2rem; font-weight: 300;
+  color: var(--tinta);
+  transition: background-color var(--t-rapido);
 }
-
-.catalogo-card__add:active { transform: scale(0.92); }
-
-.catalogo-card__add:focus-visible {
-  outline: 2px solid var(--gold);
-  outline-offset: 2px;
-  opacity: 1;
-  transform: none;
-}
-
-.catalogo-card__add--ocupado { opacity: 0.6; cursor: wait; }
-
-.catalogo-card__add--ok {
-  background: var(--success);
-  border-color: var(--success);
-  color: #fff;
-}
-
-/* Esgotado: foto esmaecida + selo, em vez de só um textinho vermelho */
-.catalogo-card-esgotado-selo {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 1;
-  font-family: 'Jost', sans-serif;
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: #fff;
-  background: rgba(20, 14, 12, 0.72);
-  border-radius: 999px;
-  padding: 0.35rem 0.9rem;
-}
-
-.catalogo-card--esgotado .catalogo-card-img img {
-  filter: grayscale(0.55);
-  opacity: 0.65;
-}
-
-.catalogo-card-preco .preco-antigo {
-  margin-left: 0.4rem;
-  font-size: 0.82rem;
-  font-weight: 400;
-  color: var(--text-muted);
-  text-decoration: line-through;
-}
-
-.catalogo-card-preco-atacado {
-  display: block;
-  font-size: 0.72rem;
-  color: var(--text-muted);
-}
-
-.catalogo-card-estoque {
-  align-self: flex-start;
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--danger);
-  background: color-mix(in srgb, var(--danger) 10%, transparent);
-  border-radius: 999px;
-  padding: 0.2rem 0.6rem;
-}
-
-.desconto-selo {
-  position: absolute;
-  top: 0.7rem;
-  left: 0.7rem;
-  z-index: 1;
-  font-family: 'Jost', sans-serif;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  color: #fff;
-  background: var(--brand);
-  border-radius: 999px;
-  padding: 0.22rem 0.6rem;
-  box-shadow: 0 4px 12px -4px rgba(0, 0, 0, 0.4);
-}
-
-.catalogo-vazio {
-  grid-column: 1 / -1;
+@media (hover: hover) { .produto-qtd-controle button:hover { background: var(--pedestal); } }
+.produto-qtd-controle input[type="number"] {
+  min-height: 0; height: 100%;
+  padding: 0;
+  border: 0; border-inline: 1px solid var(--linha);
+  border-radius: 0;
   text-align: center;
-  padding: 4rem 1rem;
-  font-family: 'Jost', sans-serif;
-  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  -moz-appearance: textfield;
 }
+.produto-qtd-controle input::-webkit-outer-spin-button,
+.produto-qtd-controle input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.produto-qtd-controle input:focus { box-shadow: none; }
+.catalogo-card .produto-qtd-controle { grid-template-columns: 40px 1fr 40px; width: 100%; height: 44px; }
 
-.catalogo-loading {
-  grid-column: 1 / -1;
-  text-align: center;
-  padding: 4rem 1rem;
-  font-family: 'Jost', sans-serif;
-  color: var(--text-muted);
-}
-
-/* ── Barra de busca na navbar ─────────────────────────────────────────── */
-.nav-busca-form {
-  display: flex;
-  align-items: center;
-  flex: 1;
-  max-width: 360px;
-  margin: 0 1.2rem;
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 0.4rem 0.9rem;
-  background: var(--surface);
-  transition: border-color 0.2s;
-}
-
-.nav-busca-form:focus-within {
-  border-color: var(--gold);
-}
-
-/* ── Sugestões ao vivo da busca ────────────────────────────────────────
-   O painel fica FORA do form e preso à tela (position: fixed), com a
-   posição calculada em JS a partir do form. Motivo: no desktop o form
-   tem overflow:hidden — é a pílula que abre no hover — e cortaria
-   qualquer filho posicionado. Ver services/nav-busca.js. */
-.busca-ao-vivo {
-  position: fixed;
-  z-index: 1200;
-  max-height: min(70vh, 420px);
-  overflow-y: auto;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  box-shadow: 0 18px 48px -12px rgba(0, 0, 0, 0.45);
-  padding: 0.35rem;
-}
-
-.busca-ao-vivo[hidden] { display: none; }
-
-.busca-ao-vivo__item {
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  padding: 0.5rem 0.6rem;
-  border-radius: 10px;
-  text-decoration: none;
-  color: var(--text-main);
-  transition: background 0.15s ease;
-}
-
-.busca-ao-vivo__item:hover,
-.busca-ao-vivo__item.ativo {
-  background: color-mix(in srgb, var(--gold) 12%, transparent);
-}
-
-.busca-ao-vivo__item img {
-  width: 38px;
-  height: 38px;
-  flex-shrink: 0;
-  object-fit: cover;
-  border-radius: 8px;
-  background: var(--bg);
-}
-
-.busca-ao-vivo__nome {
-  flex: 1;
-  min-width: 0;
-  font-family: 'Jost', sans-serif;
-  font-size: 0.82rem;
-  line-height: 1.3;
-  /* nome de perfume é longo; duas linhas e corta */
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.busca-ao-vivo__preco {
-  flex-shrink: 0;
-  font-family: 'Jost', sans-serif;
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--gold);
-  white-space: nowrap;
-}
-
-.busca-ao-vivo__todos {
-  display: block;
-  margin-top: 0.25rem;
-  padding: 0.6rem;
-  border-top: 1px solid var(--border);
-  text-align: center;
-  text-decoration: none;
-  font-family: 'Jost', sans-serif;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--gold);
-}
-
-.busca-ao-vivo__todos:hover {
-  background: color-mix(in srgb, var(--gold) 10%, transparent);
-  border-radius: 10px;
-}
-
-.busca-ao-vivo__vazio {
-  padding: 1.1rem 0.8rem;
-  text-align: center;
-  font-family: 'Jost', sans-serif;
-  font-size: 0.82rem;
-  color: var(--text-muted);
-}
-
-.nav-busca-form input {
-  flex: 1;
-  border: none;
-  outline: none;
-  background: none;
-  font-family: 'Jost', sans-serif;
-  font-size: 0.85rem;
-  color: var(--text-main);
-}
-
-.nav-busca-form button {
-  border: none;
-  background: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-}
-
-.nav-busca-form button:hover {
-  color: var(--gold);
-}
-
-/* Busca que abre no hover/foco (desktop): fechada mostra só a lupa e
-   cresce ao interagir. No mobile a barra continua inteira, ao lado do
-   Atacado.
-
-   ⚠️ O input PRECISA de `min-width: 0` + `flex-basis: 0`: um <input> tem
-   largura intrínseca (~170px) e, como item flex, não encolhe abaixo dela
-   por padrão. Dentro da pílula de 44px com `overflow: hidden`, isso
-   empurrava o botão da lupa para fora e a busca fechada aparecia VAZIA. */
-@media (min-width: 901px) {
-  .nav-busca-form {
-    flex: 0 0 auto;
-    width: 54px;
-    height: 42px;
-    max-width: none;
-    overflow: hidden;
-    padding: 0.4rem;
-    justify-content: center;
-    transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1), padding 0.3s ease;
-  }
-  .nav-busca-form:hover,
-  .nav-busca-form:focus-within {
-    width: 300px;
-    padding: 0.4rem 0.9rem;
-    justify-content: flex-start;
-  }
-
-  /* A lupa é o que fica visível com a busca fechada — nunca encolhe. */
-  .nav-busca-form button {
-    order: -1;
-    flex: 0 0 auto;
-    color: var(--text-main);
-  }
-  .nav-busca-form button svg {
-    width: 19px;
-    height: 19px;
-  }
-
-  .nav-busca-form input {
-    flex: 0 1 0;
-    min-width: 0;
-    width: 0;
-    padding: 0;
-    opacity: 0;
-    transition: opacity 0.25s ease, width 0.3s ease, margin 0.3s ease;
-  }
-  .nav-busca-form:hover input,
-  .nav-busca-form:focus-within input {
-    flex: 1 1 auto;
-    width: auto;
-    margin-left: 0.6rem;
-    opacity: 1;
-  }
-}
-
-/* Busca no mobile: com o carrinho de volta na navbar, ela precisa ceder
-   espaço. Fica aqui (e não no style.css) porque esta folha carrega por
-   último — é a que realmente vence na cascata. */
-@media (max-width: 900px) {
-  /* A busca é o único item elástico da navbar mobile — ela cede o espaço
-     que Atacado, iPhones e carrinho precisam. flex-basis 0 + min-width 0
-     faz ela encolher de verdade em vez de empurrar os outros para fora. */
-  .nav-busca-form {
-    flex: 1 1 0;
-    min-width: 44px;
-    max-width: 30vw;
-    margin: 0;
-    padding: 0.26rem 0.5rem;
-    overflow: hidden;
-  }
-
-  /* min-width:0 é obrigatório: o <input> tem largura intrínseca (~170px) e,
-     sem isso, empurrava a lupa para fora do overflow:hidden — o ícone
-     aparecia cortado na beirada da pílula. */
-  .nav-busca-form input {
-    flex: 1 1 auto;
-    min-width: 0;
-    /* 16px evita o zoom automático do iOS ao focar o campo */
-    font-size: 16px;
-  }
-
-  .nav-busca-form input::placeholder {
-    font-size: 0.76rem;
-  }
-
-  .nav-busca-form button {
-    flex: 0 0 auto;
-  }
-
-  .nav-busca-form button svg {
-    width: 16px;
-    height: 16px;
-  }
-}
-
-@media (max-width: 900px) {
-  .catalogo-layout {
-    grid-template-columns: 1fr;
-  }
-  .catalogo-filtros {
-    position: static;
-  }
-  /* Grid 2×n no mobile (R2 4.3) — igual à vitrine da home. Sem isso o
-     auto-fill de 230px virava UMA coluna em telas estreitas. */
-  .catalogo-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.9rem;
-  }
-}
-
-/* ── PÁGINA DE DETALHE DO PRODUTO ─────────────────────────────────────── */
-.produto-main {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 7rem 1.5rem 5rem;
-}
-
+/* ── Produto ───────────────────────────────────────────────────────────── */
 .produto-trilha {
-  font-family: 'Jost', sans-serif;
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  margin-bottom: 1.5rem;
+  display: flex; flex-wrap: wrap; gap: var(--s-2);
+  margin-bottom: var(--s-6);
+  font-size: var(--t-micro); letter-spacing: var(--track-micro); text-transform: uppercase;
+  color: var(--tinta-3);
 }
-
-.produto-trilha a {
-  color: var(--text-muted);
-  text-decoration: none;
-}
-
-.produto-trilha a:hover {
-  color: var(--gold);
-}
+.produto-trilha a { transition: color var(--t-rapido); }
+@media (hover: hover) { .produto-trilha a:hover { color: var(--tinta); } }
+#trilha-nome { color: var(--tinta-2); }
 
 .produto-layout {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 3rem;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  gap: clamp(var(--s-6), 5vw, var(--s-9));
   align-items: start;
 }
 
-.produto-img-wrap {
-  aspect-ratio: 1;
-  background: var(--surface);
-  border-radius: 6px;
-  overflow: hidden;
-  border: 1px solid var(--border);
-}
-
-.produto-img-wrap img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
+/* Galeria */
+/* Galeria — também fixa: quando a descrição é longa (a coluna da direita
+   fica mais alta), a foto acompanha a leitura. Fica fixa quem for menor. */
+.produto-layout > :first-child { position: sticky; top: calc(var(--topo-altura) + var(--s-6)); }
 .produto-carrossel {
   position: relative;
-  aspect-ratio: 1;
-  border-radius: 6px;
+  aspect-ratio: 4 / 5;
   overflow: hidden;
-  border: 1px solid var(--border);
-  background: var(--surface);
+  background: var(--pedestal);
+  touch-action: pan-y;
   cursor: grab;
-  user-select: none;
 }
-
-.produto-carrossel:active {
-  cursor: grabbing;
-}
-
+.produto-carrossel:active { cursor: grabbing; }
 .produto-carrossel-trilho {
-  display: flex;
-  height: 100%;
-  transition: transform 0.35s ease;
+  display: flex; height: 100%;
+  transition: transform 900ms var(--ease);
 }
-
-.produto-carrossel-slide {
-  flex: 0 0 100%;
-  width: 100%;
-  height: 100%;
-}
-
+.produto-carrossel-slide { flex: 0 0 100%; height: 100%; display: grid; place-items: center; }
 .produto-carrossel-slide img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  pointer-events: none; /* evita que a própria imagem "capture" o arrasto */
+  width: 100%; height: 100%;
+  object-fit: contain;
+  padding: 9%;
+  mix-blend-mode: multiply;
+  user-select: none;
+  -webkit-user-drag: none;
 }
-
+body[data-theme="dark"] .produto-carrossel-slide img { mix-blend-mode: normal; }
 .produto-carrossel-seta {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: none;
-  background: rgba(28, 21, 18, 0.55);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 2;
-  transition: background 0.2s;
+  position: absolute; top: 50%; z-index: 2;
+  width: 48px; height: 48px;
+  display: grid; place-items: center;
+  translate: 0 -50%;
+  border-radius: var(--raio-pilula);
+  background: var(--porcelana);
+  color: var(--tinta);
+  opacity: 0;
+  transition: opacity var(--t-ui) var(--ease), background-color var(--t-ui);
 }
+.produto-carrossel-seta svg { width: 18px; height: 18px; stroke-width: 1.5; }
+.produto-carrossel-seta-esq { left: var(--s-4); }
+.produto-carrossel-seta-dir { right: var(--s-4); }
+.produto-carrossel:hover .produto-carrossel-seta, .produto-carrossel-seta:focus-visible { opacity: 1; }
+@media (hover: none) { .produto-carrossel-seta { opacity: 1; } }
 
-.produto-carrossel-seta:hover {
-  background: rgba(28, 21, 18, 0.8);
+.produto-miniaturas {
+  display: flex; gap: var(--s-3);
+  margin-top: var(--s-3);
+  overflow-x: auto;
+  scrollbar-width: none;
 }
-
-.produto-carrossel-seta-esq { left: 0.8rem; }
-.produto-carrossel-seta-dir { right: 0.8rem; }
-
-.produto-carrossel-pontos {
-  position: absolute;
-  bottom: 0.8rem;
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: center;
-  gap: 0.4rem;
-  z-index: 2;
+.produto-miniaturas::-webkit-scrollbar { display: none; }
+.produto-miniaturas .ponto-carrossel {
+  position: relative;
+  flex: none;
+  width: 76px; aspect-ratio: 4 / 5;
+  background: var(--pedestal);
+  opacity: 0.55;
+  transition: opacity var(--t-ui) var(--ease);
 }
-
-.ponto-carrossel {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  border: none;
-  background: rgba(255, 255, 255, 0.5);
-  cursor: pointer;
-  padding: 0;
-  transition: background 0.2s, transform 0.2s;
+.produto-miniaturas .ponto-carrossel img { width: 100%; height: 100%; object-fit: contain; padding: 10%; mix-blend-mode: multiply; }
+.produto-miniaturas .ponto-carrossel::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0;
+  height: 1px; background: var(--ouro);
+  transform: scaleX(0); transform-origin: left;
+  transition: transform 500ms var(--ease);
 }
+.produto-miniaturas .ponto-carrossel.active { opacity: 1; }
+.produto-miniaturas .ponto-carrossel.active::after { transform: scaleX(1); }
+@media (hover: hover) { .produto-miniaturas .ponto-carrossel:hover { opacity: 1; } }
 
-.ponto-carrossel.active {
-  background: var(--gold);
-  transform: scale(1.2);
+/* Informações — acompanham o scroll enquanto a galeria passa */
+.produto-info {
+  position: sticky; top: calc(var(--topo-altura) + var(--s-6));
+  display: flex; flex-direction: column; gap: var(--s-5);
 }
-
-.produto-etiqueta {
-  display: block;
-  font-family: 'Jost', sans-serif;
-  font-size: 0.66rem;
-  font-weight: 600;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--gold);
-  margin-bottom: 0.6rem;
-}
-
-.produto-info h1 {
-  font-family: 'Playfair Display', serif;
-  font-size: clamp(1.7rem, 3vw, 2.15rem);
-  line-height: 1.2;
-  color: var(--text-main);
-  margin-bottom: 1.1rem;
-}
-
+.produto-etiqueta { font-size: var(--t-micro); font-weight: 500; letter-spacing: var(--track-micro); text-transform: uppercase; color: var(--tinta-3); }
+.produto-titulo, .produto-info h1 { font-size: clamp(2rem, 1.4rem + 2.2vw, 3.4rem); line-height: 1.05; }
 .produto-preco {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 0.55rem;
-  margin-bottom: 0.9rem;
+  display: flex; align-items: baseline; flex-wrap: wrap; gap: var(--s-3);
+  padding-bottom: var(--s-4);
+  border-bottom: 1px solid var(--ouro);
 }
-
-.produto-preco-valor {
-  font-family: 'Jost', sans-serif;
-  font-size: clamp(1.8rem, 3.4vw, 2.2rem);
-  font-weight: 600;
-  line-height: 1;
-  color: var(--gold);
+.produto-preco-valor { font-family: var(--f-display); font-size: var(--t-3); font-variant-numeric: lining-nums tabular-nums; }
+.produto-preco:has(.preco-antigo) .produto-preco-valor { color: var(--marca); }
+.produto-preco .preco-antigo { font-size: var(--t-p); }
+.desconto-badge {
+  padding: 2px var(--s-2);
+  background: var(--marca); color: var(--sobre-marca);
+  font-size: var(--t-micro); letter-spacing: 0.08em;
 }
+.produto-estoque { display: flex; align-items: center; gap: var(--s-2); font-size: var(--t-pp); color: var(--tinta-2); }
+.produto-estoque-ponto { width: 7px; height: 7px; border-radius: 50%; background: var(--sucesso); box-shadow: 0 0 0 4px color-mix(in srgb, var(--sucesso) 18%, transparent); }
+.produto-estoque.indisponivel .produto-estoque-ponto { background: var(--perigo); box-shadow: 0 0 0 4px color-mix(in srgb, var(--perigo) 18%, transparent); }
 
-/* o espaçamento aqui é do gap do flex, não das margens que esses dois
-   carregam para funcionar soltos dentro de um parágrafo */
-.produto-preco .preco-antigo,
-.produto-preco .desconto-badge {
-  margin-left: 0;
-}
-
-/* Pastilha de estoque: um ponto colorido diz o estado de longe, sem o
-   texto ter de ficar verde-berrante sobre o fundo escuro. */
-.produto-estoque {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-family: 'Jost', sans-serif;
-  font-size: 0.8rem;
-  letter-spacing: 0.02em;
-  padding: 0.4rem 0.85rem;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  margin-bottom: 1.6rem;
-}
-
-.produto-estoque-ponto {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.produto-estoque.disponivel {
-  color: var(--success);
-  border-color: color-mix(in srgb, var(--success) 35%, var(--border));
-  background: color-mix(in srgb, var(--success) 8%, transparent);
-}
-.produto-estoque.disponivel .produto-estoque-ponto { background: var(--success); }
-
-.produto-estoque.indisponivel {
-  color: var(--danger);
-  border-color: color-mix(in srgb, var(--danger) 35%, var(--border));
-  background: color-mix(in srgb, var(--danger) 8%, transparent);
-}
-.produto-estoque.indisponivel .produto-estoque-ponto { background: var(--danger); }
-
-/* Base do seletor de quantidade — a pagina de atacado tambem usa. */
-.produto-qtd-wrap {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.produto-qtd-controle {
-  display: flex;
-  align-items: center;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-}
-
-.produto-qtd-controle button {
-  width: 36px;
-  height: 36px;
-  background: none;
-  border: none;
-  color: var(--text-main);
-  font-size: 1.1rem;
-  cursor: pointer;
-}
-
-.produto-qtd-controle button:hover {
-  color: var(--gold);
-}
-
-.produto-qtd-controle input {
-  width: 48px;
-  text-align: center;
-  border: none;
-  background: none;
-  color: var(--text-main);
-  font-family: 'Jost', sans-serif;
-  font-size: 0.95rem;
-  /* R2 6.2: sem os spinners nativos do input[type=number] — a quantidade
-     é controlada pelos botões − / + ao lado. */
-  -moz-appearance: textfield;
-  appearance: textfield;
-}
-
-.produto-qtd-controle input::-webkit-outer-spin-button,
-.produto-qtd-controle input::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-/* Quantidade e "adicionar" na MESMA linha: os dois formam uma ação só, e
-   empilhados o botão largo sozinho ficava com cara de banner. */
 .produto-compra {
-  display: flex;
-  align-items: stretch;
-  gap: 0.7rem;
-  margin-bottom: 1.6rem;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--s-3);
 }
+.produto-compra .btn:first-of-type { min-width: 0; }
+.produto-compra #btn-comprar-agora { grid-column: 1 / -1; }
 
-.produto-compra .produto-qtd-controle {
-  flex-shrink: 0;
-  height: 50px;          /* mesma altura do botão ao lado */
-  border-radius: 6px;
-}
-
-.produto-compra .produto-qtd-controle button,
-.produto-compra .produto-qtd-controle input { height: 100%; }
-
-.produto-compra .btn-primary,
-.produto-compra .btn-outline {
-  flex: 1;
-  min-width: 0;
-  height: 50px;
-  padding: 0 1.5rem;
-  border-radius: 6px;
-  /* .btn-primary/.btn-outline são inline-block; sem isto o texto encosta
-     no topo da altura fixa em vez de centralizar */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Avisos de condição de compra (retirada na loja, preço de atacado).
-   Mesmo desenho do aviso de pedido aberto no carrinho. */
 .produto-aviso {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.8rem;
-  padding: 0.9rem 1.05rem;
-  margin-bottom: 0.7rem;
-  border: 1px solid color-mix(in srgb, var(--gold) 40%, var(--border));
-  border-left: 3px solid var(--gold);
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--gold) 7%, transparent);
+  display: grid; grid-template-columns: 22px 1fr; gap: var(--s-3);
+  padding: var(--s-4) 0;
+  border-top: 1px solid var(--linha);
+  font-size: var(--t-pp); line-height: 1.55; color: var(--tinta-2);
 }
+.produto-aviso-ic { color: var(--ouro); }
+.produto-aviso-ic svg { width: 20px; height: 20px; }
+.produto-aviso-texto { display: flex; flex-direction: column; gap: 2px; }
+.produto-aviso-texto strong { font-weight: 500; color: var(--tinta); }
+.produto-aviso-texto a { color: var(--tinta); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
 
-.produto-aviso-ic {
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
-  color: var(--gold);
-  margin-top: 0.05rem;
-}
-
-.produto-aviso-ic svg { width: 100%; height: 100%; display: block; }
-
-.produto-aviso-texto {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  font-family: 'Jost', sans-serif;
-}
-
-.produto-aviso-texto strong {
-  font-size: 0.87rem;
-  font-weight: 600;
-  color: var(--text-main);
-}
-
-.produto-aviso-texto span {
-  font-size: 0.8rem;
-  line-height: 1.55;
-  color: var(--text-muted);
-}
-
-.produto-aviso-texto a {
-  color: var(--gold);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-/* Ficha: descrição e tabela de detalhes. Bloco vazio não é renderizado
-   (ver js/produto-detalhe.js) — daí a borda ficar no contêiner. */
-.produto-ficha {
-  display: grid;
-  gap: 1.8rem;
-  margin-top: 2.2rem;
-  padding-top: 1.8rem;
-  border-top: 1px solid var(--border);
-}
-
+.produto-ficha { display: flex; flex-direction: column; }
+.produto-bloco { padding: var(--s-5) 0; border-top: 1px solid var(--linha); }
 .produto-bloco h3 {
-  font-family: 'Jost', sans-serif;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  margin-bottom: 0.8rem;
+  margin-bottom: var(--s-3);
+  font-family: var(--f-texto);
+  font-size: var(--t-micro); font-weight: 500; letter-spacing: var(--track-micro); text-transform: uppercase;
+  color: var(--tinta-3);
 }
-
-.produto-bloco p {
-  font-family: 'Jost', sans-serif;
-  font-size: 0.9rem;
-  line-height: 1.75;
-  color: var(--text-main);
-  /* as descrições são digitadas em linhas ("Principais notas:" e uma nota
-     por linha); sem isto o HTML junta tudo num parágrafo só */
-  white-space: pre-line;
+.produto-bloco p { font-size: var(--t-p); line-height: 1.75; color: var(--tinta-2); white-space: pre-line; }
+.produto-detalhes-tabela { display: flex; flex-direction: column; }
+.produto-detalhes-tabela > div {
+  display: flex; justify-content: space-between; gap: var(--s-4);
+  padding: var(--s-2) 0;
+  border-bottom: 1px dashed var(--linha);
+  font-size: var(--t-p);
 }
+.produto-detalhes-tabela > div span:first-child { color: var(--tinta-3); }
+.produto-detalhes-tabela > div span:last-child { text-align: right; }
+.produto-msg { font-size: var(--t-pp); color: var(--tinta-2); }
 
-.produto-detalhes-tabela {
-  font-family: 'Jost', sans-serif;
-  font-size: 0.85rem;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.produto-detalhes-tabela div {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 1.5rem;
-  padding: 0.7rem 1rem;
-  color: var(--text-muted);
-}
-
-.produto-detalhes-tabela div:nth-child(odd) {
-  background: color-mix(in srgb, var(--text-muted) 5%, transparent);
-}
-
-.produto-detalhes-tabela span:last-child {
-  color: var(--text-main);
-  text-align: right;
-}
-
-/* ── Avaliações ──────────────────────────────────────────────────────── */
-.produto-avaliacoes {
-  margin-top: 3.5rem;
-  padding-top: 2rem;
-  border-top: 1px solid var(--border);
-}
-
-.produto-avaliacoes[hidden] { display: none; }
-
-/* Quando as duas seções aparecem juntas, uma linha divisória basta. */
-.produto-avaliacoes + .produto-relacionados {
-  margin-top: 3rem;
-}
-
-.estrelas {
-  display: inline-flex;
-  gap: 0.1rem;
-  flex-shrink: 0;
-}
-
-.estrela svg {
-  width: 15px;
-  height: 15px;
-  display: block;
-  fill: var(--border);
-}
-
-.estrela.cheia svg { fill: var(--gold); }
-
-.avaliacao-resumo {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  margin-bottom: 1.4rem;
-  font-family: 'Jost', sans-serif;
-}
-
-.avaliacao-resumo strong {
-  font-size: 1.1rem;
-  color: var(--text-main);
-}
-
-.avaliacao-resumo__total {
-  font-size: 0.82rem;
-  color: var(--text-muted);
-}
-
-/* ── Formulário de quem comprou ──────────────────────────────────────── */
-.avaliacao-form {
-  margin-bottom: 1.8rem;
-  padding: 1.2rem;
-  border: 1px solid color-mix(in srgb, var(--gold) 40%, var(--border));
-  border-left: 3px solid var(--gold);
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--gold) 7%, transparent);
-}
-
-.avaliacao-form__titulo {
-  font-family: 'Jost', sans-serif;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--text-main);
-  margin-bottom: 0.8rem;
-}
-
-.avaliacao-notas {
-  display: flex;
-  gap: 0.25rem;
-  margin-bottom: 0.8rem;
-}
-
-.avaliacao-nota {
-  padding: 0.2rem;
-  border: none;
-  background: none;
-  cursor: pointer;
-  border-radius: 4px;
-  line-height: 0;
-}
-
-.avaliacao-nota svg {
-  width: 26px;
-  height: 26px;
-  display: block;
-  fill: var(--border);
-  transition: fill 0.15s ease, transform 0.15s ease;
-}
-
-.avaliacao-nota:hover svg { transform: scale(1.12); }
-.avaliacao-nota.marcada svg { fill: var(--gold); }
-
-.avaliacao-form textarea {
-  width: 100%;
-  padding: 0.7rem 0.85rem;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface);
-  color: var(--text-main);
-  font-family: 'Jost', sans-serif;
-  font-size: 0.88rem;
-  line-height: 1.6;
-  outline: none;
-  resize: vertical;
-}
-
-.avaliacao-form textarea:focus { border-color: var(--gold); }
-
-.avaliacao-form__rodape {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 0.8rem;
-  margin-top: 0.8rem;
-}
-
-.avaliacao-form__aviso {
-  font-family: 'Jost', sans-serif;
-  font-size: 0.75rem;
-  color: var(--text-muted);
-}
-
-.avaliacao-form__rodape .btn-primary {
-  padding: 0.6rem 1.6rem;
-  border-radius: 8px;
-}
-
-.avaliacao-enviada {
-  margin-bottom: 1.8rem;
-  padding: 1rem 1.2rem;
-  border-radius: 12px;
-  border-left: 3px solid var(--success);
-  background: color-mix(in srgb, var(--success) 8%, transparent);
-  font-family: 'Jost', sans-serif;
-  font-size: 0.86rem;
-  color: var(--text-main);
-}
-
-/* ── Lista ───────────────────────────────────────────────────────────── */
-.avaliacao-lista {
-  list-style: none;
-  display: grid;
-  gap: 1.2rem;
-}
-
-.avaliacao-item {
-  padding-bottom: 1.2rem;
-  border-bottom: 1px solid var(--border);
-}
-
-.avaliacao-item:last-child { border-bottom: none; padding-bottom: 0; }
-
-.avaliacao-item__topo {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-  margin-bottom: 0.4rem;
-  font-family: 'Jost', sans-serif;
-  font-size: 0.82rem;
-}
-
-.avaliacao-item__autor {
-  font-weight: 600;
-  color: var(--text-main);
-}
-
-.avaliacao-item__data {
-  color: var(--text-muted);
-  font-size: 0.78rem;
-}
-
-.avaliacao-item__texto {
-  font-family: 'Jost', sans-serif;
-  font-size: 0.88rem;
-  line-height: 1.65;
-  color: var(--text-main);
-  white-space: pre-line;
-}
-
-/* ── "Você também pode gostar" ───────────────────────────────────────
-   Fica FORA do .produto-layout, na largura inteira: a coluna da direita
-   é curta e a imagem é alta, então sugestão espremida ali do lado só
-   acentuaria o vazio em vez de resolver. */
-.produto-relacionados {
-  margin-top: 3.5rem;
-  padding-top: 2rem;
-  border-top: 1px solid var(--border);
-}
-
-.produto-relacionados[hidden] { display: none; }
-
+/* Relacionados e avaliações */
+.produto-relacionados, .produto-avaliacoes { margin-top: var(--secao); }
 .produto-relacionados__titulo {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.4rem;
-  font-weight: 400;
-  color: var(--text-main);
-  margin-bottom: 1.4rem;
+  position: relative;
+  margin-bottom: var(--s-6);
+  padding-bottom: var(--s-4);
+  font-size: var(--t-2);
 }
-
-.produto-relacionados__grade {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1.2rem;
+.produto-relacionados__titulo::after {
+  content: ""; position: absolute; left: 0; bottom: 0;
+  width: min(120px, 40%); height: 1px; background: var(--ouro);
 }
+.produto-relacionados__grade { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s-7) var(--s-5); }
 
-@media (max-width: 900px) {
-  .produto-relacionados__grade { grid-template-columns: repeat(3, 1fr); }
+.estrelas { display: inline-flex; gap: 3px; }
+.estrela svg { width: 14px; height: 14px; fill: var(--linha-forte); }
+.estrela.cheia svg { fill: var(--ouro); }
+.avaliacao-resumo { display: flex; align-items: center; gap: var(--s-3); margin-bottom: var(--s-6); }
+.avaliacao-resumo strong { font-family: var(--f-display); font-size: var(--t-3); font-weight: 400; }
+.avaliacao-resumo__total { font-size: var(--t-pp); color: var(--tinta-3); }
+.avaliacao-lista { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 var(--s-7); }
+.avaliacao-item { padding: var(--s-5) 0; border-top: 1px solid var(--linha); }
+.avaliacao-item__topo { display: flex; align-items: center; flex-wrap: wrap; gap: var(--s-3); margin-bottom: var(--s-2); }
+.avaliacao-item__autor { font-size: var(--t-p); }
+.avaliacao-item__data { font-size: var(--t-pp); color: var(--tinta-3); }
+.avaliacao-item__texto { font-family: var(--f-display); font-style: italic; font-size: var(--t-4); line-height: 1.6; }
+.avaliacao-form {
+  display: flex; flex-direction: column; gap: var(--s-4);
+  max-width: 640px;
+  margin-bottom: var(--s-7);
+  padding: var(--s-6);
+  background: var(--pedestal);
+  border-top: 1px solid var(--ouro);
 }
+.avaliacao-form__titulo { font-family: var(--f-display); font-size: var(--t-4); }
+.avaliacao-notas { display: flex; gap: var(--s-1); }
+.avaliacao-nota { width: 40px; height: 40px; display: grid; place-items: center; }
+.avaliacao-nota svg { width: 24px; height: 24px; fill: transparent; stroke: var(--tinta-3); stroke-width: 1.2; transition: fill var(--t-rapido), stroke var(--t-rapido), transform var(--t-rapido) var(--ease); }
+.avaliacao-nota[aria-checked="true"] svg, .avaliacao-nota.ativa svg, .avaliacao-nota.marcada svg { fill: var(--ouro); stroke: var(--ouro); }
+@media (hover: hover) { .avaliacao-nota:hover svg { transform: scale(1.12); stroke: var(--ouro); } }
+.avaliacao-form__rodape { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--s-3); }
+.avaliacao-form__aviso { font-size: var(--t-pp); color: var(--tinta-3); }
+.avaliacao-enviada { padding: var(--s-5); background: var(--pedestal); color: var(--tinta-2); font-size: var(--t-p); }
 
+/* ── Responsivo ────────────────────────────────────────────────────────── */
+@media (max-width: 1200px) {
+  .catalogo-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .catalogo-layout .catalogo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 1080px) {
+  /* filtros viram gaveta */
+  .catalogo-layout { grid-template-columns: 1fr; }
+  .catalogo-layout .catalogo-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .catalogo-ferramentas__filtros { display: inline-flex; }
+  .catalogo-filtros {
+    position: fixed; inset: 0 auto 0 0; z-index: 160;
+    width: min(92vw, 400px);
+    max-height: none;
+    padding: var(--s-5) var(--margem) calc(var(--s-6) + env(safe-area-inset-bottom));
+    background: var(--porcelana);
+    transform: translateX(-102%);
+    visibility: hidden;
+    transition: transform 560ms var(--ease), visibility 560ms;
+    display: flex; flex-direction: column;
+  }
+  .catalogo-filtros.aberto { transform: none; visibility: visible; box-shadow: var(--sombra-sobre); }
+  .filtro-fechar { display: grid; }
+  .filtro-ver { display: inline-flex; margin-top: auto; position: sticky; bottom: 0; }
+  .filtros-veu {
+    display: block;
+    position: fixed; inset: 0; z-index: 155;
+    background: var(--veu);
+    opacity: 0; visibility: hidden;
+    transition: opacity 400ms var(--ease), visibility 400ms;
+  }
+  body.filtros-abertos .filtros-veu { opacity: 1; visibility: visible; }
+  body.filtros-abertos { overflow: hidden; }
+
+  .produto-layout { grid-template-columns: 1fr; }
+  .produto-info, .produto-layout > :first-child { position: static; }
+  .produto-relacionados__grade { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .iphone-hero { grid-template-columns: 1fr; }
+  .iphone-hero-arte { min-height: 280px; }
+}
 @media (max-width: 640px) {
-  /* Duas colunas, como o catálogo no celular — uma só viraria uma lista
-     comprida demais logo abaixo do botão de comprar. */
-  .produto-relacionados__grade { grid-template-columns: repeat(2, 1fr); gap: 0.8rem; }
-  .produto-relacionados { margin-top: 2.5rem; }
-  .produto-relacionados__titulo { font-size: 1.2rem; }
+  .catalogo-grid, .catalogo-layout .catalogo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-6) var(--s-3); }
+  .catalogo-ordenar label { display: none; }
+  .avaliacao-lista { grid-template-columns: 1fr; }
+  .produto-carrossel { margin-inline: calc(var(--margem) * -1); }
+  .produto-compra { grid-template-columns: 1fr; }
+  .produto-qtd-controle { justify-self: start; }
+  .catalogo-card .catalogo-card-nome { font-size: var(--t-pp); }
+  .catalogo-card__add { width: 38px; height: 38px; }
 }
 
-.produto-msg {
-  font-family: 'Jost', sans-serif;
-  font-size: 0.85rem;
-  margin-top: 0.8rem;
-  color: var(--success);
+/* Coleção 2026 — abertura de campanha e apresentação sem molduras. */
+.pagina-colecao .catalogo-main { max-width: none; padding-top: 0; }
+.pagina-colecao .catalogo-campanha {
+  position: relative; isolation: isolate; overflow: hidden;
+  min-height: clamp(390px, 43vw, 620px);
+  margin: 0 calc(var(--margem) * -1) 0;
+  padding: clamp(4rem, 7vw, 8rem) var(--margem);
+  display: flex; align-items: center;
+  background: var(--iphone-fundo) url('../images/campanha-perfume-homem.webp') no-repeat right 36%;
+  background-size: cover; color: var(--campanha-texto);
 }
+.pagina-colecao .catalogo-campanha::before {
+  content: ''; position: absolute; inset: 0; z-index: -1;
+  background: linear-gradient(90deg, rgba(15,10,9,.91), rgba(15,10,9,.68) 38%, rgba(15,10,9,.05) 78%);
+}
+.pagina-colecao .catalogo-campanha .catalogo-titulo { gap: 1.6rem; max-width: 930px; }
+.pagina-colecao .catalogo-campanha .rotulo,
+.pagina-colecao .catalogo-campanha .catalogo-contagem { color: rgba(255,250,246,.78); }
+.pagina-colecao .catalogo-campanha h1 {
+  color: var(--campanha-texto); font-size: clamp(4.7rem, 8vw, 9.5rem);
+  line-height: .88; letter-spacing: -.065em;
+}
+.pagina-colecao .catalogo-campanha__selo {
+  position: absolute; right: var(--margem); bottom: 1.6rem;
+  font-size: .62rem; letter-spacing: .18em; color: rgba(255,250,246,.8);
+}
+.pagina-colecao .barra-categorias { background: var(--pedestal); }
+.pagina-colecao .catalogo-ferramentas { background: var(--vidro); }
+.pagina-colecao .catalogo-layout { max-width: var(--largura); margin-inline: auto; }
+.pagina-colecao .catalogo-grid { gap: clamp(2.5rem, 4vw, 5rem) clamp(.8rem, 1.8vw, 2rem); }
+.pagina-colecao .catalogo-card-img { background: var(--produto-pedestal); }
+.pagina-colecao .catalogo-card-nome { font-size: 1rem; }
+.pagina-colecao .catalogo-card-preco { font-size: 1.25rem; }
 
-@media (max-width: 800px) {
-  .produto-layout {
-    grid-template-columns: 1fr;
-  }
-}
+/* Ficha: frasco maior, informações com mais silêncio e foco no pedido. */
+.produto-main { padding-top: clamp(3rem, 6vw, 7rem); }
+.produto-layout { gap: clamp(3rem, 7vw, 8rem); }
+.produto-info h1, .produto-titulo { font-size: clamp(3rem, 5.2vw, 6rem); letter-spacing: -.055em; line-height: .94; }
+.produto-preco-valor { font-size: clamp(2rem, 2.8vw, 3rem); }
 
-@media (max-width: 420px) {
-  /* controle + botão lado a lado não cabem: o botão perderia o texto */
-  .produto-compra {
-    flex-direction: column;
-  }
-  .produto-compra .produto-qtd-controle {
-    align-self: flex-start;
-  }
-  /* empilhado, o eixo principal vira a ALTURA: o flex:1 do botão passaria
-     a valer como base 0 e ele achataria para a altura do texto */
-  .produto-compra .btn-primary,
-  .produto-compra .btn-outline {
-    flex: none;
-    width: 100%;
-  }
+@media (max-width: 700px) {
+  .pagina-colecao .catalogo-campanha { min-height: 500px; background-position: 61% center; align-items: flex-end; padding-bottom: 3.5rem; }
+  .pagina-colecao .catalogo-campanha::before { background: linear-gradient(0deg, rgba(15,10,9,.85), rgba(15,10,9,.12) 85%); }
+  .pagina-colecao .catalogo-campanha h1 { font-size: clamp(3.8rem, 13vw, 6rem); max-width: 9ch; }
+  .pagina-colecao .catalogo-campanha__selo { display: none; }
+  .pagina-colecao .catalogo-grid { gap: 2.5rem .7rem; }
+  .produto-info h1, .produto-titulo { font-size: clamp(2.8rem, 10vw, 4.5rem); }
 }
-
-
-/* ── SEÇÃO DE IPHONES ─────────────────────────────────────────────────── */
-/* O painel usa o bordô da marca nos DOIS temas — é uma faixa de destaque,
-   como a marquee da home — então o texto é sempre claro. */
-.iphone-hero {
-  display: grid;
-  grid-template-columns: 1.15fr 0.85fr;
-  align-items: center;
-  gap: 2.5rem;
-  background: linear-gradient(135deg, var(--brand-strong) 0%, var(--brand) 55%, var(--color-2) 100%);
-  border-radius: 18px;
-  padding: 3rem 3rem 3rem 3.2rem;
-  margin-bottom: 3.5rem;
-  overflow: hidden;
-  position: relative;
-}
-
-.iphone-hero::after {
-  /* brilho suave atrás dos aparelhos */
-  content: '';
-  position: absolute;
-  right: -10%;
-  top: -30%;
-  width: 60%;
-  height: 160%;
-  background: radial-gradient(circle, rgba(236, 193, 160, 0.22) 0%, transparent 65%);
-  pointer-events: none;
-}
-
-.iphone-hero-eyebrow {
-  display: block;
-  font-family: 'Jost', sans-serif;
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--color-4);
-  margin-bottom: 0.9rem;
-}
-
-.iphone-hero-titulo {
-  font-family: 'Playfair Display', serif;
-  font-size: clamp(1.9rem, 4vw, 3rem);
-  font-weight: 500;
-  line-height: 1.1;
-  color: var(--on-brand);
-  margin-bottom: 1rem;
-}
-
-.iphone-hero-titulo em {
-  font-style: italic;
-  color: var(--color-4);
-}
-
-.iphone-hero-texto-desc {
-  font-family: 'Jost', sans-serif;
-  font-size: 0.95rem;
-  font-weight: 300;
-  line-height: 1.75;
-  color: rgba(254, 245, 239, 0.82);
-  max-width: 46ch;
-  margin-bottom: 1.8rem;
-}
-
-.iphone-hero-acoes {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.8rem;
-}
-
-/* Dentro do painel bordô o botão primário precisa se destacar DO bordô,
-   então ele inverte: fundo claro, texto bordô. */
-.iphone-hero-acoes .btn-primary {
-  background: var(--on-brand);
-  color: var(--brand);
-}
-.iphone-hero-acoes .btn-primary:hover {
-  background: var(--color-4);
-  color: var(--brand-strong);
-}
-.iphone-hero-acoes .btn-outline {
-  background: transparent;
-  border: 1.4px solid rgba(254, 245, 239, 0.55);
-  color: var(--on-brand);
-  padding: calc(0.9rem - 1.4px) calc(2.5rem - 1.4px);
-}
-.iphone-hero-acoes .btn-outline:hover {
-  background: rgba(254, 245, 239, 0.12);
-  border-color: var(--on-brand);
-  color: var(--on-brand);
-}
-
-.iphone-hero-arte {
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 0;
-  z-index: 1;
-}
-
-.iphone-hero-arte img {
-  width: 46%;
-  max-width: 190px;
-  border-radius: 12px;
-  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.45);
-}
-
-.iphone-hero-arte img:first-child {
-  transform: rotate(-7deg) translateX(12%);
-  z-index: 2;
-}
-
-.iphone-hero-arte img:last-child {
-  transform: rotate(6deg) translateX(-12%);
-}
-
-@media (max-width: 860px) {
-  .iphone-hero {
-    grid-template-columns: 1fr;
-    padding: 2.2rem 1.6rem;
-    gap: 2rem;
-    text-align: center;
-  }
-  .iphone-hero-texto-desc {
-    margin-left: auto;
-    margin-right: auto;
-  }
-  .iphone-hero-acoes {
-    justify-content: center;
-  }
-  .iphone-hero-arte img {
-    max-width: 150px;
-  }
-}
+.produto-main .produto-carrossel { background: var(--produto-pedestal); }
+.produto-main .produto-carrossel-slide img { padding: 3%; }
+.produto-main .produto-relacionados__titulo { font-size: clamp(2.6rem, 4vw, 5rem); letter-spacing: -.05em; }
