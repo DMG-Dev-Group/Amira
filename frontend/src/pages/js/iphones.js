@@ -8,6 +8,7 @@ import { listarProdutosIphone, agruparIphones } from "../services/iphones.js";
 import { listarCamadas } from "../services/camadas.js";
 import { infoPreco, estoquePorModo, disponivelNoModo, ordenarProdutos } from "../services/produtos.js";
 import { escapeHtml, urlImagemSegura } from "../services/seguranca.js";
+import { redimensionada, LARGURA } from "../services/imagens.js";
 
 const grid = document.getElementById("iphones-grid");
 const contagem = document.getElementById("iphones-contagem");
@@ -32,7 +33,7 @@ function cardProduto(p) {
   return `
     <a class="catalogo-card" href="produto.html?id=${encodeURIComponent(p.id)}">
       <div class="catalogo-card-img">
-        <img src="${urlImagemSegura(p.imagemURL)}" alt="${escapeHtml(p.nome)}" loading="lazy">
+        <img src="${urlImagemSegura(redimensionada(p.imagemURL, LARGURA.card))}" alt="${escapeHtml(p.nome)}" loading="lazy">
         ${preco.temDesconto ? `<span class="desconto-selo">-${preco.percentual}%</span>` : ""}
       </div>
       <div class="catalogo-card-info">

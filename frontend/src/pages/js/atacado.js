@@ -13,6 +13,7 @@ import { observarAuth } from "../services/auth.js";
 import { listarProdutosAtacado, estoquePorModo, infoPreco } from "../services/produtos.js";
 import { adicionarAoCarrinho } from "../services/carrinho.js";
 import { escapeHtml, urlImagemSegura } from "../services/seguranca.js";
+import { redimensionada, LARGURA } from "../services/imagens.js";
 import { obterMinimoAtacadoCarrinho, atacadoEstaAtivo } from "../services/atacado-config.js";
 import { toast } from "../services/ui-feedback.js";
 
@@ -114,7 +115,7 @@ async function renderizarPagina(perfil, usuario) {
       <div class="catalogo-card" style="cursor:default;" data-produto-id="${escapeHtml(p.id)}">
         <a href="produto.html?id=${encodeURIComponent(p.id)}" style="text-decoration:none; display:block;">
           <div class="catalogo-card-img">
-            <img src="${urlImagemSegura(p.imagemURL)}" alt="${escapeHtml(p.nome)}" loading="lazy">
+            <img src="${urlImagemSegura(redimensionada(p.imagemURL, LARGURA.card))}" alt="${escapeHtml(p.nome)}" loading="lazy">
           </div>
         </a>
         <div class="catalogo-card-info">

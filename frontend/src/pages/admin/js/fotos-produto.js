@@ -2,14 +2,15 @@
 // Extraído de admin-produtos.js para a aba de iPhones usar a mesma coisa:
 // era isso ou duplicar ~55 linhas de slot de upload em dois arquivos.
 //
-// Cada slot lê o arquivo, comprime num <canvas> e guarda a data URI em
-// slot.dataset.valor (ver services/imagem-upload.js). O primeiro slot é a
+// Cada slot lê o arquivo, envia ao ImageKit e guarda a URL devolvida em
+// slot.dataset.valor (ver services/imagem-upload.js — sem ImageKit
+// configurado, cai na data URI antiga). O primeiro slot é a
 // FOTO PRINCIPAL (produto.imagemURL); os demais viram imagensExtras[].
 //
 // O arquivo entra de dois jeitos, e os dois caem no mesmo usarArquivo():
 // pelo botão (input file) ou ARRASTANDO a imagem para cima do slot.
 
-import { comprimirImagem } from "../../services/imagem-upload.js";
+import { enviarImagem } from "../../services/imagem-upload.js";
 import { urlImagemSegura } from "../../services/seguranca.js";
 
 const PLACEHOLDER = "../images/amira-placeholder.svg";
@@ -55,9 +56,9 @@ function criarSlotImagem(valor = "", ehPrincipal = false) {
     escolher.classList.add("processando");
     setRotuloEscolher("Processando...");
     try {
-      const dataURI = await comprimirImagem(arquivo);
-      slot.dataset.valor = dataURI;
-      preview.src = dataURI;
+      const url = await enviarImagem(arquivo, { pasta: "produtos" });
+      slot.dataset.valor = url;
+      preview.src = url;
       setRotuloEscolher("Trocar foto");
     } catch (erro) {
       console.error(erro);

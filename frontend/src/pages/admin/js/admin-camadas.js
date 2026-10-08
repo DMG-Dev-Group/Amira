@@ -11,6 +11,7 @@ import {
 } from "../../services/camadas.js";
 import { montarUploadFoto } from "../../services/imagem-upload.js";
 import { escapeHtml, urlImagemSegura } from "../../services/seguranca.js";
+import { redimensionada, LARGURA } from "../../services/imagens.js";
 
 let camadasCache = [];
 let camadaEditandoId = null;          // null = criando camada nova
@@ -35,8 +36,9 @@ const campoOpcaoImagem = document.getElementById("campo-opcao-imagem");
 const opcaoImagem = montarUploadFoto(document.getElementById("opcao-imagem-upload"), {
   placeholder: "../images/amira-placeholder.svg",
   textoVazio: "Escolher imagem de capa",
-  // As capas ficam TODAS dentro do mesmo documento da camada, que o
-  // Firestore corta em 1 MB — orçamento apertado por capa.
+  pasta: "categorias",
+  // Só para a reserva sem ImageKit: aí as capas ficam TODAS dentro do
+  // mesmo documento da camada, que o Firestore corta em 1 MB.
   maxLado: 900,
   alvoBytes: 110 * 1024
 });
@@ -92,7 +94,7 @@ async function carregarLista() {
             <tr>
               <td>${escapeHtml(op.nome)}</td>
               <td><code>${escapeHtml(op.slug)}</code></td>
-              ${ehPrincipal ? `<td>${op.imagemURL ? `<img class="thumb" src="${urlImagemSegura(op.imagemURL, '../images/amira-placeholder.svg')}" alt="">` : "—"}</td>` : ""}
+              ${ehPrincipal ? `<td>${op.imagemURL ? `<img class="thumb" src="${urlImagemSegura(redimensionada(op.imagemURL, LARGURA.icone), '../images/amira-placeholder.svg')}" alt="">` : "—"}</td>` : ""}
               <td>
                 <div class="admin-acoes-linha">
                   <button class="admin-btn admin-btn-outline admin-btn-sm btn-editar-opcao" data-id="${escapeHtml(camada.id)}" data-idx="${idx}">Editar</button>

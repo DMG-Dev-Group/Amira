@@ -15,6 +15,7 @@
 
 import { listarProdutos, infoPreco, disponivelNoModo } from "./produtos.js";
 import { escapeHtml, urlImagemSegura } from "./seguranca.js";
+import { redimensionada, LARGURA } from "./imagens.js";
 
 const form = document.getElementById("nav-busca-form");
 const input = document.getElementById("nav-busca-input");
@@ -79,7 +80,7 @@ if (form && input) {
         sugestoes.map((p, i) => `
           <a class="busca-ao-vivo__item ${i === ativo ? "ativo" : ""}" role="option"
              aria-selected="${i === ativo}" href="produto.html?id=${encodeURIComponent(p.id)}">
-            <img src="${urlImagemSegura(p.imagemURL)}" alt="" loading="lazy">
+            <img src="${urlImagemSegura(redimensionada(p.imagemURL, LARGURA.icone))}" alt="" loading="lazy">
             <span class="busca-ao-vivo__nome">${escapeHtml(p.nome)}</span>
             <span class="busca-ao-vivo__preco">${escapeHtml(precoDoItem(p))}</span>
           </a>

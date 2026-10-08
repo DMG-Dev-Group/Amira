@@ -12,6 +12,7 @@ import {
   tomDoStatus
 } from "../services/pedidos.js";
 import { escapeHtml, urlImagemSegura } from "../services/seguranca.js";
+import { redimensionada, LARGURA } from "../services/imagens.js";
 
 const lista = document.getElementById("mp-lista");
 const contagem = document.getElementById("mp-contagem");
@@ -37,7 +38,7 @@ function miniaturas(itensDetalhados) {
   return `
     <div class="mp-card__miniaturas">
       ${visiveis.map((i) => `
-        <img src="${urlImagemSegura(i.imagemURL)}" alt="${escapeHtml(i.nome)}" loading="lazy">
+        <img src="${urlImagemSegura(redimensionada(i.imagemURL, LARGURA.icone))}" alt="${escapeHtml(i.nome)}" loading="lazy">
       `).join("")}
       ${resto > 0 ? `<span class="mp-card__mais">+${resto}</span>` : ""}
     </div>

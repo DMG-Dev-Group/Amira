@@ -420,6 +420,9 @@ exigirLogin(async ({ usuario, perfil }) => {
       alvoBytes: 140 * 1024,
       classeEscolher: "foto-upload-btn",
       classeRemover: "foto-upload-btn foto-upload-btn--danger",
+      // Cliente não tem acesso ao ImageKit (a assinatura é só para admin);
+      // a foto de perfil é pequena e só o próprio dono lê o documento.
+      destino: "inline",
       onChange: (v) => atualizarAvatar(campoNome.value.trim(), v)
     });
   } else if (fotoUpload) {

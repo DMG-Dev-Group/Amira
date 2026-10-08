@@ -25,6 +25,7 @@ import {
   podeSerEntregue
 } from "../services/produtos.js";
 import { escapeHtml, urlImagemSegura } from "../services/seguranca.js";
+import { redimensionada, LARGURA } from "../services/imagens.js";
 import {
   obterMinimoAtacadoCarrinho,
   contarUnidadesAtacado
@@ -322,7 +323,7 @@ function renderizarItens() {
         <input type="checkbox" class="check-item-carrinho" ${itensSelecionados.has(chaveItem(item)) ? "checked" : ""} aria-label="Selecionar ${escapeHtml(item.nome)} para comprar">
       </label>
       <div class="carrinho-item-img">
-        <img src="${urlImagemSegura((produto && produto.imagemURL) || item.imagemURL)}" alt="${escapeHtml(item.nome)}">
+        <img src="${urlImagemSegura(redimensionada((produto && produto.imagemURL) || item.imagemURL, LARGURA.icone))}" alt="${escapeHtml(item.nome)}">
       </div>
       <div class="carrinho-item-info">
         <h3>${escapeHtml(item.nome)}

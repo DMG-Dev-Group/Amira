@@ -11,6 +11,7 @@ import { observarAuth } from "./auth.js";
 import { adicionarAoCarrinho } from "./carrinho.js";
 import { ativarReveals } from "./script.js";
 import { escapeHtml, urlImagemSegura, urlFundoSegura } from "./seguranca.js";
+import { redimensionada, LARGURA } from "./imagens.js";
 import { db } from "./firebase-config.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
@@ -113,7 +114,7 @@ async function iniciarCarrosselAnuncio() {
 
   container.innerHTML = `
     ${imagens.map((url, i) => `
-      <div class="hero-slide ${i === 0 ? "ativa" : ""}" style="background-image:url('${urlFundoSegura(url)}')"></div>
+      <div class="hero-slide ${i === 0 ? "ativa" : ""}" style="background-image:url('${urlFundoSegura(redimensionada(url, LARGURA.fundo))}')"></div>
     `).join("")}
     <div class="hero-slide-overlay"></div>
     <div class="hero-slide-conteudo">
@@ -156,7 +157,7 @@ function cartaoProdutoIphone(p, duplicata) {
   return `
     <a class="carousel-card carousel-card--produto" href="produto.html?id=${encodeURIComponent(p.id)}"
        ${duplicata ? 'aria-hidden="true" tabindex="-1"' : ""}>
-      <img src="${urlImagemSegura(p.imagemURL)}" alt="${duplicata ? "" : escapeHtml(p.nome)}" loading="lazy">
+      <img src="${urlImagemSegura(redimensionada(p.imagemURL, LARGURA.card))}" alt="${duplicata ? "" : escapeHtml(p.nome)}" loading="lazy">
       ${esgotado ? `<span class="carousel-card-selo">Esgotado</span>` : ""}
       <div class="carousel-card-info">
         <span class="carousel-card-nome">${escapeHtml(p.nome)}</span>
@@ -172,7 +173,7 @@ function cartaoFotoIphone(url, duplicata) {
   return `
     <a class="carousel-card" href="iphones.html"
        ${duplicata ? 'aria-hidden="true" tabindex="-1"' : 'aria-label="Ver os iPhones disponíveis"'}>
-      <img src="${urlImagemSegura(url)}" alt="${duplicata ? "" : "iPhone disponível na Amira"}" loading="lazy">
+      <img src="${urlImagemSegura(redimensionada(url, LARGURA.card))}" alt="${duplicata ? "" : "iPhone disponível na Amira"}" loading="lazy">
     </a>
   `;
 }
@@ -243,7 +244,7 @@ async function carregarCategoriasVisuais() {
     grid.innerHTML = opcoes.map((op) => `
       <a class="cat-card reveal" href="produtos.html?${encodeURIComponent(principal.slug)}=${encodeURIComponent(op.slug)}" style="text-decoration:none; display:block;">
         <div class="cat-imagem-generica">
-          <img src="${urlImagemSegura(op.imagemURL)}" alt="${escapeHtml(op.nome)}">
+          <img src="${urlImagemSegura(redimensionada(op.imagemURL, LARGURA.categoria))}" alt="${escapeHtml(op.nome)}">
         </div>
         <div class="cat-overlay"></div>
         <div class="cat-label">
@@ -280,7 +281,7 @@ async function carregarDestaques() {
       <div class="catalogo-card destaque-card reveal">
         <a href="produto.html?id=${encodeURIComponent(p.id)}" style="text-decoration:none; display:block;">
           <div class="catalogo-card-img">
-            <img src="${urlImagemSegura(p.imagemURL)}" alt="${escapeHtml(p.nome)}" loading="lazy">
+            <img src="${urlImagemSegura(redimensionada(p.imagemURL, LARGURA.card))}" alt="${escapeHtml(p.nome)}" loading="lazy">
             ${infoPreco(p).temDesconto ? `<span class="desconto-selo">-${infoPreco(p).percentual}%</span>` : ""}
           </div>
           <div class="catalogo-card-info">
@@ -321,7 +322,7 @@ async function carregarProdutosHome() {
     grid.innerHTML = produtos.map((p) => `
       <a class="catalogo-card reveal" href="produto.html?id=${encodeURIComponent(p.id)}">
         <div class="catalogo-card-img">
-          <img src="${urlImagemSegura(p.imagemURL)}" alt="${escapeHtml(p.nome)}" loading="lazy">
+          <img src="${urlImagemSegura(redimensionada(p.imagemURL, LARGURA.card))}" alt="${escapeHtml(p.nome)}" loading="lazy">
           ${infoPreco(p).temDesconto ? `<span class="desconto-selo">-${infoPreco(p).percentual}%</span>` : ""}
         </div>
         <div class="catalogo-card-info">
@@ -397,7 +398,7 @@ function renderizarBanner() {
   container.innerHTML = `
     <div class="highlight-visual reveal">
       <div class="highlight-circle">
-        <img src="${urlImagemSegura(p.bannerImagemURL || p.imagemURL)}" alt="${escapeHtml(p.nome)}">
+        <img src="${urlImagemSegura(redimensionada(p.bannerImagemURL || p.imagemURL, LARGURA.destaque))}" alt="${escapeHtml(p.nome)}">
       </div>
       ${p.bannerEtiqueta ? `<div class="highlight-tag">${escapeHtml(p.bannerEtiqueta)}</div>` : ""}
     </div>
