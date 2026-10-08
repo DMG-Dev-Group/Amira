@@ -53,71 +53,63 @@ function injetarEstilo() {
   const estilo = document.createElement("style");
   estilo.id = "amira-cookie-estilo";
   estilo.textContent = `
+    /* Visual "Maison" (docs/design.md): cartão claro no canto, filete
+       dourado no topo, botões retos. Some do caminho do hero no desktop. */
     .amira-cookie-banner {
       position: fixed;
-      left: 50%;
-      bottom: 1rem;
-      transform: translateX(-50%) translateY(0);
+      right: var(--margem, 1.25rem);
+      bottom: calc(1.25rem + env(safe-area-inset-bottom));
       z-index: 9000;
-      width: min(680px, calc(100vw - 2rem));
-      background: #241A17;
-      color: #FEF5EF;
-      border: 1px solid rgba(236, 193, 160, 0.28);
-      border-radius: 12px;
-      padding: 1.1rem 1.25rem;
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
-      font-family: 'Jost', system-ui, sans-serif;
+      width: min(400px, calc(100vw - 2rem));
+      background: var(--porcelana, #FBF8F5);
+      color: var(--tinta, #1C1411);
+      border-top: 1px solid var(--ouro, #B98A2C);
+      padding: 1.25rem 1.35rem 1.35rem;
+      box-shadow: 0 24px 60px -24px rgba(28, 20, 17, 0.45), 0 6px 18px -8px rgba(28, 20, 17, 0.2);
+      font-family: var(--f-texto, 'Jost', system-ui, sans-serif);
       display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 0.75rem 1.25rem;
+      flex-direction: column;
+      gap: 1rem;
       opacity: 1;
-      transition: opacity 0.28s ease, transform 0.28s ease;
+      transform: translateY(0);
+      transition: opacity 0.4s cubic-bezier(.16,1,.3,1), transform 0.5s cubic-bezier(.16,1,.3,1);
+      animation: amira-cookie-entra .7s cubic-bezier(.16,1,.3,1) 1.2s both;
     }
+    @keyframes amira-cookie-entra { from { opacity: 0; transform: translateY(18px); } }
     .amira-cookie-banner[hidden] { display: none; }
-    .amira-cookie-banner.saindo {
-      opacity: 0;
-      transform: translateX(-50%) translateY(12px);
-    }
+    .amira-cookie-banner.saindo { opacity: 0; transform: translateY(14px); }
+    body:has(.amira-cookie-banner:not([hidden]):not(.saindo)) .whatsapp-btn { opacity: 0; pointer-events: none; }
     .amira-cookie-texto {
-      flex: 1 1 260px;
-      font-size: 0.86rem;
-      line-height: 1.55;
-      color: rgba(254, 245, 239, 0.82);
+      font-size: 0.875rem;
+      line-height: 1.6;
+      color: var(--tinta-2, #5F524C);
     }
-    .amira-cookie-texto a { color: #ECC1A0; }
-    .amira-cookie-acoes {
-      display: flex;
-      gap: 0.55rem;
-      flex-wrap: wrap;
-    }
+    .amira-cookie-texto a { color: var(--tinta, #1C1411); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+    .amira-cookie-acoes { display: flex; gap: 0.5rem; }
     .amira-cookie-btn {
+      flex: 1;
+      min-height: 44px;
       font-family: inherit;
-      font-size: 0.8rem;
-      font-weight: 600;
-      letter-spacing: 0.02em;
-      padding: 0.6rem 1.1rem;
-      border-radius: 7px;
+      font-size: 0.6875rem;
+      font-weight: 500;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      padding: 0 1rem;
+      border-radius: 2px;
       border: 1px solid transparent;
       cursor: pointer;
-      transition: opacity 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+      transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
     }
-    .amira-cookie-btn--aceitar { background: #8A5B4E; color: #FEF5EF; }
-    .amira-cookie-btn--aceitar:hover { background: #75463B; }
-    .amira-cookie-btn--essenciais {
-      background: transparent;
-      color: #FEF5EF;
-      border-color: rgba(236, 193, 160, 0.4);
-    }
-    .amira-cookie-btn--essenciais:hover { border-color: #ECC1A0; }
-    .amira-cookie-btn:focus-visible { outline: 2px solid #ECC1A0; outline-offset: 2px; }
+    .amira-cookie-btn--aceitar { background: var(--tinta, #1C1411); color: var(--porcelana, #FBF8F5); }
+    .amira-cookie-btn--aceitar:hover { background: var(--marca, #8A5B4E); }
+    .amira-cookie-btn--essenciais { background: transparent; color: var(--tinta, #1C1411); border-color: var(--linha-forte, #CDBDB1); }
+    .amira-cookie-btn--essenciais:hover { border-color: var(--tinta, #1C1411); }
+    .amira-cookie-btn:focus-visible { outline: 1.5px solid var(--ouro, #B98A2C); outline-offset: 3px; }
     @media (max-width: 520px) {
-      .amira-cookie-banner { bottom: 0; border-radius: 12px 12px 0 0; width: 100vw; }
-      .amira-cookie-acoes, .amira-cookie-btn { width: 100%; }
-      .amira-cookie-btn { text-align: center; }
+      .amira-cookie-banner { right: 0; bottom: 0; width: 100vw; padding-bottom: calc(1.25rem + env(safe-area-inset-bottom)); }
     }
     @media (prefers-reduced-motion: reduce) {
-      .amira-cookie-banner { transition-duration: 0.01ms; }
+      .amira-cookie-banner { transition-duration: 0.01ms; animation: none; }
     }
   `;
   document.head.appendChild(estilo);

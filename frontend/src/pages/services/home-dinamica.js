@@ -38,6 +38,14 @@ async function ehDaLinhaIphone() {
   return (produto) => produtoEhIphone(produto, camadas);
 }
 
+// Segunda foto do produto, que aparece no hover do card (se existir)
+function fotoAlternativa(p) {
+  const extra = Array.isArray(p.imagensExtras) ? p.imagensExtras.find(Boolean) : null;
+  return extra
+    ? `<img class="catalogo-card-img__alt" src="${urlImagemSegura(redimensionada(extra, LARGURA.card))}" alt="" loading="lazy">`
+    : "";
+}
+
 function formatarPreco(valor) {
   return (valor || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
@@ -112,25 +120,40 @@ async function iniciarCarrosselAnuncio() {
     console.error("Carrossel: usando conteúdo padrão (config indisponível):", erro);
   }
 
+  // Fotos em fusão com zoom lento (Ken Burns, no CSS). Os indicadores
+  // embaixo marcam o tempo de cada foto — a duração vem do admin.
+  container.style.setProperty("--intervalo-hero", `${intervalo}ms`);
   container.innerHTML = `
     ${imagens.map((url, i) => `
       <div class="hero-slide ${i === 0 ? "ativa" : ""}" style="background-image:url('${urlFundoSegura(redimensionada(url, LARGURA.fundo))}')"></div>
     `).join("")}
     <div class="hero-slide-overlay"></div>
-    <div class="hero-slide-conteudo">
+    <div class="hero-slide-conteudo hero-conteudo moldura">
+      <span class="rotulo hero-rotulo">Maison Amira · São Luís</span>
       <h1 class="hero-title">${tituloComDestaque(titulo)}</h1>
       ${subtitulo ? `<p class="hero-subtitle">${escapeHtml(subtitulo)}</p>` : ""}
+      <div class="hero-acoes">
+        <a href="produtos.html" class="btn btn--claro">Explorar a coleção</a>
+        <a href="#sobre" class="link-fio hero-link">Produto da estação</a>
+      </div>
+      ${imagens.length > 1 ? `
+        <div class="hero-indicadores" aria-hidden="true">
+          ${imagens.map((_, i) => `<span class="hero-indicador ${i === 0 ? "ativo" : ""}"><span></span></span>`).join("")}
+        </div>` : ""}
     </div>
   `;
 
   if (imagens.length <= 1) return;
 
   const slides = container.querySelectorAll(".hero-slide");
+  const indicadores = container.querySelectorAll(".hero-indicador");
   let indice = 0;
   setInterval(() => {
     slides[indice].classList.remove("ativa");
+    indicadores[indice]?.classList.remove("ativo");
     indice = (indice + 1) % slides.length;
     slides[indice].classList.add("ativa");
+    indicadores[indice]?.classList.add("ativo");
   }, intervalo);
 }
 
@@ -282,6 +305,7 @@ async function carregarDestaques() {
         <a href="produto.html?id=${encodeURIComponent(p.id)}" style="text-decoration:none; display:block;">
           <div class="catalogo-card-img">
             <img src="${urlImagemSegura(redimensionada(p.imagemURL, LARGURA.card))}" alt="${escapeHtml(p.nome)}" loading="lazy">
+            ${fotoAlternativa(p)}
             ${infoPreco(p).temDesconto ? `<span class="desconto-selo">-${infoPreco(p).percentual}%</span>` : ""}
           </div>
           <div class="catalogo-card-info">
@@ -323,6 +347,7 @@ async function carregarProdutosHome() {
       <a class="catalogo-card reveal" href="produto.html?id=${encodeURIComponent(p.id)}">
         <div class="catalogo-card-img">
           <img src="${urlImagemSegura(redimensionada(p.imagemURL, LARGURA.card))}" alt="${escapeHtml(p.nome)}" loading="lazy">
+          ${fotoAlternativa(p)}
           ${infoPreco(p).temDesconto ? `<span class="desconto-selo">-${infoPreco(p).percentual}%</span>` : ""}
         </div>
         <div class="catalogo-card-info">
@@ -398,13 +423,13 @@ function renderizarBanner() {
   container.innerHTML = `
     <div class="highlight-visual reveal">
       <div class="highlight-circle">
-        <img src="${urlImagemSegura(redimensionada(p.bannerImagemURL || p.imagemURL, LARGURA.destaque))}" alt="${escapeHtml(p.nome)}">
+        <img src="${urlImagemSegura(redimensionada(p.bannerImagemURL || p.imagemURL, LARGURA.destaque))}" alt="${escapeHtml(p.nome)}" data-movimento="parallax">
       </div>
       ${p.bannerEtiqueta ? `<div class="highlight-tag">${escapeHtml(p.bannerEtiqueta)}</div>` : ""}
     </div>
     <div class="highlight-content reveal reveal-delay-1">
       <span class="section-eyebrow2">${escapeHtml(p.bannerNomeSecao || "Produto da estação")}</span>
-      <h2 class="highlight-title">${escapeHtml(p.bannerTitulo || p.nome)}</h2>
+      <h2 class="highlight-title titulo-1">${escapeHtml(p.bannerTitulo || p.nome)}</h2>
       <p class="highlight-text">${escapeHtml(p.bannerTexto || p.descricao || "")}</p>
       ${(p.bannerTags && p.bannerTags.length > 0) ? `
         <div class="highlight-notes">
@@ -418,8 +443,9 @@ function renderizarBanner() {
           ${preco.temDesconto ? `<span class="preco-antigo">${formatarPreco(preco.precoOriginal)}</span>` : ""}
         ` : `<small>Exclusivo atacado</small>`}
       </div>
-      <a href="produto.html?id=${encodeURIComponent(p.id)}" class="btn-primary">
-        Quero este produto
+      <a href="produto.html?id=${encodeURIComponent(p.id)}" class="btn">
+        Conhecer o produto
+        <svg class="seta" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M4 12h15m-5-6 6 6-6 6"/></svg>
       </a>
     </div>
   `;
