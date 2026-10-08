@@ -239,15 +239,22 @@ async function carregarProduto() {
             <button type="button" class="produto-carrossel-seta produto-carrossel-seta-dir" id="carrossel-seta-dir" aria-label="Próxima imagem">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><polyline points="9 18 15 12 9 6"/></svg>
             </button>
-            <div class="produto-carrossel-pontos" id="produto-carrossel-pontos">
-              ${todasImagens.map((_, i) => `<button type="button" class="ponto-carrossel ${i === 0 ? "active" : ""}" data-indice="${i}" aria-label="Ir para imagem ${i + 1}"></button>`).join("")}
-            </div>
           ` : ""}
         </div>
+        ${todasImagens.length > 1 ? `
+          <!-- Miniaturas: são os "pontos" do carrossel (configurarCarrossel
+               trata qualquer .ponto-carrossel como controle). -->
+          <div class="produto-carrossel-pontos produto-miniaturas" id="produto-carrossel-pontos">
+            ${todasImagens.map((url, i) => `
+              <button type="button" class="ponto-carrossel ${i === 0 ? "active" : ""}" data-indice="${i}" aria-label="Ver imagem ${i + 1}">
+                <img src="${urlImagemSegura(redimensionada(url, LARGURA.icone))}" alt="" loading="lazy">
+              </button>`).join("")}
+          </div>
+        ` : ""}
       </div>
       <div class="produto-info">
         ${etiqueta ? `<span class="produto-etiqueta">${escapeHtml(etiqueta)}</span>` : ""}
-        <h1>${escapeHtml(p.nome)}</h1>
+        <h1 class="produto-titulo">${escapeHtml(p.nome)}</h1>
 
         ${temVarejo ? `
           <div class="produto-preco">
@@ -273,8 +280,8 @@ async function carregarProduto() {
               <input type="number" id="qtd-input" value="1" min="1" max="${estoque}" aria-label="Quantidade">
               <button type="button" id="qtd-mais" aria-label="Aumentar quantidade">+</button>
             </div>
-            <button class="btn-primary" id="btn-add-carrinho">Adicionar ao carrinho</button>
-            <button class="btn-outline" id="btn-comprar-agora">Comprar agora</button>
+            <button class="btn" id="btn-add-carrinho">Adicionar à sacola</button>
+            <button class="btn btn--contorno" id="btn-comprar-agora">Comprar agora</button>
           </div>
         ` : ""}
 
@@ -629,7 +636,7 @@ function configurarBotaoCarrinho() {
       toast("Não foi possível adicionar ao carrinho agora. Tente novamente.", "erro");
     } finally {
       btn.disabled = false;
-      btn.textContent = "Adicionar ao carrinho";
+      btn.textContent = "Adicionar à sacola";
     }
   });
 }
