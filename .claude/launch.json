@@ -3,7 +3,7 @@
   "configurations": [
     {
       "name": "amira-static",
-      "runtimeExecutable": "C:/Python314/python.exe",
+      "runtimeExecutable": "python",
       "runtimeArgs": [
         "-m",
         "http.server",
