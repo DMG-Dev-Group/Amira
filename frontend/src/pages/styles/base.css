@@ -845,6 +845,17 @@ body[data-theme="dark"] .catalogo-card-img img { mix-blend-mode: normal; }
 .destaque-card { position: relative; }
 .destaque-card > a { display: block; }
 
+/* Etiqueta pequena (ATACADO, SÓ RETIRADA) — catálogo e sacola */
+.tag-atacado {
+  display: inline-block; padding: 2px var(--s-2);
+  border: 1px solid var(--linha-forte); border-radius: var(--raio-pilula);
+  font-family: var(--f-texto);
+  font-size: var(--t-micro); font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--tinta-2);
+  vertical-align: middle;
+}
+h3 .tag-atacado { margin-left: var(--s-2); }
+
 /* ── 11. Carregando, vazio ─────────────────────────────────────────────── */
 .catalogo-loading {
   grid-column: 1 / -1;

@@ -112,9 +112,16 @@
   </aside>
   <!-- /casca:topo -->
 
-  <main id="conteudo" class="carrinho-main" style="text-align:center;">
+  <main id="conteudo" class="carrinho-main carrinho-main--estreito">
+    <header class="carrinho-topo carrinho-topo--centro">
+      <ol class="etapas" aria-label="Etapas da compra">
+      <li class="etapas__item feito"><span class="etapas__num">1</span>Sacola</li>
+      <li class="etapas__item ativo" aria-current="step"><span class="etapas__num">2</span>Pagamento</li>
+      <li class="etapas__item etapas__item--fim"><span class="etapas__num">3</span>Confirmação</li>
+    </ol>
+    </header>
     <div id="confirmacao-conteudo">
-      <p class="carrinho-vazio">Carregando informações do pedido...</p>
+      <p class="catalogo-loading">Carregando seu pedido…</p>
     </div>
   </main>
 

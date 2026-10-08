@@ -114,10 +114,20 @@
 
   <!-- ── CARRINHO ─────────────────────────────────────────── -->
   <main id="conteudo" class="carrinho-main">
-    <h1>Meu Carrinho</h1>
+    <header class="carrinho-topo">
+      <div>
+        <span class="rotulo">Sua compra</span>
+        <h1 class="titulo-1">Sua <em>sacola</em></h1>
+      </div>
+      <ol class="etapas" aria-label="Etapas da compra">
+      <li class="etapas__item ativo" aria-current="step"><span class="etapas__num">1</span>Sacola</li>
+      <li class="etapas__item"><span class="etapas__num">2</span>Pagamento</li>
+      <li class="etapas__item etapas__item--fim"><span class="etapas__num">3</span>Confirmação</li>
+    </ol>
+    </header>
 
     <div id="carrinho-conteudo">
-      <p class="carrinho-vazio">Carregando seu carrinho...</p>
+      <p class="catalogo-loading">Carregando sua sacola…</p>
     </div>
   </main>
 

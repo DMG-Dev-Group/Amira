@@ -228,11 +228,6 @@
 .atacado-aviso-acoes { display: flex; flex-wrap: wrap; gap: var(--s-3); margin-top: var(--s-2); }
 .atacado-aviso-acoes a { margin-left: 0 !important; }
 .atacado-nota { margin: calc(var(--s-4) * -1) 0 var(--s-6); font-size: var(--t-p); color: var(--tinta-2); }
-.tag-atacado {
-  display: inline-block; padding: 2px var(--s-2);
-  border: 1px solid var(--linha-forte); border-radius: var(--raio-pilula);
-  font-size: var(--t-micro); letter-spacing: 0.1em; text-transform: uppercase; color: var(--tinta-2);
-}
 .catalogo-card .btn-add-atacado { min-height: 44px; font-size: var(--t-micro) !important; padding: 0 var(--s-4) !important; }
 
 /* Quantidade (produto e atacado) */
