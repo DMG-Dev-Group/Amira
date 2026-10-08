@@ -5,12 +5,16 @@
 //
 // FILTROS EM CAMADAS (B): cada camada (Tipo, Origem, Gênero…) é um eixo
 // de facetas. Dentro de uma camada as opções SOMAM (OU); entre camadas
-// as escolhas se CRUZAM (E). Assim que qualquer filtro (camada, busca ou
-// preço) está ativo, o catálogo carrega a lista completa uma vez e cruza
-// em memória — o Firestore aceita só um array-contains por consulta, e
-// cruzar três camadas no servidor custaria mais leituras e latência do
-// que vale neste porte de catálogo. Vira dívida a partir de ~1.000
-// produtos ativos — aí é busca facetada dedicada (Algolia/Typesense).
+// as escolhas se CRUZAM (E). O Firestore aceita só um array-contains por
+// consulta, então UMA camada marcada (a principal, se estiver) vai para o
+// servidor e as demais se cruzam em memória:
+//   • só camadas marcadas → continua paginado, já filtrado no servidor
+//     (índice filtros.<camada> + criadoEm em firestore.indexes.json; sem
+//     ele, cai na lista filtrada inteira, sem paginação);
+//   • busca ou preço → lista inteira (só da camada marcada, se houver) e
+//     filtra em memória — não há busca textual no Firestore.
+// Vira dívida a partir de ~1.000 produtos ativos — aí é busca facetada
+// dedicada (Algolia/Typesense).
 //
 // Estado na URL: produtos.html?tipo=perfumes,decante&origem=arabe — o
 // filtro é compartilhável e sobrevive ao F5. Links antigos com
@@ -24,6 +28,8 @@
 import {
   listarProdutos,
   listarProdutosPaginado,
+  listarProdutosPorOpcoes,
+  listarProdutosPorOpcoesPaginado,
   filtrarProdutos,
   ordenarProdutos,
   infoPreco,
@@ -70,8 +76,8 @@ let precoMin = null;
 let precoMax = null;
 let ultimoDoc = null;
 let temMais = true;
-let carregandoPagina = false;
-let modoFiltroCompleto = false; // true = algum filtro ativo (lista completa carregada)
+let modoFiltroCompleto = false; // true = busca/preço ativos (lista completa carregada)
+let filtroServidor = null;      // { camada, opcoes } enviado ao Firestore, ou null
 
 // ── Lê os filtros da URL ────────────────────────────────────────────────
 const params = new URLSearchParams(window.location.search);
@@ -341,10 +347,43 @@ function atualizarTitulo() {
   }
 }
 
-// ── Modo paginado (navegação normal, sem filtro) ─────────────────────────
+// A camada que vai para o servidor: a principal, se marcada (é a que mais
+// corta o catálogo); senão a primeira marcada.
+function escolherFiltroServidor() {
+  const camadasMarcadas = Object.keys(selecao);
+  if (camadasMarcadas.length === 0) return null;
+  const camada = camadasMarcadas.includes(camadaPrincipalSlug) ? camadaPrincipalSlug : camadasMarcadas[0];
+  return { camada, opcoes: selecao[camada] };
+}
+
+function buscarPagina() {
+  if (!filtroServidor) {
+    return listarProdutosPaginado({ tamanhoPagina: TAMANHO_PAGINA, aposDoc: ultimoDoc });
+  }
+  return listarProdutosPorOpcoesPaginado(filtroServidor.camada, filtroServidor.opcoes, {
+    tamanhoPagina: TAMANHO_PAGINA,
+    aposDoc: ultimoDoc
+  });
+}
+
+// O que sobra de um bloco depois das camadas que o servidor não filtrou.
+function filtrarBloco(produtos) {
+  const daPerfumaria = filtrarProdutosPerfumaria(produtos, camadas);
+  if (!temFiltroCamada()) return daPerfumaria;
+  return filtrarProdutos(daPerfumaria, { selecaoCamadas: selecao, camadaPrincipalSlug });
+}
+
+// ── Modo paginado (sem filtro, ou só com camadas marcadas) ───────────────
+// "geracao" muda a cada reiniciarCatalogo(): resposta que chega depois de
+// a pessoa trocar o filtro é de uma consulta velha e é descartada — sem
+// isso, marcar duas categorias seguidas podia pintar a grade da primeira.
+let geracao = 0;
+let carregandoGeracao = -1;
+
 async function carregarProximaPagina() {
-  if (carregandoPagina || !temMais || modoFiltroCompleto) return;
-  carregandoPagina = true;
+  const minha = geracao;
+  if (carregandoGeracao === minha || !temMais || modoFiltroCompleto) return;
+  carregandoGeracao = minha;
 
   try {
     const primeiraPagina = produtosCarregados.length === 0;
@@ -353,45 +392,59 @@ async function carregarProximaPagina() {
     // no bloco de 24, um bloco pode chegar inteiro de aparelhos e não
     // render nenhum card — e aí o IntersectionObserver não dispararia de
     // novo (a sentinela continua visível, sem "entrar" na tela). Por isso
-    // o laço: busca até render alguma coisa ou acabar o catálogo.
+    // o laço: busca até render alguma coisa ou acabar o catálogo. O mesmo
+    // vale para as camadas que o servidor não filtrou.
     let rendeu = 0;
     do {
-      const pagina = await listarProdutosPaginado({
-        tamanhoPagina: TAMANHO_PAGINA,
-        aposDoc: ultimoDoc
-      });
+      const pagina = await buscarPagina();
+      if (minha !== geracao) return;
       ultimoDoc = pagina.ultimoDoc;
       temMais = pagina.temMais;
 
-      const daPerfumaria = filtrarProdutosPerfumaria(pagina.produtos, camadas);
-      produtosCarregados = produtosCarregados.concat(daPerfumaria);
-      rendeu += daPerfumaria.length;
+      const doBloco = filtrarBloco(pagina.produtos);
+      produtosCarregados = produtosCarregados.concat(doBloco);
+      rendeu += doBloco.length;
     } while (temMais && rendeu === 0);
 
     const lista = ordenarProdutos(produtosCarregados, selectOrdenar.value);
     renderizarLista(lista, { acrescentar: false });
     if (primeiraPagina && lista.length === 0) {
-      grid.innerHTML = `<p class="catalogo-vazio">Nenhum produto no catálogo ainda.</p>`;
+      grid.innerHTML = `<p class="catalogo-vazio">${temFiltroCamada() ? "Nenhum produto encontrado com esses filtros." : "Nenhum produto no catálogo ainda."}</p>`;
     }
     atualizarContagem(lista.length);
   } catch (erro) {
+    if (minha !== geracao) return;
+    // Índice composto da camada ainda não publicado: em vez de quebrar,
+    // carrega a lista filtrada inteira (mais pesada, mas funciona).
+    if (filtroServidor && erro?.code === "failed-precondition" && produtosCarregados.length === 0) {
+      console.warn("Índice de paginação por camada ausente — carregando a lista filtrada inteira.", erro);
+      modoFiltroCompleto = true;
+      await carregarListaCompletaEFiltrar();
+      return;
+    }
     console.error("Erro ao carregar produtos:", erro);
     if (produtosCarregados.length === 0) {
       grid.innerHTML = `<p class="catalogo-vazio">Não foi possível carregar os produtos agora. Tente novamente em instantes.</p>`;
     }
   } finally {
-    carregandoPagina = false;
+    if (carregandoGeracao === minha) carregandoGeracao = -1;
   }
 }
 
-// ── Modo filtro completo (camada, busca e/ou faixa de preço) ─────────────
+// ── Modo lista completa (busca e/ou faixa de preço) ──────────────────────
 async function carregarListaCompletaEFiltrar() {
+  const minha = geracao;
   grid.innerHTML = `<p class="catalogo-loading">Carregando produtos...</p>`;
   try {
-    produtosCarregados = filtrarProdutosPerfumaria(await listarProdutos(), camadas);
+    const lista = filtroServidor
+      ? await listarProdutosPorOpcoes(filtroServidor.camada, filtroServidor.opcoes)
+      : await listarProdutos();
+    if (minha !== geracao) return;
+    produtosCarregados = filtrarProdutosPerfumaria(lista, camadas);
     temMais = false;
     aplicarFiltrosERenderizar();
   } catch (erro) {
+    if (minha !== geracao) return;
     console.error("Erro ao carregar produtos:", erro);
     grid.innerHTML = `<p class="catalogo-vazio">Não foi possível carregar os produtos agora. Tente novamente em instantes.</p>`;
   }
@@ -421,10 +474,13 @@ function atualizarBotaoLimpar() {
 }
 
 async function reiniciarCatalogo() {
+  geracao += 1;
   produtosCarregados = [];
   ultimoDoc = null;
   temMais = true;
-  modoFiltroCompleto = haFiltrosAtivos();
+  filtroServidor = escolherFiltroServidor();
+  // camada sozinha pagina pelo servidor; busca e preço precisam da lista
+  modoFiltroCompleto = Boolean(termoBusca.trim()) || precoMin !== null || precoMax !== null;
 
   escreverSelecaoNaURL();
   montarChips();

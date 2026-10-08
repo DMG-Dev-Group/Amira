@@ -13,12 +13,18 @@
 // aparelho e acessório, perfume só sugere perfume. Sem isso, a página de
 // um iPhone de R$ 7.500 sugeriria decant de R$ 40 (ver services/iphones.js).
 
-import { listarProdutos, filtrosDoProduto, disponivelNoModo, estoquePorModo } from "./produtos.js";
+import { listarProdutosPorOpcoes, filtrosDoProduto, disponivelNoModo, estoquePorModo } from "./produtos.js";
 import { listarCamadas, camadaPrincipal } from "./camadas.js";
 import { produtoEhIphone } from "./iphones.js";
 
 const PESO_PRINCIPAL = 3;
 const PESO_OUTRAS = 1;
+
+// Quantos candidatos pedir ao servidor. A lista sai já restrita a quem
+// divide alguma opção da camada principal com o produto (o que mais pesa
+// na pontuação), então um punhado basta para escolher os `max` melhores —
+// antes a seção baixava o catálogo inteiro.
+const POOL_CANDIDATOS = 24;
 
 function pontuar(produto, alvoFiltros, camadas, principalSlug) {
   const meus = filtrosDoProduto(produto, principalSlug);
@@ -42,10 +48,20 @@ function pontuar(produto, alvoFiltros, camadas, principalSlug) {
  * @returns {Promise<Array>}
  */
 export async function produtosRelacionados(produto, max = 4) {
-  const [camadas, todos] = await Promise.all([listarCamadas(), listarProdutos()]);
+  const camadas = await listarCamadas();
   const principalSlug = camadaPrincipal(camadas)?.slug || null;
   const alvoFiltros = filtrosDoProduto(produto, principalSlug);
   const alvoEhIphone = produtoEhIphone(produto, camadas);
+
+  // a camada principal primeiro; sem nada marcado nela, a 1ª que tiver
+  const camadaBusca = [principalSlug, ...camadas.map((c) => c.slug)]
+    .find((slug) => slug && (alvoFiltros[slug] || []).length > 0);
+  if (!camadaBusca) return [];
+
+  // +1: o próprio produto pode vir na lista
+  const todos = await listarProdutosPorOpcoes(camadaBusca, alvoFiltros[camadaBusca], {
+    limite: POOL_CANDIDATOS + 1
+  });
 
   const candidatos = todos
     .filter((p) => p.id !== produto.id)

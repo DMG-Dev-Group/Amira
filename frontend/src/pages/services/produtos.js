@@ -170,19 +170,53 @@ export async function listarProdutosPaginado({ tamanhoPagina = 24, aposDoc = nul
   };
 }
 
-// Quantos produtos buscar antes de aplicar a ordem manual e os cortes de
-// vitrine. A vitrine mostra poucos, mas um produto antigo pode ter sido
-// arrastado para o topo — sem esta folga ele nem entraria na consulta.
+// ⚠️ PESO: enquanto as fotos morarem dentro do documento (data URI), cada
+// produto lido custa ~90 KB. Toda listagem aqui busca SÓ o que a tela vai
+// mostrar — listarProdutos() (o catálogo inteiro) fica para quando não há
+// outro jeito (busca textual, painel admin).
+
+// Teto da lista de destaques (curada pelo admin — sobra folga).
 const POOL_VITRINE = 60;
+
+// Bloco lido por vez quando a vitrine precisa completar `max` produtos
+// depois de tirar inativos e a linha de iPhones.
+const BLOCO_VITRINE = 12;
+
+/**
+ * Lê blocos de uma consulta (por cursor) até juntar `max` produtos que
+ * passam em `aceitar`, ou a consulta acabar.
+ */
+async function coletarAte(max, partesBase, aceitar) {
+  const colecaoRef = collection(db, COLECAO);
+  const aceitos = [];
+  let cursor = null;
+  for (;;) {
+    const partes = [...partesBase];
+    if (cursor) partes.push(startAfter(cursor));
+    partes.push(limitarQtd(BLOCO_VITRINE));
+    const snap = await getDocs(query(colecaoRef, ...partes));
+    for (const d of snap.docs) {
+      const produto = { id: d.id, ...d.data() };
+      if (aceitar(produto)) aceitos.push(produto);
+      if (aceitos.length >= max) return aceitos;
+    }
+    if (snap.docs.length < BLOCO_VITRINE) return aceitos;
+    cursor = snap.docs[snap.docs.length - 1];
+  }
+}
 
 /**
  * Lista os produtos da vitrine da home (B2).
  *
  * A ordem é a definida no painel (campo "ordem", arrastando as linhas em
  * Admin > Produtos). Quem ainda não tem "ordem" vai para o fim, mantendo
- * o critério antigo — mais recentes primeiro. A ordenação é feita em
- * memória de propósito: ordenar por "ordem" no Firestore exigiria um
- * índice composto novo para um punhado de documentos.
+ * o critério antigo — mais recentes primeiro.
+ *
+ * Lê em blocos pequenos, primeiro pela "ordem" e, se faltar produto, pelos
+ * mais recentes sem "ordem" — só o necessário para encher a vitrine (antes
+ * eram 60 documentos para mostrar 8). Os dois orderBy usam o índice
+ * automático de campo único; "ativo" é conferido em memória para não
+ * exigir índice composto.
  *
  * @param {number} max
  * @param {{excluir?: (produto: object) => boolean}} opcoes
@@ -192,16 +226,19 @@ const POOL_VITRINE = 60;
  *   predicado é services/home-dinamica.js.
  */
 export async function listarProdutosRecentes(max = 8, { excluir = null } = {}) {
-  const { produtos } = await listarProdutosPaginado({ tamanhoPagina: POOL_VITRINE });
-  const base = excluir ? produtos.filter((p) => !excluir(p)) : produtos;
+  const serve = (p) => p.ativo === true && !(excluir && excluir(p));
+  // orderBy("ordem") só devolve quem TEM o campo
+  const comOrdem = await coletarAte(max, [orderBy("ordem", "asc")], serve);
+  if (comOrdem.length >= max) return comOrdem;
 
-  const ordenados = base.slice().sort((a, b) => {
-    const oa = Number.isFinite(Number(a.ordem)) ? Number(a.ordem) : Infinity;
-    const ob = Number.isFinite(Number(b.ordem)) ? Number(b.ordem) : Infinity;
-    return oa - ob; // empate mantém a ordem da consulta (criadoEm desc)
-  });
-
-  return ordenados.slice(0, max);
+  // mesmo critério do orderBy: quem tem o campo já entrou na 1ª consulta
+  const temOrdem = (p) => Object.prototype.hasOwnProperty.call(p, "ordem");
+  const semOrdem = await coletarAte(
+    max - comOrdem.length,
+    [where("ativo", "==", true), orderBy("criadoEm", "desc")],
+    (p) => serve(p) && !temOrdem(p)
+  );
+  return comOrdem.concat(semOrdem);
 }
 
 /**
@@ -243,20 +280,85 @@ export async function listarDestaques(max = 8, { excluir = null } = {}) {
  * já ordenados pela ordem de exibição definida pelo admin.
  */
 export async function listarBannerHero() {
-  const todos = await listarProdutos();
-  return todos
-    .filter((p) => p.bannerHero === true)
-    .sort((a, b) => (a.bannerOrdem || 0) - (b.bannerOrdem || 0));
+  // só os marcados (antes lia o catálogo inteiro para usar ~10 produtos)
+  const q = query(collection(db, COLECAO), where("bannerHero", "==", true));
+  const snap = await getDocs(q);
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() }))
+    .filter((p) => p.ativo === true)
+    // empate na ordem do banner: mais recente primeiro (como antes)
+    .sort((a, b) => ((a.bannerOrdem || 0) - (b.bannerOrdem || 0)) || (milis(b.criadoEm) - milis(a.criadoEm)));
 }
 
 /**
- * Lista produtos disponíveis no modo atacado (têm precoAtacado > 0).
- * O filtro é feito no cliente — para o tamanho de catálogo de uma loja,
- * é mais simples que manter um índice composto dedicado.
+ * Lista produtos disponíveis no modo atacado (têm precoAtacado > 0),
+ * mais recentes primeiro. O filtro de preço vai ao servidor (índice de
+ * campo único); "ativo" e a ordem ficam em memória para não exigir um
+ * índice composto.
  */
 export async function listarProdutosAtacado() {
-  const todos = await listarProdutos();
-  return todos.filter((p) => disponivelNoModo(p, "atacado"));
+  const q = query(collection(db, COLECAO), where("precoAtacado", ">", 0));
+  const snap = await getDocs(q);
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() }))
+    .filter((p) => p.ativo === true && disponivelNoModo(p, "atacado"))
+    .sort((a, b) => milis(b.criadoEm) - milis(a.criadoEm));
+}
+
+function milis(ts) {
+  return ts && typeof ts.toMillis === "function" ? ts.toMillis() : 0;
+}
+
+// ── Consultas por opção de camada ────────────────────────────────────────
+// Os filtros moram em produtos.filtros.<camadaSlug> (lista de slugs), que
+// o Firestore indexa sozinho — dá para pedir ao servidor só os produtos de
+// uma categoria em vez de baixar tudo e filtrar aqui. array-contains-any
+// aceita até 30 valores por consulta.
+const MAX_VALORES_ANY = 30;
+
+function filtroDeOpcoes(camadaSlug, opcoes) {
+  const valores = [...new Set((opcoes || []).map(String))].slice(0, MAX_VALORES_ANY);
+  return where(`filtros.${camadaSlug}`, "array-contains-any", valores);
+}
+
+/**
+ * Produtos ativos marcados com QUALQUER uma das `opcoes` da camada.
+ * Sem orderBy (dispensa índice composto) — volta mais recentes primeiro,
+ * ordenado em memória.
+ * @param {string} camadaSlug
+ * @param {string[]} opcoes
+ * @param {{limite?: number}} [extra]
+ */
+export async function listarProdutosPorOpcoes(camadaSlug, opcoes, { limite = null } = {}) {
+  if (!camadaSlug || !opcoes || opcoes.length === 0) return [];
+  const partes = [filtroDeOpcoes(camadaSlug, opcoes)];
+  if (limite) partes.push(limitarQtd(limite));
+  const snap = await getDocs(query(collection(db, COLECAO), ...partes));
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() }))
+    .filter((p) => p.ativo === true)
+    .sort((a, b) => milis(b.criadoEm) - milis(a.criadoEm));
+}
+
+/**
+ * Versão paginada (por cursor) de listarProdutosPorOpcoes, mais recentes
+ * primeiro. Precisa do índice composto filtros.<camada> + criadoEm
+ * (firestore.indexes.json); sem ele o Firestore responde
+ * "failed-precondition" e quem chama deve cair na versão sem paginação.
+ * Inativos saem em memória, então um bloco pode vir menor que o pedido —
+ * `temMais` olha o tamanho do bloco CRU.
+ */
+export async function listarProdutosPorOpcoesPaginado(camadaSlug, opcoes, { tamanhoPagina = 24, aposDoc = null } = {}) {
+  const partes = [filtroDeOpcoes(camadaSlug, opcoes), orderBy("criadoEm", "desc")];
+  if (aposDoc) partes.push(startAfter(aposDoc));
+  partes.push(limitarQtd(tamanhoPagina));
+
+  const snap = await getDocs(query(collection(db, COLECAO), ...partes));
+  return {
+    produtos: snap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((p) => p.ativo === true),
+    ultimoDoc: snap.docs.length > 0 ? snap.docs[snap.docs.length - 1] : null,
+    temMais: snap.docs.length === tamanhoPagina
+  };
 }
 
 /**
