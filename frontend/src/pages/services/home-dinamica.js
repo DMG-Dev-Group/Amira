@@ -113,8 +113,6 @@ async function iniciarCarrosselAnuncio() {
     </div>
     ${fontes.length > 1 ? `<span class="campaign-intro__contador" aria-hidden="true">01 / ${String(fontes.length).padStart(2, "0")}</span>` : ""}
   `;
-  document.dispatchEvent(new CustomEvent("amira:hero-atualizado"));
-
   if (fontes.length <= 1 || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   const foto = container.querySelector(".campaign-intro__foto");
   const contador = container.querySelector(".campaign-intro__contador");

@@ -10,6 +10,7 @@
 //                               parallax ao rolar
 //   data-movimento="parallax"   imagem desliza devagar dentro da moldura
 //   data-movimento="essencia"   frasco 3D gira com o scroll, com texto breve
+//   data-movimento="code"       pausa editorial com tipografia e raios da marca
 
 import { aberturaTerminou } from "./interface.js";
 
@@ -73,6 +74,7 @@ export async function iniciar() {
   document.documentElement.classList.add("com-gsap");
 
   iniciarHero(gsap);
+  iniciarEditorial(gsap);
   iniciarParallax(gsap);
   iniciarEssencia(gsap, ScrollTrigger);
 
@@ -100,11 +102,8 @@ function iniciarHero(gsap) {
     gsap.fromTo(apoio, { autoAlpha: 0, y: 18 }, { autoAlpha: 1, y: 0, duration: 1.2, stagger: 0.1, delay: 0.55 });
   };
 
-  // O título do painel pode chegar depois do GSAP; animamos o texto final.
-  // O prazo de reserva cobre páginas offline em que o HTML inicial fica.
-  document.addEventListener("amira:hero-atualizado", animarTitulo, { once: true });
-  if (hero.querySelectorAll(".hero-slide").length > 1) animarTitulo();
-  else setTimeout(animarTitulo, 2400);
+  // A chamada principal é fixa; o conteúdo administrável mora no quadro seguinte.
+  animarTitulo();
 
   // Parallax de saída: a foto afunda devagar e o texto some ao rolar
   gsap.to(hero.querySelector(".hero-carrossel-trilho"), {
@@ -115,6 +114,79 @@ function iniciarHero(gsap) {
     autoAlpha: 0, y: -40, ease: "none",
     scrollTrigger: { trigger: hero, start: "35% top", end: "80% top", scrub: true },
   });
+}
+
+// A cadência da referência vem de revelar um plano de cada vez. Todas as
+// fotografias e palavras continuam visíveis se o GSAP ou ScrollTrigger falhar.
+function iniciarEditorial(gsap) {
+  const entrada = (alvos, gatilho, distancia = 42) => {
+    if (!alvos.length || !gatilho) return;
+    gsap.fromTo(alvos,
+      { autoAlpha: 0, y: distancia },
+      { autoAlpha: 1, y: 0, duration: 1.15, stagger: 0.13,
+        scrollTrigger: { trigger: gatilho, start: "top 82%", once: true } });
+  };
+
+  const code = document.querySelector('[data-movimento="code"]');
+  if (code) {
+    entrada([
+      code.querySelector(".rotulo"),
+      code.querySelector(".campaign-code__sinais"),
+      code.querySelector("h2"),
+      code.querySelector("p"),
+      code.querySelector(".campaign-code__sol"),
+    ].filter(Boolean), code, 32);
+    if (matchMedia("(min-width: 701px)").matches) {
+      gsap.to(code.querySelector(".campaign-code__linha--esq"), {
+        xPercent: -8, ease: "none",
+        scrollTrigger: { trigger: code, start: "top bottom", end: "bottom top", scrub: true },
+      });
+      gsap.to(code.querySelector(".campaign-code__linha--dir"), {
+        xPercent: 8, ease: "none",
+        scrollTrigger: { trigger: code, start: "top bottom", end: "bottom top", scrub: true },
+      });
+    }
+  }
+
+  const intro = document.querySelector(".campaign-intro");
+  if (intro) {
+    entrada([...intro.querySelectorAll(".campaign-intro__texto > *")], intro);
+    const janela = intro.querySelector(".campaign-intro__janela");
+    if (janela && matchMedia("(min-width: 701px)").matches) {
+      gsap.fromTo(janela, { clipPath: "inset(9% 7%)" }, {
+        clipPath: "inset(0% 0%)", ease: "none",
+        scrollTrigger: { trigger: intro, start: "top 85%", end: "center 45%", scrub: 1 },
+      });
+    }
+  }
+
+  [".categories .secao-cabecalho", ".featured .secao-cabecalho",
+    ".vitrine-produtos .secao-cabecalho", ".newsletter-content"].forEach((seletor) => {
+    const alvo = document.querySelector(seletor);
+    if (alvo) entrada([alvo], alvo);
+  });
+
+  const retrato = document.querySelector(".featured-editorial");
+  if (retrato) {
+    entrada([retrato], retrato, 60);
+    if (matchMedia("(min-width: 701px)").matches) {
+      gsap.fromTo(retrato.querySelector("img"), { scale: 1.12, yPercent: -4 }, {
+        scale: 1.04, yPercent: 4, ease: "none",
+        scrollTrigger: { trigger: retrato, start: "top bottom", end: "bottom top", scrub: true },
+      });
+    }
+  }
+
+  const ligarDinamicos = () => {
+    document.querySelectorAll("#grid-categorias-home .cat-card, #grid-destaques .catalogo-card, #grid-produtos-home .catalogo-card, #highlight-conteudo .highlight-visual, #highlight-conteudo .highlight-content")
+      .forEach((alvo) => {
+        if (alvo.dataset.entradaAtiva) return;
+        alvo.dataset.entradaAtiva = "1";
+        entrada([alvo], alvo, 32);
+      });
+  };
+  ligarDinamicos();
+  new MutationObserver(ligarDinamicos).observe(document.body, { childList: true, subtree: true });
 }
 
 // ── Parallax de imagens editoriais ──────────────────────────────────────

@@ -49,9 +49,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..600;1,6..96,400..600&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles/base.css">
   <link rel="stylesheet" href="styles/home.css?v=20261008-campanha">
-  <link rel="stylesheet" href="styles/campaign.css?v=20261008-campanha">
+  <link rel="stylesheet" href="styles/campaign.css?v=20261008-editorial2">
 </head>
-<body>
+<body class="home-editorial">
   <script>
     /* partida: tema salvo sem piscar + abertura na 1ª página da sessão (ver services/interface.js) */
     (function () {
@@ -87,8 +87,8 @@
             </ul>
           </div>
         </div>
-        <a href="iphones.html" id="nav-btn-iphones" class="topo__link">iPhones</a>
-        <a href="atacado.html" id="nav-btn-atacado" class="topo__link">Atacado</a>
+        <a href="#destaques" class="topo__link">Destaques</a>
+        <a href="#produtos" class="topo__link">Novidades</a>
       </div>
       <div class="topo__logo nav-logo">
         <a href="index.html" aria-label="Amira — início">
@@ -147,24 +147,39 @@
 
   <main id="conteudo">
 
-    <!-- Campanha original: imagem editorial com um perfume real do acervo
-         como referência. A configuração do painel aparece no quadro seguinte. -->
+    <!-- Campanha com fotografias originais inspiradas nos frascos da loja. -->
     <section class="campaign-hero" data-movimento="hero" aria-label="Campanha Amira">
-      <div class="hero-carrossel-trilho campaign-hero__imagem" aria-hidden="true">
-        <img src="images/campanha-perfume-mulher.webp" alt="" fetchpriority="high" width="1672" height="941">
+      <div class="hero-carrossel-trilho campaign-hero__painelaria" aria-hidden="true">
+        <div class="campaign-hero__painel campaign-hero__painel--esquerdo"><img src="images/campanha-asad-macro.webp" alt="" fetchpriority="high" width="1051" height="1496"></div>
+        <div class="campaign-hero__painel campaign-hero__painel--centro"><img src="images/campanha-asad-toque.webp" alt="" fetchpriority="high" width="1122" height="1402"></div>
+        <div class="campaign-hero__painel campaign-hero__painel--direito"><img src="images/campanha-ouro-pavao.webp" alt="" fetchpriority="high" width="1122" height="1402"></div>
       </div>
       <div class="campaign-hero__sombra"></div>
       <div class="moldura campaign-hero__interior">
         <div class="hero-conteudo campaign-hero__conteudo">
           <span class="rotulo hero-rotulo">AMIRA / PERFUMARIA</span>
-          <h1 class="hero-title">A arte de ser<br><em>inesquecível.</em></h1>
-          <p class="hero-subtitle">Fragrâncias originais para quem deixa presença.</p>
+          <h1 class="hero-title">A presença <em>permanece.</em></h1>
           <div class="hero-acoes">
-            <a href="produtos.html" class="btn btn--claro">Descobrir fragrâncias</a>
-            <a href="#categorias" class="link-fio hero-link">Explorar a curadoria</a>
+            <a href="produtos.html" class="btn btn--claro">Explorar a coleção <span aria-hidden="true">↗</span></a>
           </div>
         </div>
-        <div class="campaign-hero__rodape" aria-hidden="true"><span>São Luís · MA</span><span>Perfumes que permanecem</span><span>01 / 03</span></div>
+        <div class="campaign-hero__rodape" aria-hidden="true"><span>São Luís · MA</span><span>Amira / 2026</span><span>Deslize para descobrir ↓</span></div>
+      </div>
+    </section>
+
+    <section class="campaign-code" data-movimento="code" aria-labelledby="code-titulo">
+      <span class="campaign-code__linha campaign-code__linha--esq" aria-hidden="true"></span>
+      <span class="campaign-code__linha campaign-code__linha--dir" aria-hidden="true"></span>
+      <div class="campaign-code__conteudo moldura">
+        <span class="rotulo">O ritual Amira</span>
+        <div class="campaign-code__sinais" aria-hidden="true">
+          <span><img src="images/sol.svg" alt="">01</span>
+          <span><img src="images/sol.svg" alt="">02</span>
+          <span><img src="images/sol.svg" alt="">03</span>
+        </div>
+        <h2 id="code-titulo">Um aroma.<br><em>Uma presença.</em></h2>
+        <p>Fragrâncias originais escolhidas para marcar o que importa.</p>
+        <img class="campaign-code__sol" src="images/sol.svg" alt="" aria-hidden="true">
       </div>
     </section>
 
@@ -192,6 +207,10 @@
             <span class="rotulo">A coleção</span>
             <h2 class="titulo-2 horizonte">Encontre sua <em>assinatura</em></h2>
           </div>
+          <div class="trilho-setas" aria-label="Explorar categorias">
+            <button class="trilho-seta" data-trilho="grid-categorias-home" data-dir="-1" aria-label="Categorias anteriores"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
+            <button class="trilho-seta" data-trilho="grid-categorias-home" data-dir="1" aria-label="Próximas categorias"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+          </div>
         </header>
         <div class="categories-grid" id="grid-categorias-home">
           <p class="catalogo-loading">Carregando categorias…</p>
@@ -218,7 +237,7 @@
       </div>
       <div class="featured-layout">
         <figure class="featured-editorial">
-          <img src="images/campanha-perfume-homem.webp" alt="Campanha Amira: modelo com perfume em ambiente de luz dourada" loading="lazy" width="1122" height="1402">
+          <img src="images/campanha-perfume-mulher.webp" alt="Campanha Amira: modelo aplicando perfume" loading="lazy" width="1672" height="941">
           <figcaption><span>O gesto que fica</span><span>Campanha Amira / 2026</span></figcaption>
         </figure>
         <div class="products-grid trilho" id="grid-destaques">
