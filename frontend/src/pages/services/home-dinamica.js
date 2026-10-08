@@ -9,6 +9,7 @@ import { listarCamadas, camadaPrincipal } from "./camadas.js";
 import { produtoEhIphone, opcoesSemIphone, listarProdutosIphone } from "./iphones.js";
 import { observarAuth } from "./auth.js";
 import { adicionarAoCarrinho } from "./carrinho.js";
+import { toast } from "./ui-feedback.js";
 import { ativarReveals } from "./script.js";
 import { escapeHtml, urlImagemSegura, urlFundoSegura } from "./seguranca.js";
 import { redimensionada, LARGURA } from "./imagens.js";
@@ -120,12 +121,17 @@ async function iniciarCarrosselAnuncio() {
     console.error("Carrossel: usando conteúdo padrão (config indisponível):", erro);
   }
 
-  // Fotos em fusão com zoom lento (Ken Burns, no CSS). Os indicadores
-  // embaixo marcam o tempo de cada foto — a duração vem do admin.
+  // A mesma coleção de fotos do painel vira um tríptico editorial. A imagem
+  // central é a campanha ativa; as laterais antecipam as próximas imagens.
+  // Em telas pequenas apenas a imagem central aparece.
   container.style.setProperty("--intervalo-hero", `${intervalo}ms`);
   container.innerHTML = `
     ${imagens.map((url, i) => `
-      <div class="hero-slide ${i === 0 ? "ativa" : ""}" style="background-image:url('${urlFundoSegura(redimensionada(url, LARGURA.fundo))}')"></div>
+      <div class="hero-slide ${i === 0 ? "ativa" : ""} ${imagens.length === 1 ? "hero-slide--unica" : ""}">
+        <div class="hero-slide__painel hero-slide__painel--esq" style="background-image:url('${urlFundoSegura(redimensionada(imagens[(i + imagens.length - 1) % imagens.length], LARGURA.fundo))}')"></div>
+        <div class="hero-slide__painel hero-slide__painel--centro" style="background-image:url('${urlFundoSegura(redimensionada(url, LARGURA.fundo))}')"></div>
+        <div class="hero-slide__painel hero-slide__painel--dir" style="background-image:url('${urlFundoSegura(redimensionada(imagens[(i + 1) % imagens.length], LARGURA.fundo))}')"></div>
+      </div>
     `).join("")}
     <div class="hero-slide-overlay"></div>
     <div class="hero-slide-conteudo hero-conteudo moldura">
@@ -134,7 +140,7 @@ async function iniciarCarrosselAnuncio() {
       ${subtitulo ? `<p class="hero-subtitle">${escapeHtml(subtitulo)}</p>` : ""}
       <div class="hero-acoes">
         <a href="produtos.html" class="btn btn--claro">Explorar a coleção</a>
-        <a href="#sobre" class="link-fio hero-link">Produto da estação</a>
+        <a href="#categorias" class="link-fio hero-link">Descobrir as categorias</a>
       </div>
       ${imagens.length > 1 ? `
         <div class="hero-indicadores" aria-hidden="true">
@@ -142,8 +148,9 @@ async function iniciarCarrosselAnuncio() {
         </div>` : ""}
     </div>
   `;
+  document.dispatchEvent(new CustomEvent("amira:hero-atualizado"));
 
-  if (imagens.length <= 1) return;
+  if (imagens.length <= 1 || matchMedia("(prefers-reduced-motion: reduce), (max-width: 640px)").matches) return;
 
   const slides = container.querySelectorAll(".hero-slide");
   const indicadores = container.querySelectorAll(".hero-indicador");
@@ -313,8 +320,8 @@ async function carregarDestaques() {
             ${precoCardHtml(p)}
           </div>
         </a>
-        ${disponivelNoModo(p, "varejo") ? `
-          <button class="product-add" data-id="${escapeHtml(p.id)}" title="Adicionar ao carrinho">+</button>
+        ${disponivelNoModo(p, "varejo") && estoquePorModo(p, "varejo") > 0 ? `
+          <button class="product-add" data-id="${escapeHtml(p.id)}" aria-label="Adicionar ${escapeHtml(p.nome)} à sacola" title="Adicionar à sacola">+</button>
         ` : ""}
       </div>
     `).join("");
@@ -344,20 +351,28 @@ async function carregarProdutosHome() {
     }
 
     grid.innerHTML = produtos.map((p) => `
-      <a class="catalogo-card reveal" href="produto.html?id=${encodeURIComponent(p.id)}">
-        <div class="catalogo-card-img">
-          <img src="${urlImagemSegura(redimensionada(p.imagemURL, LARGURA.card))}" alt="${escapeHtml(p.nome)}" loading="lazy">
-          ${fotoAlternativa(p)}
-          ${infoPreco(p).temDesconto ? `<span class="desconto-selo">-${infoPreco(p).percentual}%</span>` : ""}
-        </div>
-        <div class="catalogo-card-info">
-          <h3 class="catalogo-card-nome">${escapeHtml(p.nome)}</h3>
-          ${precoCardHtml(p)}
-        </div>
-      </a>
+      <div class="catalogo-card destaque-card reveal">
+        <a href="produto.html?id=${encodeURIComponent(p.id)}" aria-label="Conhecer ${escapeHtml(p.nome)}">
+          <div class="catalogo-card-img">
+            <img src="${urlImagemSegura(redimensionada(p.imagemURL, LARGURA.card))}" alt="${escapeHtml(p.nome)}" loading="lazy">
+            ${fotoAlternativa(p)}
+            ${infoPreco(p).temDesconto ? `<span class="desconto-selo">-${infoPreco(p).percentual}%</span>` : ""}
+          </div>
+          <div class="catalogo-card-info">
+            <h3 class="catalogo-card-nome">${escapeHtml(p.nome)}</h3>
+            ${precoCardHtml(p)}
+          </div>
+        </a>
+        ${disponivelNoModo(p, "varejo") && estoquePorModo(p, "varejo") > 0 ? `
+          <button class="product-add" data-id="${escapeHtml(p.id)}" aria-label="Adicionar ${escapeHtml(p.nome)} à sacola" title="Adicionar à sacola">+</button>
+        ` : ""}
+      </div>
     `).join("");
 
     ativarReveals(grid);
+    grid.querySelectorAll(".product-add").forEach((btn) => {
+      btn.addEventListener("click", () => adicionarProdutoAoCarrinho(btn, produtos));
+    });
   } catch (erro) {
     console.error("Erro ao carregar a vitrine de produtos:", erro);
     grid.innerHTML = `<p class="catalogo-vazio" style="padding:2rem;">Não foi possível carregar os produtos agora.</p>`;
@@ -388,6 +403,7 @@ async function adicionarProdutoAoCarrinho(btn, produtos) {
       modo: "varejo"
     });
     btn.textContent = "✓";
+    toast(`${produto.nome} adicionado à sacola.`, "sucesso");
     setTimeout(() => {
       btn.textContent = textoOriginal;
       btn.disabled = false;
@@ -395,6 +411,7 @@ async function adicionarProdutoAoCarrinho(btn, produtos) {
   } catch (erro) {
     console.error(erro);
     btn.textContent = "!";
+    toast("Não foi possível adicionar agora. Tente novamente.", "erro");
     setTimeout(() => {
       btn.textContent = textoOriginal;
       btn.disabled = false;
@@ -405,6 +422,7 @@ async function adicionarProdutoAoCarrinho(btn, produtos) {
 // ── Banner "Produto da Estação" (carrossel com setas) ────────────────────
 let produtosBanner = [];
 let indiceBanner = 0;
+const bannerReserva = document.getElementById("highlight-conteudo")?.innerHTML || "";
 
 function renderizarBanner() {
   const container = document.getElementById("highlight-conteudo");
@@ -412,7 +430,7 @@ function renderizarBanner() {
   const contador = document.getElementById("highlight-contador");
 
   if (produtosBanner.length === 0) {
-    container.innerHTML = `<p class="catalogo-vazio">Nenhum produto configurado para este banner ainda.</p>`;
+    container.innerHTML = bannerReserva;
     nav.style.display = "none";
     return;
   }
@@ -433,7 +451,7 @@ function renderizarBanner() {
       <p class="highlight-text">${escapeHtml(p.bannerTexto || p.descricao || "")}</p>
       ${(p.bannerTags && p.bannerTags.length > 0) ? `
         <div class="highlight-notes">
-          ${p.bannerTags.map((tag) => `<span class="note-pill">${escapeHtml(tag)}</span>`).join("")}
+          ${p.bannerTags.slice(0, 3).map((tag) => `<span class="note-pill">${escapeHtml(tag)}</span>`).join("")}
         </div>
       ` : ""}
       <div class="highlight-price">
@@ -467,8 +485,7 @@ async function carregarBannerHero() {
     renderizarBanner();
   } catch (erro) {
     console.error("Erro ao carregar banner:", erro);
-    document.getElementById("highlight-conteudo").innerHTML =
-      `<p class="catalogo-vazio">Não foi possível carregar esta seção agora.</p>`;
+    document.getElementById("highlight-conteudo").innerHTML = bannerReserva;
   }
 }
 

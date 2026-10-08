@@ -1,8 +1,7 @@
 /* ════════════════════════════════════════════════════════════════════════
    AMIRA — home  (tokens e componentes em base.css)
-   Ritmo: hero escuro e cheio → vitrine clara e densa → editorial amplo →
-   seção fixada do frasco → grade assimétrica → trilho → bloco escuro dos
-   iPhones → depoimentos → lista. Densidade e escala variam; a gramática
+   Ritmo: tríptico fotográfico → coleções → produtos → campanha → mais
+   produtos → história da marca → iPhones → depoimentos → lista. A gramática
    (filete, Bodoni, pedestal) não.
    ════════════════════════════════════════════════════════════════════════ */
 
@@ -18,41 +17,60 @@
 }
 .hero-carrossel-trilho { position: absolute; inset: 0; }
 .hero-slide {
-  position: absolute; inset: -4%;
-  background-size: cover;
-  background-position: center 30%;
+  position: absolute; inset: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2.35fr) minmax(0, 1fr);
+  gap: var(--s-1);
   opacity: 0;
-  transform: scale(1.12);
-  transition: opacity 1.6s var(--ease-io), transform 0s linear 1.6s;
-  will-change: opacity, transform;
+  transition: opacity var(--t-entrada) var(--ease-io);
 }
 .hero-slide.ativa {
   opacity: 1;
-  transform: scale(1);
-  /* Ken Burns: aproxima devagar durante todo o tempo da foto */
-  transition: opacity 1.6s var(--ease-io), transform calc(var(--intervalo-hero, 4500ms) + 1600ms) linear;
+}
+.hero-slide--unica { grid-template-columns: minmax(0, 1fr); }
+.hero-slide--unica .hero-slide__painel:not(.hero-slide__painel--centro) { display: none; }
+.hero-slide__painel {
+  min-width: 0;
+  background-size: cover;
+  background-position: center;
+  transform: scale(1.04);
+  transition: transform calc(var(--intervalo-hero, 4500ms) + var(--t-entrada)) linear;
+}
+.hero-slide__painel--centro { background-position: center 38%; }
+.hero-slide.ativa .hero-slide__painel { transform: scale(1); }
+.hero-slide__painel--esq,
+.hero-slide__painel--dir { filter: saturate(0.82); }
+.hero-slide__painel--esq { background-position: 60% center; }
+.hero-slide__painel--dir { background-position: 40% center; }
+.hero-carrossel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, var(--hero-sombra-lateral), transparent 20%, transparent 80%, var(--hero-sombra-lateral));
 }
 .hero-slide-overlay {
   position: absolute; inset: 0;
   background:
-    linear-gradient(180deg, rgba(18, 13, 11, 0.55) 0%, rgba(18, 13, 11, 0) 26%),
-    linear-gradient(0deg, rgba(18, 13, 11, 0.78) 0%, rgba(18, 13, 11, 0.12) 55%, rgba(18, 13, 11, 0) 75%);
+    linear-gradient(180deg, var(--hero-sombra-topo), transparent 23%),
+    linear-gradient(0deg, var(--hero-sombra-base), transparent 48%);
 }
 .hero-slide-conteudo {
-  position: absolute; left: 0; right: 0; bottom: clamp(3rem, 2rem + 6vh, 7rem);
-  display: flex; flex-direction: column; align-items: flex-start; gap: var(--s-5);
+  position: absolute; left: 0; right: 0; bottom: clamp(var(--s-8), 7vh, var(--s-10));
+  z-index: 2;
+  display: flex; flex-direction: column; align-items: center; text-align: center; gap: var(--s-4);
 }
 .hero-rotulo { color: rgba(251, 248, 245, 0.75); }
 .hero-title {
-  max-width: 13ch;
-  font-size: var(--t-hero);
-  line-height: 0.96;
+  max-width: 18ch;
+  font-size: clamp(2.8rem, 2rem + 4.4vw, 5.7rem);
+  line-height: 1;
   letter-spacing: -0.03em;
   color: #FBF8F5;
 }
 .hero-title em { color: var(--ouro-claro); }
-.hero-subtitle { max-width: 42ch; font-size: var(--t-4); line-height: 1.6; color: rgba(251, 248, 245, 0.82); }
-.hero-acoes { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-6); margin-top: var(--s-2); }
+.hero-subtitle { max-width: 42ch; font-size: var(--t-p); line-height: 1.5; color: rgba(251, 248, 245, 0.88); }
+.hero-acoes { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--s-6); margin-top: var(--s-2); }
 .hero-link { color: #FBF8F5; }
 .hero-indicadores { display: flex; gap: var(--s-2); margin-top: var(--s-4); }
 .hero-indicador { width: 48px; height: 1px; background: rgba(251, 248, 245, 0.28); overflow: hidden; }
@@ -80,12 +98,17 @@
 @keyframes rolar { 0% { transform: translateY(-100%); } 60%, 100% { transform: translateY(100%); } }
 @media (max-width: 760px) { .hero-rolar { display: none; } }
 
-/* ── Vitrine (novidades) ───────────────────────────────────────────────── */
+/* ── Vitrine (novidades): variação de escala editorial ─────────────────── */
 .vitrine-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(12, minmax(0, 1fr));
   gap: var(--s-7) var(--s-5);
 }
+.vitrine-grid > .catalogo-card { grid-column: span 3; }
+.vitrine-grid > .catalogo-card:nth-child(1),
+.vitrine-grid > .catalogo-card:nth-child(2) { grid-column: span 6; }
+.vitrine-grid > .catalogo-card:nth-child(-n + 2) .catalogo-card-img { aspect-ratio: 5 / 4; }
+.vitrine-grid > .esqueleto, .vitrine-grid > .catalogo-vazio { grid-column: 1 / -1; }
 
 /* ── Produto da estação — editorial ────────────────────────────────────── */
 .highlight { padding-block: var(--secao); background: var(--pedestal); }
@@ -124,8 +147,8 @@ body[data-theme="dark"] .highlight-circle img { mix-blend-mode: normal; }
 .highlight-title { font-size: var(--t-1); }
 .highlight-text {
   font-size: var(--t-4); line-height: 1.7; color: var(--tinta-2); max-width: 44ch;
-  /* a descrição vem do cadastro e pode ser longa: 5 linhas e "Conhecer" */
-  display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden;
+  /* descrição extensa permanece na página do produto */
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
 }
 .highlight-notes { display: flex; flex-wrap: wrap; gap: var(--s-2); }
 .note-pill {
@@ -165,7 +188,7 @@ body[data-theme="dark"] .highlight-circle img { mix-blend-mode: normal; }
 /* ── Sua essência (frasco 3D) ──────────────────────────────────────────── */
 .essencia {
   position: relative;
-  min-height: 100svh;
+  min-height: 78svh;
   display: flex; align-items: center;
   padding-block: var(--secao);
   overflow: hidden;
@@ -189,7 +212,7 @@ body[data-theme="dark"] .highlight-circle img { mix-blend-mode: normal; }
 .essencia__palco {
   position: relative;
   aspect-ratio: 4 / 5;
-  max-height: 78svh;
+  max-height: 68svh;
   width: 100%;
 }
 .essencia__palco canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !important; }
@@ -254,6 +277,7 @@ body[data-theme="dark"] .highlight-circle img { mix-blend-mode: normal; }
 }
 
 /* ── Os mais amados: trilho horizontal com encaixe ─────────────────────── */
+.featured-acoes { display: flex; align-items: center; gap: var(--s-6); }
 .trilho-setas { display: flex; gap: var(--s-2); }
 .trilho {
   display: grid;
@@ -359,11 +383,12 @@ body[data-theme="dark"] .highlight-circle img { mix-blend-mode: normal; }
 
 /* ── Responsivo ────────────────────────────────────────────────────────── */
 @media (max-width: 1080px) {
-  .vitrine-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .vitrine-grid > :nth-child(n + 7) { display: none; }
+  .vitrine-grid > .catalogo-card { grid-column: span 4; }
+  .vitrine-grid > .catalogo-card:nth-child(-n + 2) { grid-column: span 6; }
   .reviews-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 860px) {
+  .hero-slide { grid-template-columns: minmax(0, 1fr) minmax(0, 3fr) minmax(0, 1fr); }
   .highlight-inner, .essencia__interno { grid-template-columns: 1fr; }
   .highlight-inner { min-height: 0; }
   .essencia { min-height: 0; }
@@ -373,12 +398,35 @@ body[data-theme="dark"] .highlight-circle img { mix-blend-mode: normal; }
   .cat-card:nth-child(3n + 1) { grid-column: span 2; }
 }
 @media (max-width: 640px) {
+  .hero-carrossel { min-height: min(620px, 100svh); height: 92svh; }
+  .hero-slide { display: block; }
+  .hero-slide__painel { display: none; height: 100%; }
+  .hero-slide__painel--centro { display: block; background-position: center; }
+  .hero-slide-conteudo { bottom: var(--s-8); align-items: flex-start; text-align: left; }
+  .hero-title { font-size: clamp(2.9rem, 12vw, 4.75rem); max-width: 12ch; }
+  .hero-subtitle { max-width: 34ch; }
+  .hero-acoes { justify-content: flex-start; gap: var(--s-4); }
+  .hero-indicadores { margin-top: var(--s-3); }
   .vitrine-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-6) var(--s-3); }
-  .vitrine-grid > :nth-child(n + 7) { display: flex; }
+  .vitrine-grid > .catalogo-card,
+  .vitrine-grid > .catalogo-card:nth-child(-n + 2) { grid-column: span 1; }
+  .vitrine-grid > .catalogo-card:nth-child(-n + 2) .catalogo-card-img { aspect-ratio: 4 / 5; }
+  .categories-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: clamp(220px, 58vw, 320px); gap: var(--s-3); }
+  .cat-card:nth-child(n) { grid-column: span 1; grid-row: span 1; }
+  .cat-card:first-child { grid-column: span 2; grid-row: span 1; }
+  .cat-label { left: var(--s-4); bottom: var(--s-4); right: var(--s-5); }
+  .cat-name { font-size: clamp(1.3rem, 5vw, 1.8rem); }
+  .cat-arrow { right: var(--s-3); bottom: var(--s-3); width: 36px; height: 36px; }
+  .essencia__palco { max-height: 45svh; aspect-ratio: 4 / 3; }
   .reviews-grid { grid-template-columns: 1fr; }
   .newsletter-form { flex-direction: column; }
   .trilho { grid-auto-columns: 62vw; gap: var(--s-3); }
   .trilho-setas { display: none; }
+  .featured-acoes { width: 100%; justify-content: flex-start; }
   .hero-acoes { gap: var(--s-5); }
   .carousel-card { width: 220px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-slide, .hero-slide__painel, .hero-indicador span { transition: none; animation: none; }
+  .hero-indicador.ativo span { transform: scaleX(1); }
 }

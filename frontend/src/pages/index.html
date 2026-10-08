@@ -152,14 +152,88 @@
          o que está aqui é o estado inicial (sem Firestore ainda). -->
     <section class="hero-carrossel" data-movimento="hero" aria-label="Destaque da Amira">
       <div id="hero-carrossel" class="hero-carrossel-trilho">
-        <div class="hero-slide ativa" style="background-image:url('images/look_rosa.jpeg')"></div>
+        <div class="hero-slide ativa">
+          <div class="hero-slide__painel hero-slide__painel--esq" style="background-image:url('images/maquiagem_fran.jpeg')"></div>
+          <div class="hero-slide__painel hero-slide__painel--centro" style="background-image:url('images/perfume_asaad.jpg')"></div>
+          <div class="hero-slide__painel hero-slide__painel--dir" style="background-image:url('images/acessorios_destaque.jpg')"></div>
+        </div>
         <div class="hero-slide-overlay"></div>
         <div class="hero-slide-conteudo hero-conteudo moldura">
           <span class="rotulo hero-rotulo">Maison Amira · São Luís</span>
           <h1 class="hero-title">Sua <em>essência</em>,<br>nossa paixão</h1>
+          <p class="hero-subtitle">Perfumes, maquiagem e acessórios escolhidos para você.</p>
+          <div class="hero-acoes">
+            <a href="produtos.html" class="btn btn--claro">Explorar a coleção</a>
+            <a href="#categorias" class="link-fio hero-link">Descobrir as categorias</a>
+          </div>
         </div>
       </div>
-      <a class="hero-rolar" href="#produtos" aria-label="Rolar para os produtos"><span></span></a>
+      <a class="hero-rolar" href="#categorias" aria-label="Rolar para as categorias"><span></span></a>
+    </section>
+
+    <!-- ── CATEGORIAS ────────────────────────────────────────────────── -->
+    <section class="secao categories" id="categorias">
+      <div class="moldura">
+        <header class="secao-cabecalho">
+          <div>
+            <span class="rotulo">Por família</span>
+            <h2 class="titulo-2 horizonte">Encontre a <em>sua</em></h2>
+          </div>
+        </header>
+        <div class="categories-grid" id="grid-categorias-home">
+          <p class="catalogo-loading">Carregando categorias…</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── OS MAIS AMADOS (destaques) ────────────────────────────────── -->
+    <section class="secao featured" id="destaques">
+      <div class="moldura">
+        <header class="secao-cabecalho">
+          <div>
+            <span class="rotulo">Os mais amados</span>
+            <h2 class="titulo-2 horizonte">Escolhidos pelas <em>clientes</em></h2>
+          </div>
+          <div class="featured-acoes">
+            <a href="produtos.html" class="link-fio">Ver toda a coleção</a>
+            <div class="trilho-setas">
+              <button class="trilho-seta" data-trilho="grid-destaques" data-dir="-1" aria-label="Produtos anteriores"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
+              <button class="trilho-seta" data-trilho="grid-destaques" data-dir="1" aria-label="Próximos produtos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+            </div>
+          </div>
+        </header>
+      </div>
+      <div class="products-grid trilho" id="grid-destaques">
+        <p class="catalogo-loading">Carregando destaques…</p>
+      </div>
+    </section>
+
+    <!-- ── PRODUTO DA ESTAÇÃO (banner do admin) ──────────────────────── -->
+    <section class="highlight" id="sobre" aria-label="Produto da estação">
+      <div class="moldura">
+        <div class="highlight-inner" id="highlight-conteudo">
+          <div class="highlight-visual">
+            <div class="highlight-circle">
+              <img src="images/perfume_principal.png" alt="Frasco de perfume da coleção Amira" loading="lazy">
+            </div>
+          </div>
+          <div class="highlight-content">
+            <span class="section-eyebrow2">Seleção Amira</span>
+            <h2 class="highlight-title titulo-1">A coleção <em>Amira</em></h2>
+            <p class="highlight-text">Encontre uma fragrância para chamar de sua.</p>
+            <a href="produtos.html" class="btn">Conhecer a coleção</a>
+          </div>
+        </div>
+        <div class="highlight-nav" id="highlight-nav" style="display:none;">
+          <button class="highlight-nav-btn" id="highlight-prev" aria-label="Produto anterior">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+          </button>
+          <span class="highlight-nav-contador numero" id="highlight-contador"></span>
+          <button class="highlight-nav-btn" id="highlight-next" aria-label="Próximo produto">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+          </button>
+        </div>
+      </div>
     </section>
 
     <!-- ── NOVIDADES (vitrine B2) ────────────────────────────────────── -->
@@ -174,24 +248,6 @@
         </header>
         <div class="vitrine-grid" id="grid-produtos-home">
           <p class="catalogo-loading">Carregando produtos…</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- ── PRODUTO DA ESTAÇÃO (banner do admin) ──────────────────────── -->
-    <section class="highlight" id="sobre" aria-label="Produto da estação">
-      <div class="moldura">
-        <div class="highlight-inner" id="highlight-conteudo">
-          <p class="catalogo-loading">Carregando…</p>
-        </div>
-        <div class="highlight-nav" id="highlight-nav" style="display:none;">
-          <button class="highlight-nav-btn" id="highlight-prev" aria-label="Produto anterior">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
-          </button>
-          <span class="highlight-nav-contador numero" id="highlight-contador"></span>
-          <button class="highlight-nav-btn" id="highlight-next" aria-label="Próximo produto">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
-          </button>
         </div>
       </div>
     </section>
@@ -219,40 +275,6 @@
             <a href="produtos.html" class="btn">Explorar a coleção <svg class="seta" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M4 12h15m-5-6 6 6-6 6"/></svg></a>
           </div>
         </div>
-      </div>
-    </section>
-
-    <!-- ── CATEGORIAS ────────────────────────────────────────────────── -->
-    <section class="secao categories" id="categorias">
-      <div class="moldura">
-        <header class="secao-cabecalho">
-          <div>
-            <span class="rotulo">Por família</span>
-            <h2 class="titulo-2 horizonte">Encontre a <em>sua</em></h2>
-          </div>
-        </header>
-        <div class="categories-grid" id="grid-categorias-home">
-          <p class="catalogo-loading">Carregando categorias…</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- ── OS MAIS AMADOS (destaques) ────────────────────────────────── -->
-    <section class="secao featured" id="destaques">
-      <div class="moldura">
-        <header class="secao-cabecalho">
-          <div>
-            <span class="rotulo">Os mais amados</span>
-            <h2 class="titulo-2 horizonte">Escolhidos pelas <em>clientes</em></h2>
-          </div>
-          <div class="trilho-setas" aria-hidden="false">
-            <button class="trilho-seta" data-trilho="grid-destaques" data-dir="-1" aria-label="Anteriores"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
-            <button class="trilho-seta" data-trilho="grid-destaques" data-dir="1" aria-label="Próximos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
-          </div>
-        </header>
-      </div>
-      <div class="products-grid trilho" id="grid-destaques">
-        <p class="catalogo-loading">Carregando destaques…</p>
       </div>
     </section>
 
@@ -303,11 +325,11 @@
       <div class="moldura newsletter-content">
         <span class="rotulo">Lista da maison</span>
         <h2 class="titulo-2 newsletter-title">Lançamentos e reservas<br><em>antes de todo mundo</em>.</h2>
-        <p class="texto-apoio newsletter-text">Deixe seu e-mail e continuamos a conversa no WhatsApp — sem spam, só o que chegar de especial.</p>
+        <p class="texto-apoio newsletter-text">Informe seu e-mail e confirme a inscrição em uma mensagem pelo WhatsApp.</p>
         <form class="newsletter-form" onsubmit="event.preventDefault(); handleNewsletter();">
           <label class="visualmente-oculto" for="email-input">Seu e-mail</label>
           <input type="email" class="newsletter-input" placeholder="Seu melhor e-mail" id="email-input" autocomplete="email" required>
-          <button type="submit" class="newsletter-btn btn">Quero receber</button>
+          <button type="submit" class="newsletter-btn btn">Continuar no WhatsApp</button>
         </form>
       </div>
     </section>

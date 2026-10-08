@@ -28,6 +28,9 @@
   --aviso: #8A6114;
   --vidro: rgba(251, 248, 245, 0.82);   /* barra ao rolar */
   --veu: rgba(28, 20, 17, 0.42);        /* fundo atrás de menus e diálogos */
+  --hero-sombra-topo: rgba(18, 13, 11, 0.7);
+  --hero-sombra-base: rgba(18, 13, 11, 0.68);
+  --hero-sombra-lateral: rgba(18, 13, 11, 0.24);
 
   /* Tipografia */
   --f-display: "Bodoni Moda", "Didot", "Bodoni 72", Georgia, serif;
@@ -728,6 +731,7 @@ body[data-theme="dark"] .rodape { background: #0B0807; }
   color: rgba(251, 248, 245, 0.55);
 }
 .rodape__pagamentos { display: flex; gap: var(--s-2); }
+.rodape__empresa { width: 100%; font-size: var(--t-micro); letter-spacing: 0.04em; }
 .rodape__pagamentos span {
   padding: var(--s-1) var(--s-3);
   border: 1px solid rgba(251, 248, 245, 0.2);

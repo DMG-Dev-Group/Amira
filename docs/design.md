@@ -30,16 +30,15 @@
   de shopping, página de produto da Apple (o objeto no centro, a história
   contada pelo scroll), editorial de moda impresso (Harper's Bazaar), cartão
   de visita com relevo seco.
-- **Primeira tela (home)**: foto da marca em tela cheia (as imagens que o
-  admin cadastra), com zoom lento tipo Ken Burns e troca em fusão; título
-  grande em Bodoni no canto inferior esquerdo, uma linha de apoio e uma ação
-  principal ("Explorar a coleção"). Logo centralizada na barra.
+- **Primeira tela (home)**: as fotos cadastradas no painel formam um
+  tríptico editorial em desktop; no celular, a imagem central ocupa toda a
+  tela. O título e uma ação principal ficam sobre a fotografia, com
+  contraste suficiente para a navegação.
 - **Momento memorável**: a abertura. Na primeira visita da sessão, o **sol
   da Amira nasce**: a linha do horizonte se desenha, o semicírculo sobe, os
   raios se abrem um a um em dourado e o nome aparece fechando o espaçamento;
-  a cortina sobe revelando a home. Logo depois, no scroll, um frasco de vidro
-  em 3D com tampa dourada gira sob uma luz de nascer do sol enquanto "Sua
-  essência, nossa paixão" entra frase por frase.
+  a cortina sobe revelando a home. Mais adiante, o frasco de vidro em 3D
+  acompanha o scroll em uma pausa breve sobre a marca.
 - **Detalhe persistente**: a **linha do horizonte** do logo — um filete
   dourado de 1px. Ela se desenha sob os títulos de seção ao entrarem na
   tela, sublinha links no hover, separa o preço no card, marca o item ativo
@@ -75,6 +74,8 @@
 - Animação nunca bloqueia: a abertura dura no máximo ~2s, aparece só na
   primeira página da sessão e some ao primeiro clique/tecla.
 - 3D é enfeite com motivo: nunca carrega no celular nem atrasa o conteúdo.
+- A home segue uma ordem de compra: hero, coleções, destaques, campanha,
+  novidades, marca, linha de iPhones, avaliações e lista de novidades.
 - O painel admin (`admin/`) é Operar e tem folha própria; fica fora desta
   direção.
 

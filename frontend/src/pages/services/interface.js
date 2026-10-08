@@ -13,6 +13,16 @@
 const reduzido = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const raiz = document.documentElement;
 
+// O rodapé é repetido nas páginas públicas. A identificação legal fica em
+// um ponto comum para todas mostrarem os mesmos dados da loja.
+document.querySelectorAll(".rodape__base").forEach((base) => {
+  if (base.querySelector(".rodape__empresa")) return;
+  const empresa = document.createElement("p");
+  empresa.className = "rodape__empresa";
+  empresa.textContent = "Amira · CNPJ 68.182.038/0001-66";
+  base.appendChild(empresa);
+});
+
 // ── Abertura (o sol nasce) ──────────────────────────────────────────────
 const DURACAO_ABERTURA = 2600;
 

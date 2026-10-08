@@ -9,8 +9,7 @@
 //                               (depois da abertura); foto e texto fazem
 //                               parallax ao rolar
 //   data-movimento="parallax"   imagem desliza devagar dentro da moldura
-//   data-movimento="essencia"   seção fixada: frasco 3D gira com o scroll e
-//                               as frases acendem uma a uma
+//   data-movimento="essencia"   frasco 3D gira com o scroll, com texto breve
 
 import { aberturaTerminou } from "./interface.js";
 
@@ -87,10 +86,13 @@ export async function iniciar() {
 function iniciarHero(gsap) {
   const hero = document.querySelector('[data-movimento="hero"]');
   if (!hero) return;
+  let animado = false;
 
   const animarTitulo = async () => {
+    if (animado) return;
     const titulo = hero.querySelector(".hero-title");
     if (!titulo) return;
+    animado = true;
     const palavras = quebrarEmPalavras(titulo);
     const apoio = hero.querySelectorAll(".hero-subtitle, .hero-acoes, .hero-rotulo, .hero-indicadores");
     await aberturaTerminou;
@@ -98,15 +100,11 @@ function iniciarHero(gsap) {
     gsap.fromTo(apoio, { autoAlpha: 0, y: 18 }, { autoAlpha: 1, y: 0, duration: 1.2, stagger: 0.1, delay: 0.55 });
   };
 
-  // O título é escrito pelo home-dinamica.js depois de ler o Firestore:
-  // espera ele aparecer (ou anima o que já está lá).
-  if (hero.querySelector(".hero-slide")) animarTitulo();
-  else {
-    const mo = new MutationObserver(() => {
-      if (hero.querySelector(".hero-slide")) { mo.disconnect(); animarTitulo(); }
-    });
-    mo.observe(hero, { childList: true, subtree: true });
-  }
+  // O título do painel pode chegar depois do GSAP; animamos o texto final.
+  // O prazo de reserva cobre páginas offline em que o HTML inicial fica.
+  document.addEventListener("amira:hero-atualizado", animarTitulo, { once: true });
+  if (hero.querySelectorAll(".hero-slide").length > 1) animarTitulo();
+  else setTimeout(animarTitulo, 2400);
 
   // Parallax de saída: a foto afunda devagar e o texto some ao rolar
   gsap.to(hero.querySelector(".hero-carrossel-trilho"), {
@@ -134,7 +132,7 @@ function iniciarParallax(gsap) {
   new MutationObserver(ligar).observe(document.body, { childList: true, subtree: true });
 }
 
-// ── "Sua essência": seção fixada com o frasco 3D ────────────────────────
+// ── "Sua essência": uma pausa editorial curta com o frasco 3D ──────────
 function iniciarEssencia(gsap, ScrollTrigger) {
   const secao = document.querySelector('[data-movimento="essencia"]');
   if (!secao) return;
@@ -142,27 +140,25 @@ function iniciarEssencia(gsap, ScrollTrigger) {
   const palco = secao.querySelector(".essencia__palco");
   let frasco = null;
 
-  const linha = gsap.timeline({
-    scrollTrigger: {
-      trigger: secao,
-      start: "top top",
-      end: "+=180%",
-      pin: true,
-      scrub: 0.6,
-      onUpdate: (st) => frasco?.definirProgresso(st.progress),
-    },
-  });
   frases.forEach((f, i) => {
-    linha.fromTo(f, { autoAlpha: 0.12, y: 24 }, { autoAlpha: 1, y: 0, duration: 1, ease: "power2.out" }, i * 0.9);
+    gsap.from(f, {
+      opacity: 0.25, y: 24, delay: i * 0.08, duration: 0.9,
+      scrollTrigger: { trigger: secao, start: "top 78%", once: true },
+    });
   });
-  linha.fromTo(secao.querySelector(".essencia__acao"), { autoAlpha: 0, y: 16 }, { autoAlpha: 1, y: 0, duration: 0.8 }, ">-0.2");
+  const giro = ScrollTrigger.create({
+    trigger: secao,
+    start: "top bottom",
+    end: "bottom top",
+    onUpdate: (st) => frasco?.definirProgresso(st.progress),
+  });
 
   if (palco && aparelhoAguenta3D()) {
     import("../vendor/frasco-3d.js")
       .then(({ montarFrasco }) => {
         frasco = montarFrasco(palco);
         palco.classList.add("com-3d");           // esconde a foto de reserva
-        frasco.definirProgresso(linha.scrollTrigger?.progress || 0);
+        frasco.definirProgresso(giro.progress);
       })
       .catch((e) => console.warn("[Amira] frasco 3D indisponível:", e));
   }
