@@ -75,11 +75,32 @@ export function sanitizarOpcoes(opcoes) {
  * Lista todas as camadas, já ordenadas (menor "ordem" primeiro). A
  * primeira do array é sempre a camada principal.
  */
+// Uma leitura só por página: a home, a navbar, o catálogo e a página de
+// produto pedem as camadas cada um por conta própria, e o documento da
+// camada principal carrega as capas das categorias (centenas de KB).
+// Qualquer escrita deste módulo descarta a cópia, para o painel enxergar
+// o que acabou de gravar.
+let camadasEmCache = null;
+
+function descartarCache() {
+  camadasEmCache = null;
+}
+
 export async function listarCamadas() {
-  const colecaoRef = collection(db, COLECAO);
-  const q = query(colecaoRef, orderBy("ordem", "asc"));
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => normalizarCamada(d.id, d.data()));
+  if (!camadasEmCache) {
+    const colecaoRef = collection(db, COLECAO);
+    const q = query(colecaoRef, orderBy("ordem", "asc"));
+    camadasEmCache = getDocs(q)
+      .then((snap) => snap.docs.map((d) => normalizarCamada(d.id, d.data())))
+      .catch((erro) => {
+        descartarCache(); // falha de rede não fica guardada
+        throw erro;
+      });
+  }
+  // cópia rasa por chamada: quem recebe pode mexer na lista sem afetar
+  // as outras partes da página
+  const camadas = await camadasEmCache;
+  return camadas.map((c) => ({ ...c, opcoes: c.opcoes.map((o) => ({ ...o })) }));
 }
 
 /** A camada principal de uma lista já carregada (ou null se não houver). */
@@ -104,13 +125,15 @@ export async function criarCamada({ nome }) {
   const proximaOrdem = existentes.reduce((max, c) => Math.max(max, c.ordem), 0) + 1;
 
   const colecaoRef = collection(db, COLECAO);
-  return addDoc(colecaoRef, {
+  const ref = await addDoc(colecaoRef, {
     nome: String(nome).trim(),
     slug,
     ordem: proximaOrdem,
     opcoes: [],
     criadoEm: serverTimestamp()
   });
+  descartarCache();
+  return ref;
 }
 
 /**
@@ -120,16 +143,19 @@ export async function criarCamada({ nome }) {
 export async function renomearCamada(id, nome) {
   const limpo = String(nome ?? "").trim();
   if (!limpo) throw new Error("Informe um nome válido para a camada.");
-  return updateDoc(doc(db, COLECAO, id), { nome: limpo });
+  await updateDoc(doc(db, COLECAO, id), { nome: limpo });
+  descartarCache();
 }
 
 /** Substitui a lista de opções de uma camada (add/editar/remover em bloco). */
 export async function salvarOpcoes(id, opcoes) {
-  return updateDoc(doc(db, COLECAO, id), { opcoes: sanitizarOpcoes(opcoes) });
+  await updateDoc(doc(db, COLECAO, id), { opcoes: sanitizarOpcoes(opcoes) });
+  descartarCache();
 }
 
 export async function excluirCamada(id) {
-  return deleteDoc(doc(db, COLECAO, id));
+  await deleteDoc(doc(db, COLECAO, id));
+  descartarCache();
 }
 
 /**
@@ -143,4 +169,5 @@ export async function reordenarCamadas(idsNaOrdem) {
       updateDoc(doc(db, COLECAO, id), { ordem: indice + 1 })
     )
   );
+  descartarCache();
 }

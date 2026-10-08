@@ -19,7 +19,7 @@
 // opcoesSemIphone(), chamadas em cada vitrine da linha de perfumaria.
 
 import { listarCamadas, camadaPrincipal } from "./camadas.js";
-import { listarProdutos, filtrosDoProduto } from "./produtos.js";
+import { listarProdutosPorOpcoes, filtrosDoProduto } from "./produtos.js";
 
 /** Slug usado como referência quando não há opção de iPhone cadastrada. */
 export const SLUG_IPHONE_PADRAO = "iphones";
@@ -134,9 +134,15 @@ export function opcoesSemIphone(opcoes) {
  *   economizar uma leitura (a home carrega uma vez e reaproveita).
  */
 export async function listarProdutosIphone(camadas = null) {
-  const [lista, produtos] = await Promise.all([
-    camadas ? Promise.resolve(camadas) : listarCamadas(),
-    listarProdutos()
-  ]);
+  const lista = camadas || (await listarCamadas());
+  const principal = camadaPrincipal(lista);
+  if (!principal) return [];
+
+  // Pede ao servidor só os produtos marcados com uma opção da seção, em
+  // vez do catálogo inteiro. O slug padrão entra junto para não perder
+  // aparelho marcado antes de a opção ganhar outro nome.
+  const slugs = (await listarOpcoesIphone(lista)).map((o) => o.slug);
+  slugs.push(SLUG_IPHONE_PADRAO);
+  const produtos = await listarProdutosPorOpcoes(principal.slug, slugs);
   return filtrarProdutosIphone(produtos, lista);
 }

@@ -38,7 +38,12 @@ module.exports = async (req, res) => {
   const tags = PAGINAS_FIXAS.map((p) => urlTag(`${BASE_URL}${p.caminho}`, p));
 
   try {
-    const snap = await getDb().collection("produtos").where("ativo", "==", true).get();
+    // .select(): o sitemap só precisa do id e da data — sem ele cada
+    // documento viria com as fotos em base64 (~90 KB por produto).
+    const snap = await getDb().collection("produtos")
+      .where("ativo", "==", true)
+      .select("atualizadoEm")
+      .get();
     snap.forEach((doc) => {
       const dados = doc.data();
       const lastmod = dados.atualizadoEm?.toDate ? dados.atualizadoEm.toDate().toISOString() : undefined;

@@ -156,22 +156,22 @@ async function carregarProduto() {
     return;
   }
 
-  try {
-    produtoAtual = await buscarProdutoPorId(produtoId);
-  } catch (erro) {
-    console.error(erro);
-  }
+  // As duas leituras são independentes — em paralelo, a página não espera
+  // uma terminar para começar a outra.
+  const [resProduto, resCamadas] = await Promise.allSettled([
+    buscarProdutoPorId(produtoId),
+    listarCamadas()
+  ]);
+  if (resProduto.status === "fulfilled") produtoAtual = resProduto.value;
+  else console.error(resProduto.reason);
 
   if (!produtoAtual || produtoAtual.ativo === false) {
     conteudo.innerHTML = `<p class="catalogo-vazio">Este produto não foi encontrado ou não está mais disponível.</p>`;
     return;
   }
 
-  try {
-    camadasCache = await listarCamadas();
-  } catch (erro) {
-    console.error("Erro ao carregar camadas:", erro);
-  }
+  if (resCamadas.status === "fulfilled") camadasCache = resCamadas.value;
+  else console.error("Erro ao carregar camadas:", resCamadas.reason);
 
   const p = produtoAtual;
   trilhaNome.textContent = p.nome;
