@@ -126,7 +126,7 @@
 .categories .titulo-2, .featured .titulo-2, .vitrine-produtos .titulo-2 { font-size: clamp(3.4rem, 6vw, 7rem); line-height: .95; letter-spacing: -.055em; }
 .categories-grid {
   display: flex; grid-auto-rows: auto; gap: clamp(.65rem, 1.2vw, 1.5rem);
-  overflow-x: auto; scrollbar-width: none; scroll-snap-type: x mandatory;
+  overflow-x: auto; scrollbar-width: none; scroll-snap-type: x proximity;
 }
 .categories-grid::-webkit-scrollbar { display: none; }
 .categories-grid .cat-card, .categories-grid .cat-card:nth-child(n) {
@@ -139,14 +139,20 @@
 .categories-grid .cat-name { font-size: clamp(2.1rem, 3vw, 3.8rem); letter-spacing: -.04em; }
 .categories-grid .cat-arrow { right: 1.4rem; bottom: 2rem; border: none; width: 28px; font-size: 1.5rem; }
 @media (hover: hover) and (pointer: fine) and (min-width: 701px) {
-  .categories-grid .cat-card {
-    transition: flex-basis .7s cubic-bezier(.22, 1, .36, 1), filter .55s ease;
+  html.js .categories-grid .cat-card {
+    transition: opacity 1s cubic-bezier(.16, 1, .3, 1),
+                transform 1s cubic-bezier(.16, 1, .3, 1),
+                flex-basis 1.05s cubic-bezier(.62, 0, .2, 1),
+                filter .9s ease-in-out;
+  }
+  .categories-grid .cat-imagem-generica img {
+    transition: transform 1.15s cubic-bezier(.62, 0, .2, 1), filter .9s ease-in-out;
   }
   .categories-grid .cat-card:is(:hover, :focus-visible) {
     flex-basis: clamp(340px, 35vw, 560px);
   }
   .categories-grid:has(.cat-card:is(:hover, :focus-visible)) .cat-card:not(:is(:hover, :focus-visible)) {
-    filter: brightness(.78);
+    filter: brightness(.84);
   }
   .categories-grid .cat-card:is(:hover, :focus-visible) img {
     transform: scale(1.035); filter: saturate(.92);
@@ -246,7 +252,7 @@
   .campaign-intro__texto { padding: 5rem var(--margem) 4rem; }
   .campaign-intro__texto h2 { font-size: clamp(4rem, 12vw, 6rem); }
   .campaign-intro__janela { min-height: 0; height: 78svh; max-height: 700px; }
-  .categories-grid { margin-right: calc(-1 * var(--margem)); padding-right: var(--margem); }
+  .categories-grid { margin-right: calc(-1 * var(--margem)); padding-right: var(--margem); scroll-snap-type: x mandatory; }
   .categories-grid .cat-card, .categories-grid .cat-card:nth-child(n) { flex: 0 0 75vw; height: min(108vw, 600px); }
   .featured-layout { display: block; min-height: 0; }
   .featured-editorial { height: 115vw; max-height: 690px; }
@@ -269,7 +275,7 @@
 @media (prefers-reduced-motion: reduce) {
   .campaign-hero__painel img { animation: none; transform: none; }
   .campaign-intro__foto { transition: none; }
-  .categories-grid .cat-card { transition: none; }
+  html.js .categories-grid .cat-card, .categories-grid .cat-imagem-generica img { transition: none; }
 }
 
 /* Linha secundária preservada, em escala de capítulo breve. */
